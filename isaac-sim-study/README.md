@@ -27,6 +27,15 @@ NVIDIA Isaac Sim을 처음부터 공부하기 위한 한국어 가이드 모음�
 | 08 | [이상탐지 모델 학습](docs/08-anomaly-model-training.md) | Anomalib로 이상탐지 학습·추론 (M3) |
 | 09 | [대응 에이전트](docs/09-response-agent.md) | 감지→판단→대응 루프 완성 (M4) |
 
+## 보고/발표 산출물
+| 파일 | 용도 |
+|------|------|
+| `Isaac_Sim_Physical_AI_가이드.docx` | 기술 가이드 통합본(9개 챕터, 실무용) |
+| `보고용-요약.md` / `Isaac_Sim_PoC_보고서.docx` | 임원 보고서(2페이지) |
+| `VPK_PhysicalAI_PoC_발표자료.pptx` | 발표용 슬라이드(9장, VPK/PLM기술팀 김성훈) |
+| `assets/demo_flow.png` | 데모 시나리오 다이어그램 |
+| `demo/index.html` | 웹 브라우저 컨셉 데모(단일 파일, 더블클릭 실행) |
+
 ## 빠른 시작 (요약)
 
 1. RTX GPU / 드라이버 / Ubuntu 22.04 준비 → [01 설치](docs/01-installation.md)

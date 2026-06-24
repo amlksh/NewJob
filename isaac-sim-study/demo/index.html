@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VPK · 조립 라인 이상감지·대응 에이전트 (컨셉 데모)</title>
+<style>
+  :root{--green:#76b900;--bg:#14171c;--panel:#1d222a;--line:#2c333d;--txt:#e6e9ee;--muted:#8a93a0;
+        --red:#e0483a;--amber:#e2a93b;--blue:#3d8fd6;}
+  *{box-sizing:border-box;font-family:'Malgun Gothic','Segoe UI',sans-serif;}
+  body{margin:0;background:var(--bg);color:var(--txt);}
+  header{display:flex;align-items:center;gap:14px;padding:14px 22px;border-bottom:2px solid var(--green);background:#10131a;}
+  header .logo{font-weight:800;color:var(--green);font-size:20px;letter-spacing:1px;}
+  header .title{font-size:16px;font-weight:600;}
+  header .tag{margin-left:auto;font-size:12px;color:var(--muted);}
+  .wrap{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;padding:16px 22px;max-width:1280px;margin:0 auto;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;}
+  .card h2{margin:0 0 10px;font-size:14px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
+  /* line */
+  #stage{position:relative;height:230px;background:linear-gradient(#1a1f27,#11151b);border-radius:8px;overflow:hidden;border:1px solid var(--line);}
+  #belt{position:absolute;bottom:48px;left:0;right:0;height:54px;background:repeating-linear-gradient(90deg,#2a313b 0 28px,#222831 28px 56px);border-top:2px solid #39414d;border-bottom:2px solid #39414d;}
+  .part{position:absolute;bottom:54px;width:54px;height:42px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#08240a;font-weight:700;transition:filter .2s;}
+  .part.ok{background:var(--green);}
+  .part.bad{background:#d9534f;color:#fff;}
+  .part .pin{position:absolute;top:-7px;right:8px;width:10px;height:10px;border-radius:50%;background:#3a5;border:2px solid #063;}
+  .part.bad .pin{display:none;}
+  .heat{position:absolute;border:2px dashed var(--red);border-radius:6px;box-shadow:0 0 12px var(--red);animation:pulse .8s infinite alternate;}
+  @keyframes pulse{from{opacity:.5}to{opacity:1}}
+  .scanline{position:absolute;top:0;bottom:0;width:2px;background:var(--blue);left:62%;box-shadow:0 0 10px var(--blue);}
+  .cam{position:absolute;top:8px;left:60%;transform:translateX(-50%);font-size:11px;color:var(--blue);}
+  .status-stop{position:absolute;inset:0;background:rgba(224,72,58,.12);display:none;align-items:center;justify-content:center;font-size:34px;font-weight:800;color:var(--red);letter-spacing:3px;}
+  /* gauges */
+  .row{display:flex;gap:12px;margin-top:12px;}
+  .metric{flex:1;background:#171b22;border:1px solid var(--line);border-radius:8px;padding:10px;text-align:center;}
+  .metric .v{font-size:24px;font-weight:800;}
+  .metric .l{font-size:11px;color:var(--muted);margin-top:3px;}
+  .bar{height:10px;background:#222831;border-radius:6px;overflow:hidden;margin-top:8px;}
+  .bar > i{display:block;height:100%;width:0;background:var(--green);transition:width .25s,background .25s;}
+  /* decision */
+  #decision{font-size:22px;font-weight:800;padding:14px;border-radius:8px;text-align:center;background:#171b22;border:1px solid var(--line);}
+  .controls{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
+  button{background:var(--green);color:#08240a;border:0;padding:9px 16px;border-radius:7px;font-weight:700;cursor:pointer;font-size:13px;}
+  button.ghost{background:#252b34;color:var(--txt);}
+  /* log */
+  #log{height:300px;overflow:auto;font-size:12.5px;line-height:1.7;}
+  #log .e{padding:4px 8px;border-left:3px solid var(--muted);margin-bottom:4px;background:#171b22;border-radius:0 6px 6px 0;}
+  #log .e.pass{border-color:var(--green);}
+  #log .e.warn{border-color:var(--amber);}
+  #log .e.stop{border-color:var(--red);}
+  #log .e.call{border-color:var(--blue);}
+  #log .e small{color:var(--muted);}
+  .note{font-size:11px;color:var(--muted);padding:6px 22px 18px;max-width:1280px;margin:0 auto;}
+  .pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;background:#252b34;color:var(--muted);}
+</style>
+</head>
+<body>
+<header>
+  <span class="logo">VPK</span>
+  <span class="title">조립 라인 이상감지·대응 에이전트</span>
+  <span class="tag">컨셉 데모 (Mockup) · PLM기술팀 김성훈</span>
+</header>
+
+<div class="wrap">
+  <div class="card">
+    <h2>가상 조립 라인 (디지털 트윈 개념)</h2>
+    <div id="stage">
+      <div class="cam">▼ AI 카메라</div>
+      <div class="scanline"></div>
+      <div id="belt"></div>
+      <div class="status-stop" id="stopOverlay">■ LINE STOPPED</div>
+    </div>
+    <div class="row">
+      <div class="metric"><div class="v" id="mTotal">0</div><div class="l">검사 수</div></div>
+      <div class="metric"><div class="v" style="color:var(--red)" id="mBad">0</div><div class="l">이상 감지</div></div>
+      <div class="metric"><div class="v" style="color:var(--green)" id="mUp">100%</div><div class="l">정상률</div></div>
+    </div>
+    <div class="controls">
+      <button id="btnStart">▶ 시작</button>
+      <button class="ghost" id="btnPause">⏸ 일시정지</button>
+      <button class="ghost" id="btnResume">↻ 라인 재가동</button>
+      <button class="ghost" id="btnInject">⚠ 이상 부품 투입</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>AI 에이전트 판단</h2>
+    <div style="font-size:12px;color:var(--muted)">이상 점수 (Anomaly Score)</div>
+    <div class="bar"><i id="scoreBar"></i></div>
+    <div style="text-align:right;font-size:13px;margin-top:3px;" id="scoreTxt">0.00</div>
+    <div style="margin:14px 0 8px;font-size:12px;color:var(--muted)">선택된 대응 (Action)</div>
+    <div id="decision">대기 중</div>
+    <div style="margin-top:14px;font-size:12px;color:var(--muted)">대응 정책</div>
+    <div style="font-size:12px;line-height:1.9;margin-top:4px;">
+      <span class="pill">&lt; 0.50</span> 통과 ·
+      <span class="pill">0.50–0.80</span> 경고 ·
+      <span class="pill">≥ 0.80</span> 라인정지 ·
+      <span class="pill">경계</span> 사람호출
+    </div>
+  </div>
+
+  <div class="card" style="grid-column:1/3;">
+    <h2>이벤트 로그 — 인지 → 판단 → 행동</h2>
+    <div id="log"></div>
+  </div>
+</div>
+<div class="note">
+  ※ 본 화면은 실제 Isaac Sim PoC 이전에 <b>개념·서사를 빠르게 보여주기 위한 웹 목업</b>입니다.
+  실제 PoC는 NVIDIA Isaac Sim의 3D 디지털 트윈 + 합성데이터로 학습한 이상탐지 모델로 구현됩니다.
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+let running=false, paused=false, lineStopped=false, total=0, bad=0, seq=0, timer=null, forceBad=false;
+
+function log(cls, score, action, detail){
+  const t=new Date().toLocaleTimeString('ko-KR',{hour12:false});
+  const e=document.createElement('div'); e.className='e '+cls;
+  e.innerHTML=`<b>[${action}]</b> ${detail} <small>· score ${score.toFixed(2)} · ${t}</small>`;
+  $('log').prepend(e);
+}
+function setDecision(text,color){ $('decision').textContent=text; $('decision').style.color=color; }
+function setScore(s){
+  $('scoreBar').style.width=Math.min(100,s*100)+'%';
+  $('scoreBar').style.background = s>=0.8?'var(--red)':(s>=0.5?'var(--amber)':'var(--green)');
+  $('scoreTxt').textContent=s.toFixed(2);
+}
+function metrics(){ $('mTotal').textContent=total; $('mBad').textContent=bad;
+  $('mUp').textContent=(total? Math.round((total-bad)/total*100):100)+'%'; }
+
+function spawnPart(){
+  if(lineStopped) return;
+  const defective = forceBad || Math.random()<0.18; forceBad=false;
+  const p=document.createElement('div');
+  p.className='part '+(defective?'bad':'ok');
+  p.innerHTML = (defective?'결함':'정상') + (defective?'':'<span class="pin"></span>');
+  p.style.left='-60px';
+  $('stage').appendChild(p);
+  let x=-60; const speed=2.0;
+  const move=setInterval(()=>{
+    if(paused||lineStopped) return;
+    x+=speed; p.style.left=x+'px';
+    // 카메라(스캔라인 ~62%) 통과 시 검사
+    const stageW=$('stage').clientWidth;
+    if(!p.dataset.checked && x > stageW*0.62-27){ p.dataset.checked='1'; inspect(p,defective); }
+    if(x>stageW+60){ clearInterval(move); p.remove(); }
+  },16);
+}
+
+function inspect(p, defective){
+  total++; seq++;
+  // 이상 점수 모사: 정상은 낮게, 결함은 높게(약간의 노이즈)
+  let score = defective ? (0.7+Math.random()*0.3) : (Math.random()*0.45);
+  setScore(score);
+  let cls,action,color,detail;
+  if(score<0.5){ cls='pass'; action='통과'; color='var(--green)'; detail=`부품 #${seq} 정상`; }
+  else if(score>=0.8){ cls='stop'; action='라인 정지'; color='var(--red)'; detail=`부품 #${seq} 중대 이상(부품 누락 추정) → 자동 정지+리젝트`;
+    stopLine(p); bad++; }
+  else if(Math.abs(score-0.5)<0.05){ cls='call'; action='담당자 호출'; color='var(--blue)'; detail=`부품 #${seq} 판정 모호 → 사람 확인 요청`; bad++; }
+  else { cls='warn'; action='경고'; color='var(--amber)'; detail=`부품 #${seq} 경미 이상 → 로그+스냅샷`; bad++; }
+  if(defective && score>=0.5) drawHeat(p);
+  setDecision(action,color);
+  log(cls,score,action,detail);
+  metrics();
+}
+
+function drawHeat(p){
+  const h=document.createElement('div'); h.className='heat';
+  h.style.left=p.offsetLeft+'px'; h.style.bottom='54px'; h.style.width='54px'; h.style.height='42px';
+  $('stage').appendChild(h); setTimeout(()=>h.remove(),1500);
+}
+function stopLine(){ lineStopped=true; $('stopOverlay').style.display='flex'; }
+function resumeLine(){ lineStopped=false; $('stopOverlay').style.display='none'; log('pass',0,'재가동','담당자 조치 완료 → 라인 재가동'); }
+
+function start(){ if(running)return; running=true; paused=false;
+  timer=setInterval(()=>{ if(!paused&&!lineStopped) spawnPart(); }, 1400); }
+$('btnStart').onclick=start;
+$('btnPause').onclick=()=>{ paused=!paused; $('btnPause').textContent=paused?'▶ 계속':'⏸ 일시정지'; };
+$('btnResume').onclick=resumeLine;
+$('btnInject').onclick=()=>{ forceBad=true; if(!running)start(); spawnPart(); };
+</script>
+</body>
+</html>
