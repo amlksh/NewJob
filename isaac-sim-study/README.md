@@ -22,7 +22,8 @@ NVIDIA Isaac Sim을 처음부터 공부하기 위한 한국어 가이드 모음�
 | 03 | [USD 구조 이해](docs/03-usd-structure.md) | Stage, Prim, Property, Layer, Composition |
 | 04 | [ROS 2 구조 이해](docs/04-ros2-structure.md) | ROS 2 Bridge, OmniGraph, Action Graph |
 | 05 | [학습 로드맵](docs/05-roadmap.md) | 4주 단계별 학습 계획 + 체크리스트 |
-| 06 | [Physical AI PoC 전략](docs/06-physical-ai-poc-strategy.md) | AI 비주얼 검사관 · 6개월 PoC · 포지셔닝 전략 |
+| 06 | [Physical AI PoC 전략](docs/06-physical-ai-poc-strategy.md) | 조립 라인 이상감지·대응 에이전트 · 6개월 PoC · 포지셔닝 |
+| 07 | [Replicator 합성 데이터](docs/07-replicator-synthetic-data.md) | 합성 데이터 생성(PoC의 심장) + Anomalib 연결 |
 
 ## 빠른 시작 (요약)
 
