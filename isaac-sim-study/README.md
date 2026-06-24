@@ -24,6 +24,8 @@ NVIDIA Isaac Sim을 처음부터 공부하기 위한 한국어 가이드 모음�
 | 05 | [학습 로드맵](docs/05-roadmap.md) | 4주 단계별 학습 계획 + 체크리스트 |
 | 06 | [Physical AI PoC 전략](docs/06-physical-ai-poc-strategy.md) | 조립 라인 이상감지·대응 에이전트 · 6개월 PoC · 포지셔닝 |
 | 07 | [Replicator 합성 데이터](docs/07-replicator-synthetic-data.md) | 합성 데이터 생성(PoC의 심장) + Anomalib 연결 |
+| 08 | [이상탐지 모델 학습](docs/08-anomaly-model-training.md) | Anomalib로 이상탐지 학습·추론 (M3) |
+| 09 | [대응 에이전트](docs/09-response-agent.md) | 감지→판단→대응 루프 완성 (M4) |
 
 ## 빠른 시작 (요약)
 
