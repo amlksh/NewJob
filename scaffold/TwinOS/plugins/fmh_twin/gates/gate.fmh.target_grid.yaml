@@ -1,0 +1,6 @@
+key: gate.fmh.target_grid
+version: "1.0"
+applies_to: input
+impl: "python:plugins.fmh_twin.gates_impl:check_target_grid"
+params: {min_spacing_mm: 10, zone_catalog: "fmvss201u"}
+on_fail_default: escalate_hitl

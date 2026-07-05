@@ -1,0 +1,9 @@
+{
+  "gate_key": "gate.fmh.energy",
+  "gate_version": "1.0",
+  "status": "pass",
+  "measured": {"ratio": 0.041},
+  "threshold": {"max_ratio": 0.10},
+  "message": "artificial energy 4.1% < 10%",
+  "ts": "2026-07-05T09:01:00Z"
+}

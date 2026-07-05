@@ -1,0 +1,7 @@
+{
+  "urn": "urn:dtos:asset:PRJ-031:trim-b:cae.odb:01J8ZC3AK7Q2M4N6P8R9S0T1V2",
+  "uri": "s3://dtos/PRJ-031/run-x/step-y/A17/A17.odb",
+  "kind": "cae.odb",
+  "checksum": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "size": 812345678
+}

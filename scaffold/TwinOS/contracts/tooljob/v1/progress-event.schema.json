@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twinos://contracts/tooljob/v1/progress-event.schema.json",
+  "title": "ProgressEvent",
+  "description": "Spec §5.4 — tooljob.progress.v1 스트림. channel은 네임스페이스 개방(telemetry.* 포함).",
+  "type": "object",
+  "required": ["tooljob_id", "task_id", "ts", "channel"],
+  "properties": {
+    "tooljob_id": {"type": "string", "pattern": "^tj-[0-9A-HJKMNP-TV-Z]{26}$"},
+    "task_id": {"type": "string", "pattern": "^step-[0-9A-HJKMNP-TV-Z]{26}$"},
+    "ts": {"type": "string", "format": "date-time"},
+    "channel": {"type": "string", "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)*$"},
+    "pct": {"type": "number", "minimum": 0, "maximum": 100},
+    "message": {"type": "string"},
+    "series": {
+      "type": "object",
+      "required": ["name", "t", "v"],
+      "properties": {
+        "name": {"type": "string"},
+        "t": {"type": "number"},
+        "v": {"type": "number"}
+      }
+    }
+  }
+}

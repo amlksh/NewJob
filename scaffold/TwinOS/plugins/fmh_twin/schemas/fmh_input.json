@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twinos://plugins/fmh_twin/schemas/fmh_input.json",
+  "title": "FmhImpactInput",
+  "type": "object",
+  "required": ["interior_mesh_ref", "headform_ref", "target_zone"],
+  "properties": {
+    "interior_mesh_ref": {"type": "string", "pattern": "^urn:dtos:asset:"},
+    "headform_ref": {"type": "string", "pattern": "^urn:dtos:asset:"},
+    "target_zone": {"type": "string"},
+    "grid_spacing_mm": {"type": "number", "exclusiveMinimum": 0, "default": 25},
+    "approach_angles": {"type": "string", "default": "per_fmvss201u"},
+    "hic_d_target": {"type": "number", "exclusiveMinimum": 0, "maximum": 1000, "default": 900}
+  }
+}

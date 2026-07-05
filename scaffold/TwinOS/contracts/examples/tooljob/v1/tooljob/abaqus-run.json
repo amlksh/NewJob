@@ -1,0 +1,16 @@
+{
+  "tooljob_id": "tj-01J8ZC3AK7Q2M4N6P8R9S0T1V2",
+  "task_id": "step-01J8ZC3AK7Q2M4N6P8R9S0T1V2",
+  "run_id": "run-01J8ZC3AK7Q2M4N6P8R9S0T1V2",
+  "tool": "abaqus",
+  "op": "run_job",
+  "inputs": [
+    {"uri": "s3://dtos/PRJ-031/run-01J8ZC3AK7Q2M4N6P8R9S0T1V2/step-01J8ZC3AK7Q2M4N6P8R9S0T1V2/A17.inp",
+     "checksum": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+     "dest": "A17.inp"}
+  ],
+  "params": {"job_name": "A17", "cpus": 4, "max_license_tokens": 5},
+  "output_prefix": "s3://dtos/PRJ-031/run-01J8ZC3AK7Q2M4N6P8R9S0T1V2/step-01J8ZC3AK7Q2M4N6P8R9S0T1V2/A17/",
+  "timeout_sec": 14400,
+  "submitted_at": "2026-07-05T08:00:00Z"
+}

@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twinos://contracts/tooljob/v1/tooljob.schema.json",
+  "title": "ToolJob",
+  "description": "Spec §5.2 — Runner 큐 메시지 (tooljob.{tool}.v1)",
+  "type": "object",
+  "required": ["tooljob_id", "task_id", "run_id", "tool", "op", "inputs", "output_prefix", "timeout_sec"],
+  "properties": {
+    "tooljob_id": {"type": "string", "pattern": "^tj-[0-9A-HJKMNP-TV-Z]{26}$"},
+    "task_id": {"type": "string", "pattern": "^step-[0-9A-HJKMNP-TV-Z]{26}$"},
+    "run_id": {"type": "string", "pattern": "^run-[0-9A-HJKMNP-TV-Z]{26}$"},
+    "tool": {"type": "string", "pattern": "^[a-z0-9_]+$"},
+    "op": {"type": "string", "pattern": "^[a-z0-9_]+$"},
+    "inputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["uri", "dest"],
+        "properties": {
+          "uri": {"type": "string", "pattern": "^s3://"},
+          "checksum": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+          "dest": {"type": "string", "pattern": "^[^/][^\\x00]*$"}
+        }
+      }
+    },
+    "params": {"type": "object"},
+    "output_prefix": {"type": "string", "pattern": "^s3://"},
+    "timeout_sec": {"type": "integer", "minimum": 1},
+    "submitted_at": {"type": "string", "format": "date-time"}
+  }
+}

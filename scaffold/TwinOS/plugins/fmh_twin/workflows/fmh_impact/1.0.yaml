@@ -1,0 +1,40 @@
+# MVP 확정 워크플로우 (08 문서 §5, Spec §7)
+key: fmh_impact
+version: "1.0"
+description: "FMH 충돌 해석 (FMVSS 201U) -> HIC 판정 -> 보고서"
+input_schema: plugins/fmh_twin/schemas/fmh_input.json
+
+steps:
+  - id: prepare
+    agent: fmh_twin
+    action: prepare
+    gates_after: [gate.input.units, gate.fmh.target_grid]
+
+  - id: approve_plan
+    type: hitl
+    gate_key: plan_approval
+    show: [prepare.output.case_summary]
+
+  - id: run
+    agent: fmh_twin
+    action: run
+    foreach: prepare.output.cases
+    # 주의: YAML 1.1에서 on은 boolean으로 파싱되므로 반드시 인용한다 (Spec §7 retry.on)
+    retry: {max: 2, "on": [tool_transient_error]}
+    gates_after: [gate.run.convergence, gate.fmh.energy]
+    on_gate_fail: escalate_hitl
+
+  - id: validate
+    agent: fmh_twin
+    action: validate
+    gates_after: [gate.fmh.hic_sanity]
+
+  - id: report
+    agent: fmh_twin
+    action: report
+    gates_after: [gate.report.consistency]
+
+  - id: approve_report
+    type: hitl
+    gate_key: report_approval
+    on_reject: report

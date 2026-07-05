@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twinos://contracts/tooljob/v1/tooljob-result.schema.json",
+  "title": "ToolJobResult",
+  "description": "Spec §5.3 — tooljob.result.v1 스트림 메시지",
+  "type": "object",
+  "required": ["tooljob_id", "task_id", "status", "runner_id", "finished_at"],
+  "properties": {
+    "tooljob_id": {"type": "string", "pattern": "^tj-[0-9A-HJKMNP-TV-Z]{26}$"},
+    "task_id": {"type": "string", "pattern": "^step-[0-9A-HJKMNP-TV-Z]{26}$"},
+    "status": {"enum": ["succeeded", "failed", "cancelled"]},
+    "artifacts": {"type": "array", "items": {"$ref": "twinos://contracts/common/v1/artifact-ref.schema.json"}},
+    "metrics": {"type": "object"},
+    "tool_diagnosis": {"type": "object"},
+    "error": {"oneOf": [{"type": "null"}, {"$ref": "twinos://contracts/common/v1/error.schema.json"}]},
+    "runner_id": {"type": "string"},
+    "finished_at": {"type": "string", "format": "date-time"}
+  }
+}

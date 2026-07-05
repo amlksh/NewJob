@@ -1,0 +1,11 @@
+{
+  "agent": "fmh_twin",
+  "contracts": ["dtos.task-api/v1", "dtos.twin-agent/v1"],
+  "plugin_version": "1.0.0",
+  "actions": [
+    {"action": "prepare", "asset_types_in": ["fmh.interior_mesh", "fmh.headform_model"], "asset_types_out": ["fmh.case_bundle"]},
+    {"action": "run", "asset_types_in": ["fmh.case_bundle"], "asset_types_out": ["fmh.impact_result"]},
+    {"action": "validate", "asset_types_in": ["fmh.impact_result"], "asset_types_out": ["fmh.verdict_table"]},
+    {"action": "report", "asset_types_in": ["fmh.verdict_table"], "asset_types_out": ["report.docx"]}
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twinos://contracts/twin-agent/v1/report-output.schema.json",
+  "title": "ReportOutput",
+  "description": "Spec §4.2 — report action outputs. numbers_manifest는 보고서 수치 출처 선언.",
+  "type": "object",
+  "required": ["report_ref", "numbers_manifest_ref"],
+  "properties": {
+    "report_ref": {"type": "string", "pattern": "^urn:dtos:asset:"},
+    "summary_ref": {"type": "string", "pattern": "^urn:dtos:asset:"},
+    "numbers_manifest_ref": {"type": "string", "pattern": "^urn:dtos:asset:"}
+  }
+}

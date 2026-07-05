@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twinos://contracts/common/v1/error.schema.json",
+  "title": "ErrorInfo",
+  "description": "DTOS Interface Specification v1.0 §1.3 공통 에러 모델",
+  "type": "object",
+  "required": ["class", "message", "retryable"],
+  "properties": {
+    "class": {
+      "enum": ["tool_transient_error", "tool_numerical_error", "agent_generation_error", "input_error"]
+    },
+    "message": {"type": "string", "maxLength": 500},
+    "retryable": {"type": "boolean"},
+    "detail_ref": {"type": "string"},
+    "data": {"type": "object"}
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "tooljob_id": "tj-01J8ZC3AK7Q2M4N6P8R9S0T1V2",
+  "task_id": "step-01J8ZC3AK7Q2M4N6P8R9S0T1V2",
+  "ts": "2026-07-05T08:30:00Z",
+  "channel": "sta",
+  "pct": 62,
+  "message": "increment 1240/2000",
+  "series": {"name": "kinetic_energy", "t": 0.0124, "v": 320000.0}
+}

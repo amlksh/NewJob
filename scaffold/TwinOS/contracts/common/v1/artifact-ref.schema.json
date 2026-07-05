@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twinos://contracts/common/v1/artifact-ref.schema.json",
+  "title": "ArtifactRef",
+  "description": "Spec §6.3 아티팩트 참조 표준형",
+  "type": "object",
+  "required": ["uri", "kind"],
+  "properties": {
+    "urn": {"type": "string", "pattern": "^urn:dtos:asset:[A-Za-z0-9-]+:[a-z0-9-]+:[a-z0-9_]+\\.[a-z0-9_]+:(v[0-9]+|[0-9A-HJKMNP-TV-Z]{26})(#.+)?$"},
+    "uri": {"type": "string", "pattern": "^s3://"},
+    "kind": {"type": "string", "pattern": "^[a-z0-9_]+\\.[a-z0-9_]+$"},
+    "checksum": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "size": {"type": "integer", "minimum": 0}
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "task_id": "step-01J8ZC3AK7Q2M4N6P8R9S0T1V2",
+  "run_id": "run-01J8ZC3AK7Q2M4N6P8R9S0T1V2",
+  "project_id": "PRJ-031",
+  "agent": "fmh_twin",
+  "action": "prepare",
+  "inputs": {
+    "case_spec": {
+      "twin_kind": "automotive.interior_impact.fmh",
+      "params": {"target_zone": "A-pillar_upper", "grid_spacing_mm": 25, "hic_d_target": 900},
+      "asset_refs": {
+        "interior_mesh": "urn:dtos:asset:PRJ-031:trim-b:fmh.interior_mesh:v4",
+        "headform": "urn:dtos:asset:shared:headform:fmh.headform_model:v2"
+      }
+    }
+  },
+  "context": {
+    "artifacts_base": "s3://dtos/PRJ-031/run-01J8ZC3AK7Q2M4N6P8R9S0T1V2/step-01J8ZC3AK7Q2M4N6P8R9S0T1V2/",
+    "callback_url": "https://orch.internal/v1/callbacks/step-01J8ZC3AK7Q2M4N6P8R9S0T1V2",
+    "trace_id": "tr-8f21"
+  }
+}

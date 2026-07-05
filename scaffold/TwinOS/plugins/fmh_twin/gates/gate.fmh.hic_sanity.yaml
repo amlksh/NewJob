@@ -1,0 +1,6 @@
+key: gate.fmh.hic_sanity
+version: "1.0"
+applies_to: result
+impl: "python:plugins.fmh_twin.gates_impl:check_hic_signal"
+params: {filter_spec: "CFC1000", min_duration_ms: 20, max_clipping_pct: 0.0}
+on_fail_default: escalate_hitl

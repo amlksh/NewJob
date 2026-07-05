@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twinos://contracts/gate/v1/gate-result.schema.json",
+  "title": "GateResult",
+  "description": "Spec §8.2 — Quality Gate 판정 결과",
+  "type": "object",
+  "required": ["gate_key", "gate_version", "status", "ts"],
+  "properties": {
+    "gate_key": {"type": "string", "pattern": "^gate\\.[a-z0-9_]+\\.[a-z0-9_]+$"},
+    "gate_version": {"type": "string"},
+    "status": {"enum": ["pass", "fail", "warn"]},
+    "measured": {"type": "object"},
+    "threshold": {"type": "object"},
+    "evidence_ref": {"type": "string"},
+    "message": {"type": "string"},
+    "ts": {"type": "string", "format": "date-time"}
+  }
+}

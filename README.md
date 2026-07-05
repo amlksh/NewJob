@@ -21,3 +21,16 @@
 | [09-Learning-and-Evolution](docs/09-Learning-and-Evolution.md) | 학습·진화 체계: 4개 학습 루프(지식/템플릿/프롬프트/대리모델), 승격 게이트, 승인 위임 단계화, 단계별 가동 로드맵 |
 | [10-Architecture-Freeze-실행-우선순위](docs/10-Architecture-Freeze-실행-우선순위.md) | 실행 우선순위 검토(Walking Skeleton 제안), Architecture Freeze 동결 목록(F1~F8) + ADR 절차, Repo 초기 구조 |
 | [11-DTOS-Interface-Specification-v1.0](docs/11-DTOS-Interface-Specification-v1.0.md) | ⭐ **인터페이스 명세 v1.0(Draft)**: 8개 계약(task-api, twin-agent, tooljob, Artifact/URN, Workflow, Gate, 외부 API, Manifest), 상태 기계, 에러 모델, 버전 규칙, 적합성 테스트 |
+
+## TwinOS 저장소 스캐폴드
+
+`scaffold/TwinOS/` — TwinOS 저장소(Private) 초기 스캐폴드 완성본. GitHub App 권한 제약으로 이 세션에서 원격 저장소를 직접 생성할 수 없어, 생성 후 그대로 push하도록 준비되어 있다:
+
+```bash
+# 1. GitHub에서 빈 Private 저장소 TwinOS 생성 (README 없이)
+# 2. 스캐폴드 복사 후 초기화
+cp -r scaffold/TwinOS /원하는/위치/TwinOS && cd /원하는/위치/TwinOS
+./scripts/bootstrap_repo.sh git@github.com:<org-or-user>/TwinOS.git   # main + develop 푸시
+```
+
+포함: contracts/(Interface Spec v1.0 JSON Schema + golden examples), CI 계약 검증, sdk/(TwinAgent·계약 모델), plugins/fmh_twin/(manifest·워크플로우·게이트·KPI), libs/cae_toolkit(HIC 계산 + 테스트), ADR 2건, Sprint 1 Walking Skeleton 계획. 테스트 28개 통과 상태.

@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twinos://contracts/workflow/v1/workflow.schema.json",
+  "title": "WorkflowDefinition",
+  "description": "Spec §7 — 워크플로우 YAML(JSON 변환 후 검증)",
+  "type": "object",
+  "required": ["key", "version", "description", "input_schema", "steps"],
+  "properties": {
+    "key": {"type": "string", "pattern": "^[a-z0-9_]+$"},
+    "version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+$"},
+    "description": {"type": "string"},
+    "input_schema": {"type": "string"},
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^[a-z0-9_]+$"},
+          "type": {"enum": ["agent", "hitl"]},
+          "agent": {"type": "string"},
+          "action": {"type": "string"},
+          "inputs": {"type": "object"},
+          "foreach": {"type": "string"},
+          "retry": {
+            "type": "object",
+            "required": ["max", "on"],
+            "properties": {
+              "max": {"type": "integer", "minimum": 0, "maximum": 5},
+              "on": {"type": "array", "items": {"enum": ["tool_transient_error", "tool_numerical_error", "agent_generation_error", "input_error"]}}
+            }
+          },
+          "gates_after": {"type": "array", "items": {"type": "string", "pattern": "^gate\\."}},
+          "on_gate_fail": {"type": "string"},
+          "gate_key": {"type": "string"},
+          "show": {"type": "array", "items": {"type": "string"}},
+          "on_reject": {"type": "string"}
+        },
+        "allOf": [
+          {
+            "if": {"properties": {"type": {"const": "hitl"}}, "required": ["type"]},
+            "then": {"required": ["gate_key"]},
+            "else": {"required": ["agent", "action"]}
+          }
+        ]
+      }
+    }
+  }
+}

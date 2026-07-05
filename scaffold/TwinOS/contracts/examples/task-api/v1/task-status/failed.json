@@ -1,0 +1,12 @@
+{
+  "task_id": "step-01J8ZC3AK7Q2M4N6P8R9S0T1V2",
+  "status": "failed",
+  "error": {
+    "class": "tool_numerical_error",
+    "message": "excessive element distortion at increment 1240",
+    "retryable": false,
+    "detail_ref": "s3://dtos/PRJ-031/run-01J8ZC3AK7Q2M4N6P8R9S0T1V2/step-01J8ZC3AK7Q2M4N6P8R9S0T1V2/A17.msg"
+  },
+  "started_at": "2026-07-05T08:00:00Z",
+  "finished_at": "2026-07-05T09:10:00Z"
+}

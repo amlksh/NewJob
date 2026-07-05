@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twinos://contracts/twin-agent/v1/case-spec.schema.json",
+  "title": "CaseSpec",
+  "description": "Spec §4.1 — prepare 입력. 도메인 필드는 워크플로우 input_schema가 추가 제약.",
+  "type": "object",
+  "required": ["twin_kind", "params", "asset_refs"],
+  "properties": {
+    "twin_kind": {"type": "string", "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)+$"},
+    "params": {"type": "object"},
+    "asset_refs": {"type": "object", "additionalProperties": {"type": "string", "pattern": "^urn:dtos:asset:"}},
+    "template_overrides": {"type": "object"}
+  }
+}

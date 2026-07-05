@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twinos://contracts/gate/v1/gate-def.schema.json",
+  "title": "GateDefinition",
+  "description": "Spec §8.1 — Gate 정의 YAML(JSON 변환 후 검증)",
+  "type": "object",
+  "required": ["key", "version", "applies_to", "impl"],
+  "properties": {
+    "key": {"type": "string", "pattern": "^gate\\.[a-z0-9_]+\\.[a-z0-9_]+$"},
+    "version": {"type": "string"},
+    "applies_to": {"enum": ["input", "run", "result", "report"]},
+    "impl": {"type": "string", "pattern": "^(builtin|python):"},
+    "params": {"type": "object"},
+    "on_fail_default": {"enum": ["escalate_hitl", "retry", "block"]}
+  }
+}

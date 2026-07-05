@@ -1,0 +1,10 @@
+{
+  "task_id": "step-01J8ZC3AK7Q2M4N6P8R9S0T1V2",
+  "status": "running",
+  "progress": {"pct": 62, "message": "case 17/28 running", "updated_at": "2026-07-05T09:30:00Z"},
+  "outputs": {},
+  "artifacts": [],
+  "error": null,
+  "started_at": "2026-07-05T08:00:00Z",
+  "finished_at": null
+}

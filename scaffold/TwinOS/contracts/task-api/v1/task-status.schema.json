@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twinos://contracts/task-api/v1/task-status.schema.json",
+  "title": "TaskStatus",
+  "description": "Spec §3.3 — 상태 조회 응답 및 콜백 본문. outputs는 64KB 이하(런타임 검증).",
+  "type": "object",
+  "required": ["task_id", "status"],
+  "properties": {
+    "task_id": {"type": "string", "pattern": "^step-[0-9A-HJKMNP-TV-Z]{26}$"},
+    "status": {"enum": ["queued", "running", "succeeded", "failed", "cancelled"]},
+    "progress": {
+      "type": "object",
+      "properties": {
+        "pct": {"type": "number", "minimum": 0, "maximum": 100},
+        "message": {"type": "string"},
+        "updated_at": {"type": "string", "format": "date-time"}
+      }
+    },
+    "outputs": {"type": "object"},
+    "artifacts": {"type": "array", "items": {"$ref": "twinos://contracts/common/v1/artifact-ref.schema.json"}},
+    "metrics": {"type": "object"},
+    "gate_results": {"type": "array", "items": {"$ref": "twinos://contracts/gate/v1/gate-result.schema.json"}},
+    "error": {
+      "oneOf": [{"type": "null"}, {"$ref": "twinos://contracts/common/v1/error.schema.json"}]
+    },
+    "started_at": {"oneOf": [{"type": "null"}, {"type": "string", "format": "date-time"}]},
+    "finished_at": {"oneOf": [{"type": "null"}, {"type": "string", "format": "date-time"}]}
+  }
+}

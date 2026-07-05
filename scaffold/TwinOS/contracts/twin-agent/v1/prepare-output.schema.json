@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twinos://contracts/twin-agent/v1/prepare-output.schema.json",
+  "title": "PrepareOutput",
+  "description": "Spec §4.2 — prepare action outputs",
+  "type": "object",
+  "required": ["cases", "case_summary"],
+  "properties": {
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["case_id", "ref"],
+        "properties": {
+          "case_id": {"type": "string", "pattern": "^[A-Za-z0-9_-]+$"},
+          "ref": {"type": "string"},
+          "label": {"type": "string"},
+          "est_wall_sec": {"type": "integer", "minimum": 0}
+        }
+      }
+    },
+    "case_summary": {"type": "string"},
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["severity", "code", "message"],
+        "properties": {
+          "severity": {"enum": ["info", "warning", "error"]},
+          "code": {"type": "string"},
+          "message": {"type": "string"},
+          "location": {"type": "string"}
+        }
+      }
+    }
+  }
+}

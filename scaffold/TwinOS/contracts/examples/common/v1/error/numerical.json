@@ -1,0 +1,6 @@
+{
+  "class": "tool_numerical_error",
+  "message": "convergence failure ratio 0.31 over threshold",
+  "retryable": false,
+  "detail_ref": "s3://dtos/PRJ-031/run-x/step-y/A17.sta"
+}

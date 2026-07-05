@@ -1,0 +1,10 @@
+{
+  "cases": [
+    {"case_id": "A17", "ref": "urn:dtos:asset:PRJ-031:run-x:fmh.case_bundle:01J8ZC3AK7Q2M4N6P8R9S0T1V2#A17",
+     "label": "A-pillar upper / angle 50deg", "est_wall_sec": 3600}
+  ],
+  "case_summary": "28 cases (7 targets x 4 angles), est. 6h on 5 tokens",
+  "checks": [
+    {"severity": "warning", "code": "mesh.coarse_region", "message": "target zone B: element size > 8mm", "location": "B-pillar upper"}
+  ]
+}

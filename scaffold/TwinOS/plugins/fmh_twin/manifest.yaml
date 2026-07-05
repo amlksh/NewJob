@@ -1,0 +1,21 @@
+# TwinOS 최초의 Digital Twin Plugin (08 문서) — MVP 확정 대상
+twin_plugin:
+  name: "fmh_twin"
+  version: "1.0.0"
+  twin_kind: "automotive.interior_impact.fmh"
+  agent:
+    class: "plugins.fmh_twin.agent:FmhTwinAgent"
+    contract: "dtos.twin-agent/v1"
+  connectors_required: ["abaqus-connector>=1.0"]
+  asset_types:
+    - "fmh.headform_model"
+    - "fmh.target_grid"
+    - "fmh.interior_mesh"
+    - "fmh.case_bundle"
+    - "fmh.impact_result"
+    - "fmh.verdict_table"
+  gates: ["gate.fmh.target_grid", "gate.fmh.energy", "gate.fmh.hic_sanity"]
+  kpis: ["hic_d_agreement", "auto_success_rate", "wall_time_per_case", "gate_pass_rate"]
+  workflows: ["fmh_impact/1.0"]
+  regression_suite: "plugins/fmh_twin/tests"
+  trust_tier: "core"

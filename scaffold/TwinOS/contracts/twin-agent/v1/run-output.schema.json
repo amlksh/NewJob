@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twinos://contracts/twin-agent/v1/run-output.schema.json",
+  "title": "RunOutput",
+  "description": "Spec §4.2 — run action outputs (1 케이스 단위)",
+  "type": "object",
+  "required": ["result_ref", "run_metrics"],
+  "properties": {
+    "result_ref": {"type": "string", "pattern": "^urn:dtos:asset:"},
+    "run_metrics": {
+      "type": "object",
+      "properties": {
+        "increments": {"type": "integer", "minimum": 0},
+        "warnings": {"type": "integer", "minimum": 0},
+        "energy_ratio": {"type": "number", "minimum": 0},
+        "wall_sec": {"type": "number", "minimum": 0}
+      }
+    }
+  }
+}

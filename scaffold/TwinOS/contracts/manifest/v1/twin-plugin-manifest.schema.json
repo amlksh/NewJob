@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twinos://contracts/manifest/v1/twin-plugin-manifest.schema.json",
+  "title": "TwinPluginManifest",
+  "description": "Spec §10 — plugins/*/manifest.yaml",
+  "type": "object",
+  "required": ["twin_plugin"],
+  "properties": {
+    "twin_plugin": {
+      "type": "object",
+      "required": ["name", "version", "twin_kind", "agent", "connectors_required", "asset_types", "gates", "kpis", "workflows", "regression_suite", "trust_tier"],
+      "properties": {
+        "name": {"type": "string", "pattern": "^[a-z0-9_]+$"},
+        "version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+        "twin_kind": {"type": "string", "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)+$"},
+        "agent": {
+          "type": "object",
+          "required": ["class", "contract"],
+          "properties": {
+            "class": {"type": "string", "pattern": "^[a-z0-9_.]+:[A-Za-z0-9_]+$"},
+            "contract": {"const": "dtos.twin-agent/v1"}
+          }
+        },
+        "connectors_required": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+        "asset_types": {"type": "array", "items": {"type": "string", "pattern": "^[a-z0-9_]+\\.[a-z0-9_]+$"}, "minItems": 1},
+        "gates": {"type": "array", "items": {"type": "string", "pattern": "^gate\\."}},
+        "kpis": {"type": "array", "items": {"type": "string"}},
+        "workflows": {"type": "array", "items": {"type": "string", "pattern": "^[a-z0-9_]+/[0-9]+\\.[0-9]+$"}, "minItems": 1},
+        "regression_suite": {"type": "string"},
+        "trust_tier": {"enum": ["core", "partner", "experimental"]}
+      }
+    }
+  }
+}

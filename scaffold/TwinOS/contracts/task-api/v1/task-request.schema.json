@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twinos://contracts/task-api/v1/task-request.schema.json",
+  "title": "TaskRequest",
+  "description": "Spec §3.2 — POST /v1/tasks 요청 본문",
+  "type": "object",
+  "required": ["task_id", "run_id", "project_id", "agent", "action", "inputs", "context"],
+  "properties": {
+    "task_id": {"$ref": "#/$defs/step_id"},
+    "run_id": {"type": "string", "pattern": "^run-[0-9A-HJKMNP-TV-Z]{26}$"},
+    "project_id": {"type": "string", "pattern": "^PRJ-[0-9]+$"},
+    "agent": {"type": "string", "pattern": "^[a-z0-9_]+$"},
+    "action": {"type": "string", "pattern": "^[a-z0-9_]+$"},
+    "inputs": {"type": "object"},
+    "context": {
+      "type": "object",
+      "required": ["artifacts_base"],
+      "properties": {
+        "artifacts_base": {"type": "string", "pattern": "^s3://"},
+        "callback_url": {"type": "string", "format": "uri"},
+        "deadline": {"type": "string", "format": "date-time"},
+        "trace_id": {"type": "string"}
+      }
+    }
+  },
+  "$defs": {
+    "step_id": {"type": "string", "pattern": "^step-[0-9A-HJKMNP-TV-Z]{26}$"}
+  }
+}

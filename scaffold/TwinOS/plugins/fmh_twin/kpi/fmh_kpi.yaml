@@ -1,0 +1,18 @@
+# Evaluation Engine 등록 KPI (08 문서 §7)
+kpis:
+  - key: hic_d_agreement
+    description: "자동 HIC(d) 판정과 기존 수동 프로세스 결과의 일치율"
+    source: validate.outputs
+    target: 1.00
+  - key: auto_success_rate
+    description: "사람 개입 없이 1회 성공한 step 비율 (ledger: attempt=1 & succeeded)"
+    source: ledger.steps
+    target: 0.80
+  - key: wall_time_per_case
+    description: "케이스당 prepare->validate 경과시간 (수동 대비 50% 단축 목표)"
+    source: ledger.steps
+    target: null
+  - key: gate_pass_rate
+    description: "gate.fmh.* 통과율"
+    source: ledger.gates
+    target: 0.90

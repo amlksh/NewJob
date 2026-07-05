@@ -1,0 +1,27 @@
+# TwinOS 로컬 개발 인프라 (01 문서 §3 — MVP 단일 호스트)
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: twinos
+      POSTGRES_PASSWORD: twinos-dev
+      POSTGRES_DB: twinos
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+
+  redis:
+    image: redis:7
+    ports: ["6379:6379"]
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: twinos
+      MINIO_ROOT_PASSWORD: twinos-dev
+    ports: ["9000:9000", "9001:9001"]
+    volumes: [miniodata:/data]
+
+volumes:
+  pgdata:
+  miniodata:

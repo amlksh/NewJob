@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "twinos://contracts/task-api/v1/capabilities.schema.json",
+  "title": "Capabilities",
+  "description": "Spec §3.5 — GET /v1/capabilities 응답",
+  "type": "object",
+  "required": ["agent", "contracts", "actions"],
+  "properties": {
+    "agent": {"type": "string", "pattern": "^[a-z0-9_]+$"},
+    "contracts": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+    "plugin_version": {"type": "string"},
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["action"],
+        "properties": {
+          "action": {"type": "string"},
+          "input_schema": {"type": "object"},
+          "output_schema": {"type": "object"},
+          "asset_types_in": {"type": "array", "items": {"type": "string"}},
+          "asset_types_out": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    }
+  }
+}

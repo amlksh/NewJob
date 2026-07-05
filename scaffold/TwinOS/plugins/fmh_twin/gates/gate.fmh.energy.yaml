@@ -1,0 +1,6 @@
+key: gate.fmh.energy
+version: "1.0"
+applies_to: run
+impl: "builtin:ratio_threshold"
+params: {numerator: ALLAE, denominator: ALLIE, max_ratio: 0.10}
+on_fail_default: escalate_hitl

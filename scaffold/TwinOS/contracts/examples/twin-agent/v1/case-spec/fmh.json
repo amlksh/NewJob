@@ -1,0 +1,8 @@
+{
+  "twin_kind": "automotive.interior_impact.fmh",
+  "params": {"target_zone": "A-pillar_upper", "grid_spacing_mm": 25, "approach_angles": "per_fmvss201u", "hic_d_target": 900},
+  "asset_refs": {
+    "interior_mesh": "urn:dtos:asset:PRJ-031:trim-b:fmh.interior_mesh:v4",
+    "headform": "urn:dtos:asset:shared:headform:fmh.headform_model:v2"
+  }
+}

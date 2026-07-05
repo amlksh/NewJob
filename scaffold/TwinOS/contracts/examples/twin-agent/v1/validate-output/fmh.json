@@ -1,0 +1,12 @@
+{
+  "verdicts": {
+    "ref": "urn:dtos:asset:PRJ-031:run-x:fmh.verdict_table:01J8ZC3AK7Q2M4N6P8R9S0T1V2",
+    "n_cases": 28, "n_pass": 26, "n_fail": 2,
+    "items": [
+      {"case_id": "A17", "qoi": "hic_d", "measured": 1042.0, "limit": 1000.0,
+       "direction": "max", "verdict": "fail",
+       "evidence_ref": "urn:dtos:asset:PRJ-031:run-x:fmh.impact_result:01J8ZC3AK7Q2M4N6P8R9S0T1V2#accel_curve"}
+    ]
+  },
+  "worst_cases": ["A17", "B03"]
+}

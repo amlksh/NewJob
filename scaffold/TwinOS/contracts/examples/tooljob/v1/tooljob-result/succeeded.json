@@ -1,0 +1,14 @@
+{
+  "tooljob_id": "tj-01J8ZC3AK7Q2M4N6P8R9S0T1V2",
+  "task_id": "step-01J8ZC3AK7Q2M4N6P8R9S0T1V2",
+  "status": "succeeded",
+  "artifacts": [
+    {"kind": "cae.odb", "uri": "s3://dtos/PRJ-031/run-01J8ZC3AK7Q2M4N6P8R9S0T1V2/step-01J8ZC3AK7Q2M4N6P8R9S0T1V2/A17/A17.odb",
+     "checksum": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "size": 812345678}
+  ],
+  "metrics": {"wall_sec": 3520, "license_tokens": 5, "exit_code": 0},
+  "tool_diagnosis": {"convergence_ok": true, "energy_ratio": 0.041, "warnings": 3},
+  "error": null,
+  "runner_id": "abaqus-runner-01",
+  "finished_at": "2026-07-05T09:00:00Z"
+}
