@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VPK DTOS Master Plan 2030</title>
+<style>
+:root{
+  --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb; --bg:#f8fafc;
+  --brand:#0f766e; --brand2:#0f172a; --accent:#d97706; --soft:#ecfdf5; --danger:#b91c1c;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:Arial,'Noto Sans KR',sans-serif;color:var(--ink);line-height:1.7}
+.container{max-width:1180px;margin:0 auto;padding:34px 26px 80px}
+.cover{background:linear-gradient(135deg,#0f172a 0%,#0f766e 70%,#d97706 130%);color:#fff;border-radius:24px;padding:52px 56px;margin-bottom:30px;box-shadow:0 14px 35px rgba(15,23,42,.2)}
+.cover .tag{font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:#99f6e4;font-weight:700}
+.cover h1{font-size:42px;line-height:1.22;margin:14px 0 14px}
+.cover p{font-size:19px;max-width:920px;color:#d1fae5;margin:0}
+.meta{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:30px}
+.meta div{background:rgba(255,255,255,.1);padding:14px;border-radius:14px}
+.meta b{display:block;color:#fff}
+h2{font-size:26px;margin:38px 0 14px;padding-left:14px;border-left:6px solid var(--brand)}
+h3{font-size:20px;margin:26px 0 10px;color:var(--brand2)}
+.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:26px;margin:16px 0;box-shadow:0 5px 18px rgba(15,23,42,.05)}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.pill{display:inline-block;background:var(--soft);color:var(--brand);border:1px solid #99f6e4;border-radius:999px;padding:4px 12px;font-size:13px;font-weight:700;margin:3px}
+table{width:100%;border-collapse:collapse;margin:12px 0;background:#fff}
+th,td{border:1px solid var(--line);padding:10px 12px;vertical-align:top;text-align:left}
+th{background:#f1f5f9;color:#0f172a}
+.small{font-size:13px;color:var(--muted)}
+.highlight{background:#fff7ed;border-left:5px solid var(--accent);padding:16px;border-radius:12px;margin:14px 0}
+.assume{background:#fef2f2;border-left:5px solid var(--danger);padding:12px 16px;border-radius:12px;font-size:13.5px;color:#7f1d1d;margin:14px 0}
+.flow{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:14px 0}
+.step{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 16px;min-width:130px;text-align:center;font-weight:700}
+.arrow{color:var(--brand);font-weight:900;font-size:20px}
+.big-transition{display:flex;align-items:center;justify-content:center;gap:26px;padding:34px 20px;background:linear-gradient(120deg,#f0fdfa,#fffbeb);border:1px solid var(--line);border-radius:18px;margin:18px 0;flex-wrap:wrap}
+.big-transition .from,.big-transition .to{text-align:center}
+.big-transition .label{font-size:13px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;font-weight:700}
+.big-transition .name{font-size:26px;font-weight:900;margin-top:6px}
+.big-transition .to .name{color:var(--brand)}
+.big-transition .big-arrow{font-size:44px;color:var(--accent);font-weight:900}
+.kpibox{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0}
+.kpibox div{background:#0f172a;color:#fff;border-radius:14px;padding:18px 14px;text-align:center}
+.kpibox b{display:block;font-size:26px;color:#5eead4}
+.kpibox span{font-size:13px;color:#cbd5e1}
+code{background:#f1f5f9;border-radius:6px;padding:2px 6px}
+ul{margin-top:8px}
+ol{margin-top:8px}
+.footer{margin-top:38px;color:var(--muted);font-size:13px;text-align:right}
+pre.arch{background:#0f172a;color:#a7f3d0;border-radius:14px;padding:20px;overflow-x:auto;font-size:12.5px;line-height:1.5}
+@media(max-width:900px){.meta,.grid,.grid3,.kpibox{grid-template-columns:1fr}.cover{padding:34px 28px}.cover h1{font-size:30px}}
+@media print{.card{box-shadow:none;page-break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="container">
+
+<section class="cover">
+  <div class="tag">Confidential · Internal Strategy Document</div>
+  <h1>VPK DTOS Master Plan 2030</h1>
+  <p>CAE 엔지니어링 용역 회사에서 AI 기반 Digital Twin Platform 회사로 —
+  VPK가 앞으로 5년간 무엇을 먹고 살 것인가를 정의하는 전환 계획</p>
+  <div class="meta">
+    <div><b>기간</b>2026 ~ 2030 (5개년)</div>
+    <div><b>플랫폼</b>DTOS (코드명 TwinOS)</div>
+    <div><b>첫 제품</b>FMH Digital Twin</div>
+    <div><b>최종 지향</b>Physical AI 플랫폼</div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>1. Executive Summary</h2>
+  <div class="big-transition">
+    <div class="from">
+      <div class="label">현재 (2026)</div>
+      <div class="name">CAE 엔지니어링 용역회사</div>
+      <div class="small">인력 투입 시간 = 매출 · 프로젝트 종료 = 자산 소멸</div>
+    </div>
+    <div class="big-arrow">→</div>
+    <div class="to">
+      <div class="label">5년 후 (2030)</div>
+      <div class="name">AI 기반 Digital Twin Platform 회사</div>
+      <div class="small">플랫폼 자산 = 매출 · 프로젝트 수행 = 자산 축적</div>
+    </div>
+  </div>
+  <p>
+    VPK는 이미 <b>FMH 해석 자동화, 질환 Solver, 의료기기 V&amp;V(CM&amp;S)</b>라는 검증된 도메인 자산을 보유하고 있다.
+    DTOS(Digital Twin Operating System)는 이 자산을 <b>AI Agent가 실행하는 Digital Twin Plugin</b>으로 제품화하여,
+    사람의 시간을 파는 회사에서 <b>플랫폼이 일하고 사람이 승인하는 회사</b>로 전환하는 실행 계획이다.
+  </p>
+  <ul>
+    <li><b>전략:</b> 새 AI 모델 개발이 아니라, 검증된 CAE·V&amp;V 워크플로우의 오케스트레이션 — VPK만이 가진 해자(도메인 템플릿·검증 룰)를 플랫폼 자산으로 전환</li>
+    <li><b>경로:</b> FMH Twin(2026, 내부 실증) → Disease Twin(2027, 의료기기) → 플랫폼 상용화(2028) → Robot Twin/Physical AI(2029~30)</li>
+    <li><b>실행력 증거:</b> 시스템 설계서 12종, Interface Specification v1.0, 플랫폼 저장소(TwinOS)와 CI 검증 체계가 <b>이미 가동 중</b></li>
+  </ul>
+  <div class="kpibox">
+    <div><b>6개</b><span>Twin Plugin (2030)<br>FMH·당뇨·청각·척추·배터리·로봇</span></div>
+    <div><b>70%+</b><span>반복 해석 업무<br>자동 실행률</span></div>
+    <div><b>3축</b><span>수익원 다변화<br>용역+플랫폼+과제</span></div>
+    <div><b>2029</b><span>플랫폼 투자<br>손익분기 목표</span></div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>2. 왜 DTOS인가 — 용역 모델의 구조적 한계</h2>
+  <table>
+    <tr><th>구조적 한계 (현재)</th><th>결과</th><th>DTOS가 바꾸는 것</th></tr>
+    <tr><td>매출 = 투입 인력 × 시간</td><td>성장하려면 채용밖에 없음, 마진 정체</td><td>플랫폼이 반복 업무 수행 → 인당 매출 상승</td></tr>
+    <tr><td>프로젝트 산출물이 자산으로 축적되지 않음</td><td>매 프로젝트 처음부터, 노하우는 개인에게만</td><td>템플릿·검증 룰·판정 기준이 Plugin 자산으로 축적</td></tr>
+    <tr><td>시니어 엔지니어 의존</td><td>퇴사 = 역량 유출, 확장 불가</td><td>전문가 지식을 Playbook·Quality Gate로 명문화</td></tr>
+    <tr><td>단가 경쟁 심화 (CAE 용역의 범용화)</td><td>수익성 하락 추세</td><td>"검증된 자동화 플랫폼" 프리미엄 + 구독 매출</td></tr>
+    <tr><td>AI 격변기 — 해석 업무 자체가 자동화 대상</td><td>대응 없으면 <b>우리가 대체당하는 쪽</b></td><td>우리가 자동화의 공급자가 됨</td></tr>
+  </table>
+  <div class="highlight">
+    <b>핵심 판단:</b> AI에 의한 엔지니어링 자동화는 오는가/안 오는가의 문제가 아니라 <b>누가 공급자가 되는가</b>의 문제다.
+    도메인 검증 자산 없이 AI만 가진 회사는 CAE를 자동화하지 못하고, CAE 자산만 가진 회사는 AI 없이 확장하지 못한다.
+    <b>VPK는 둘을 모두 갖출 수 있는 드문 위치에 있다.</b>
+  </div>
+</section>
+
+<section class="card">
+  <h2>3. 글로벌 동향 — 시장은 이미 이 방향으로 움직이고 있다</h2>
+  <table>
+    <tr><th>플레이어</th><th>움직임</th><th>VPK 시사점</th></tr>
+    <tr><td><b>OpenAI / Anthropic</b></td><td>범용 LLM → <b>Agent 실행 플랫폼</b>으로 진화. 도구 호출·장시간 작업 수행이 표준 기능화</td><td>LLM은 사서 쓰는 인프라가 됨. 차별화는 모델이 아니라 <b>도메인 워크플로우와 검증 체계</b></td></tr>
+    <tr><td><b>NVIDIA</b></td><td>Omniverse·Isaac Sim으로 <b>Physical AI</b> 스택 구축, "시뮬레이션이 로봇/제조 AI의 학습장" 선언</td><td>CAE·시뮬레이션 역량이 Physical AI 시대의 입장권. VPK의 해석 자산이 로봇/제조 트윈으로 연결됨</td></tr>
+    <tr><td><b>Palantir</b></td><td>AIP로 "도메인 운영 워크플로우 + AI"를 묶은 플랫폼 모델로 고성장 — 기술이 아니라 <b>업무 운영체계</b>를 판매</td><td>DTOS의 벤치마크: 도메인 운영 플랫폼은 범용 AI보다 방어력이 높다</td></tr>
+    <tr><td><b>Ansys·Siemens·Dassault</b></td><td>SimAI·Xcelerator·3DEXPERIENCE 등 CAE에 AI 접목 가속, 대리모델(surrogate) 상용화</td><td>대형사는 <b>도구</b>를 팔지 <b>검증된 업무 수행</b>을 팔지 않음 — 중소 전문사의 서비스형 트윈 플랫폼 공간이 존재</td></tr>
+    <tr><td><b>규제 기관 (FDA 등)</b></td><td>의료기기 CM&amp;S(In Silico) 근거 채택 확대, ASME V&amp;V 40 기반 신뢰성 평가 요구</td><td>VPK의 V&amp;V 경험이 규제 산업 진입장벽을 해자로 전환 — Disease Twin의 근거</td></tr>
+  </table>
+  <p class="small">※ 상기 동향은 2026년 상반기 기준 공개 정보를 요약한 것으로, 발표 전 최신 수치·사례 업데이트가 필요하다.</p>
+</section>
+
+<section class="card">
+  <h2>4. VPK 현재 자산 — 우리는 맨손으로 시작하지 않는다</h2>
+  <div class="grid">
+    <div>
+      <h3>도메인 자산 (해자)</h3>
+      <ul>
+        <li><b>FMH 해석 자동화 완성본</b> — 실프로젝트 검증, 배포판 보유</li>
+        <li><b>질환 Solver</b> (당뇨 등) — cohort 검증 경험</li>
+        <li><b>의료기기 V&amp;V / CM&amp;S</b> — ASME V&amp;V 40, CoU/QoI/CAR 실무</li>
+        <li>Abaqus·FMU·MBSE 전문 인력과 실프로젝트 이력</li>
+      </ul>
+    </div>
+    <div>
+      <h3>플랫폼 자산 (2026.7 현재 이미 확보)</h3>
+      <ul>
+        <li>시스템 설계서 12종 (아키텍처·API·WBS·학습체계)</li>
+        <li><b>DTOS Interface Specification v1.0</b> — 8개 표준 계약</li>
+        <li>TwinOS 저장소: 계약 스키마 + CI 자동 검증 <b>가동 중</b></li>
+        <li>Plugin SDK 골격 + FMH Plugin 구조 + HIC 판정 라이브러리</li>
+      </ul>
+    </div>
+  </div>
+  <div class="highlight"><b>이 제안의 실행력:</b> 본 계획은 아이디어 단계가 아니다. 플랫폼의 뼈대(저장소·표준 계약·자동 검증)가 이미 만들어져 있고, 남은 것은 경영 의사결정과 자원 배정이다.</div>
+</section>
+
+<section class="card">
+  <h2>5. DTOS 개념 — Digital Twin의 운영체제</h2>
+  <p>
+    OS가 프로세스·파일·디바이스를 관리하듯, DTOS는 <b>트윈(Twin)·자산(Asset)·에이전트(Agent)·시뮬레이션</b>을 관리한다.
+    사용자가 자연어로 업무를 지시하면 AI Orchestrator가 해당 <b>Digital Twin Plugin</b>에 작업을 배분하고,
+    Plugin이 해석·검증·보고서를 수행하며, <b>사람은 검토·승인만</b> 담당한다.
+  </p>
+  <div class="flow">
+    <div class="step">업무 지시<br><span class="small">자연어</span></div><div class="arrow">→</div>
+    <div class="step">AI Orchestrator</div><div class="arrow">→</div>
+    <div class="step">Twin Plugin<br><span class="small">FMH·질환·로봇…</span></div><div class="arrow">→</div>
+    <div class="step">도구 실행<br><span class="small">Abaqus·FMU·Isaac</span></div><div class="arrow">→</div>
+    <div class="step">자동 검증<br><span class="small">Quality Gate</span></div><div class="arrow">→</div>
+    <div class="step">사람 승인<br><span class="small">HITL</span></div>
+  </div>
+  <ul>
+    <li><b>Twin Plugin이 1차 구성 단위:</b> 도메인 지식(템플릿·게이트·KPI·보고서 양식)이 플러그인에 응집 — 새 사업 = 새 플러그인</li>
+    <li><b>신뢰가 제품:</b> LLM 자유 생성 금지, 검증된 템플릿 + Quality Gate + 사람 승인 — 규제 산업에서 방어 가능한 구조</li>
+    <li><b>운영할수록 좋아짐:</b> 모든 실행·승인·반려가 원장(ledger)에 축적되어 템플릿·프롬프트·대리모델이 진화</li>
+  </ul>
+</section>
+
+<section class="card">
+  <h2>6. 제품 로드맵 ① — FMH Digital Twin (2026, 첫 제품)</h2>
+  <div class="grid">
+    <div>
+      <ul>
+        <li><b>왜 첫 번째인가:</b> 내부 자동화 완성 + 실프로젝트 검증 이력 → 기술 리스크 최소</li>
+        <li><b>무엇을 하나:</b> 타겟×접근각 케이스 매트릭스 자동 생성 → Abaqus 병렬 실행 → HIC(d) 자동 판정(FMVSS 201U) → 보고서 초안 → 승인</li>
+        <li><b>판정 기준의 명확성:</b> HIC(d) ≤ 1000 — 자동 판정과 수동 결과의 <b>일치율 100%</b>를 신뢰의 증거로 확보</li>
+      </ul>
+    </div>
+    <div>
+      <h3>2026 목표 (MVP KPI)</h3>
+      <ul>
+        <li>실프로젝트 1건 end-to-end 무인 완주</li>
+        <li>보고서 작성 시간 50%↓, 자동 성공률 80%+</li>
+        <li>HIC 판정 일치율 100% (골든 케이스 대비)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>7. 제품 로드맵 ② — Disease Twin (2027, 의료기기 확장)</h2>
+  <ul>
+    <li><b>자산 기반:</b> 보유 질환 Solver(당뇨 등) + cohort 검증 경험 + V&amp;V 문서화 역량</li>
+    <li><b>업무:</b> cohort 시나리오 자동 생성 → FMU 병렬 시뮬레이션 → RMSE/TIR 통계 판정 → CM&amp;S 검증 문서(CAR) 초안 자동화</li>
+    <li><b>시장 논리:</b> FDA 등 규제기관의 In Silico 근거 채택 확대 — <b>"검증 문서까지 자동으로 나오는 트윈"</b>은 의료기기 제조사에 직접적 비용 절감</li>
+    <li><b>플랫폼 검증:</b> 두 번째 플러그인으로서 Plugin SDK의 범용성을 입증 — 이후 청각·척추·배터리 트윈의 양산 체계 확립</li>
+  </ul>
+</section>
+
+<section class="card">
+  <h2>8. 제품 로드맵 ③ — Robot Twin &amp; Physical AI (2029~2030)</h2>
+  <div class="grid">
+    <div>
+      <h3>Robot Twin</h3>
+      <ul>
+        <li>Isaac Sim/Omniverse 기반 로봇·제조셀 시뮬레이션 플러그인</li>
+        <li>기존 CAE 모델(구조·강도)과 동일 자산 계보로 관리 — 요구사항→CAE 검증→Sim 검증의 단일 추적성</li>
+        <li>ROS2 브리지로 sim-to-real 검증 워크플로우</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Physical AI 전략</h3>
+      <ul>
+        <li>축적된 해석 데이터(계보 완비)로 <b>대리모델(surrogate)</b> 학습 → 스크리닝 가속</li>
+        <li>ASME V&amp;V 40 신뢰성 평가 프레임을 sim-to-real gap 평가로 확장 — <b>"검증된 Physical AI"</b> 포지션</li>
+        <li>실시간 제어는 범위 제외(안전 인증 리스크) — 분석·검증·의사결정 지원에 집중</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>9. 플랫폼 구조</h2>
+<pre class="arch">
+┌─────────────────────────────────────────────────────────────┐
+│  Experience    프로젝트 워크스페이스 · 승인센터 · KPI 대시보드      │
+├─────────────────────────────────────────────────────────────┤
+│  Orchestration Kernel                                       │
+│   AI Orchestrator · Workflow 엔진 · HITL 게이트 · 원장(감사)    │
+├──────────────┬──────────────┬──────────────┬────────────────┤
+│  Twin Plugins (도메인 자산의 제품화 단위)                        │
+│  fmh_twin → diabetes_twin → hearing/spine/battery → robot   │
+├──────────────┴──────────────┴──────────────┴────────────────┤
+│  Registry     Asset(URN·계보·버전) · Agent · Twin Versioning  │
+├─────────────────────────────────────────────────────────────┤
+│  Connectors   Abaqus · FMU · Dymola · CATIA · Isaac Sim ·   │
+│               ROS2  (Runner: 라이선스 서버에서 안전 실행)         │
+├─────────────────────────────────────────────────────────────┤
+│  Data Plane   PostgreSQL · 불변 Artifact Lake · 지식(RAG)     │
+│  Evaluation   Quality Gate · 회귀 Harness · KPI 자동 집계      │
+└─────────────────────────────────────────────────────────────┘
+</pre>
+  <ul>
+    <li><b>표준 계약(Interface Spec v1.0)</b>으로 모든 구성요소가 통신 — 새 도메인/도구 추가가 플러그인/커넥터 1개 추가로 끝나는 구조</li>
+    <li>모든 산출물은 <b>계보(lineage)</b>와 함께 불변 저장 — 규제 대응·감사·대리모델 학습 데이터의 원천</li>
+  </ul>
+</section>
+
+<section class="card">
+  <h2>10. 개발 로드맵 (2026 ~ 2030)</h2>
+  <table>
+    <tr><th>연도</th><th>단계</th><th>핵심 목표</th><th>사업 이벤트</th></tr>
+    <tr><td><b>2026</b></td><td>MVP + Pilot</td><td>FMH Twin end-to-end 실증(내부 PoC), Disease Twin 착수, 평가·학습 데이터 체계 가동</td><td>내부 생산성 입증 → 경영 보고, 정부과제 기획 착수</td></tr>
+    <tr><td><b>2027</b></td><td>Platform 기반</td><td>Disease Twin 완성(CAR 자동화), Traceability/MBSE, 멀티 프로젝트 운영, 온프레미스 LLM 옵션</td><td>정부과제 수주 목표, 고객 PoC 2건(자동차·의료기기)</td></tr>
+    <tr><td><b>2028</b></td><td>상용화</td><td>고객사 배포판(사내 설치형), 청각/척추/배터리 트윈, 학습 루프(템플릿·프롬프트 진화) 가동</td><td><b>플랫폼 매출 개시</b> (구독/라이선스), 특허 출원</td></tr>
+    <tr><td><b>2029</b></td><td>Physical AI 진입</td><td>Robot Twin PoC(Isaac Sim), 대리모델 상용 적용, Plugin SDK 파트너 공개 검토</td><td>로봇/제조 고객 데모, 투자유치/전략적 제휴 검토</td></tr>
+    <tr><td><b>2030</b></td><td>플랫폼 회사</td><td>6개 Twin Plugin 운영, sim-to-real 검증 체계, 파트너 생태계</td><td>플랫폼 매출이 성장의 주축으로 전환</td></tr>
+  </table>
+</section>
+
+<section class="card">
+  <h2>11. 투자계획</h2>
+  <div class="assume"><b>⚠ 가정 기반 추정치</b> — 아래 수치는 계획 수립용 가정이며, 인건비 단가·인프라 견적·정부과제 매칭 비율은 재무 검토 후 확정해야 한다. 모든 표의 산식은 조정 가능하도록 가정을 명시했다.</div>
+  <table>
+    <tr><th>항목</th><th>2026</th><th>2027</th><th>2028</th><th>2029</th><th>2030</th><th>비고(가정)</th></tr>
+    <tr><td>플랫폼 개발 인력(명)</td><td>4</td><td>5</td><td>7</td><td>9</td><td>10</td><td>기존 인력 전환 + 신규 채용, 도메인 전문가 겸임 포함</td></tr>
+    <tr><td>인건비(억원)</td><td>4.0</td><td>5.5</td><td>8.0</td><td>10.5</td><td>12.0</td><td>평균 1.0~1.2억/인·년(4대보험 포함) 가정</td></tr>
+    <tr><td>인프라·라이선스(억원)</td><td>1.0</td><td>1.5</td><td>2.0</td><td>3.0</td><td>3.0</td><td>LLM API·서버·GPU(2029~)·Abaqus 토큰 증설</td></tr>
+    <tr><td>기타(교육·특허·마케팅)(억원)</td><td>0.3</td><td>0.5</td><td>1.0</td><td>1.5</td><td>1.5</td><td>특허 출원 2028~, 고객 확보 활동</td></tr>
+    <tr><th>연간 투자 합계(억원)</th><th>5.3</th><th>7.5</th><th>11.0</th><th>15.0</th><th>16.5</th><th>5년 누적 <b>약 55억원</b></th></tr>
+    <tr><td>정부과제 충당(억원)</td><td>–</td><td>3.0</td><td>4.0</td><td>4.0</td><td>3.0</td><td>2027~ 수주 가정 시 <b>자체 부담 5년 약 41억원</b></td></tr>
+  </table>
+  <p class="small">※ 개발 인력은 상당 부분 기존 엔지니어의 역할 전환으로 충당 — 순증 채용은 AI Platform 2~3명 수준으로 최소화하는 것을 원칙으로 한다.</p>
+</section>
+
+<section class="card">
+  <h2>12. 조직계획</h2>
+  <table>
+    <tr><th>시기</th><th>조직 형태</th><th>구성</th></tr>
+    <tr><td>2026</td><td>플랫폼 TF (4명)</td><td>PM 1 · Digital Twin Architect 1 · CAE/Solver 전문가 1 · AI Platform 엔지니어 1 (+V&amp;V 겸임 0.5)</td></tr>
+    <tr><td>2027~28</td><td>플랫폼사업부 (7~9명)</td><td>TF + AI Platform 증원 + 프론트엔드 1 + Disease Twin 도메인 1 — 용역 조직과 병행, 용역 수행이 곧 플랫폼 검증</td></tr>
+    <tr><td>2029~30</td><td>플랫폼 중심 재편 (10명+)</td><td>Twin Plugin별 오너 체계 + Physical AI(로봇/ROS2) 전문가 영입 · 시니어 지식의 Playbook화 정례화</td></tr>
+  </table>
+  <div class="highlight"><b>조직 전환의 원칙:</b> 엔지니어를 대체하는 것이 아니라 <b>승격</b>시킨다 — 반복 작업은 플랫폼이, 엔지니어는 판단·승인·지식 자산화를 담당. "AI를 관리하는 엔지니어"가 VPK의 새 직무 정체성이 된다.</div>
+</section>
+
+<section class="card">
+  <h2>13. 사업모델 — 수익원 5축</h2>
+  <table>
+    <tr><th>#</th><th>수익원</th><th>내용</th><th>개시</th></tr>
+    <tr><td>1</td><td><b>내부 생산성</b> (비용 절감형)</td><td>기존 용역의 수행 원가 절감 → 동일 인력으로 수주량 확대, 마진 개선</td><td>2026</td></tr>
+    <tr><td>2</td><td><b>DTOS 기반 프리미엄 용역</b></td><td>"자동 검증 + 추적성 보고서" 차별화로 단가 방어·프리미엄</td><td>2027</td></tr>
+    <tr><td>3</td><td><b>정부과제·R&amp;D</b></td><td>디지털트윈·AI·의료기기 CM&amp;S 과제 — 개발비 충당 + 레퍼런스</td><td>2027</td></tr>
+    <tr><td>4</td><td><b>플랫폼 구독/라이선스</b></td><td>고객사 사내 설치형(연 라이선스) + Twin Plugin별 과금, 유지보수</td><td>2028</td></tr>
+    <tr><td>5</td><td><b>Physical AI 서비스</b></td><td>로봇/제조 트윈 구축·검증 서비스, 대리모델 구축</td><td>2029</td></tr>
+  </table>
+</section>
+
+<section class="card">
+  <h2>14. 예상 매출</h2>
+  <div class="assume"><b>⚠ 가정 기반 추정치</b> — 시장 검증 전 계획 수치다. 기본 시나리오 가정: 플랫폼 라이선스 고객 2028년 2사 → 2030년 6사(사당 연 2~3억), 프리미엄 용역 전환율 30%→60%.</div>
+  <table>
+    <tr><th>매출원(억원)</th><th>2026</th><th>2027</th><th>2028</th><th>2029</th><th>2030</th></tr>
+    <tr><td>① 생산성 개선 효과(원가 절감 환산)</td><td>1</td><td>3</td><td>5</td><td>6</td><td>7</td></tr>
+    <tr><td>② 프리미엄 용역 증분</td><td>–</td><td>2</td><td>5</td><td>8</td><td>10</td></tr>
+    <tr><td>③ 정부과제</td><td>–</td><td>3</td><td>4</td><td>4</td><td>3</td></tr>
+    <tr><td>④ 플랫폼 구독/라이선스</td><td>–</td><td>–</td><td>4</td><td>10</td><td>18</td></tr>
+    <tr><td>⑤ Physical AI 서비스</td><td>–</td><td>–</td><td>–</td><td>2</td><td>6</td></tr>
+    <tr><th>DTOS 관련 매출/효과 합계</th><th>1</th><th>8</th><th>18</th><th>30</th><th>44</th></tr>
+  </table>
+  <p class="small">시나리오 폭: 보수(2030년 25억) / 기본(44억) / 공격(65억 — 파트너 생태계 성공 시). 기존 용역 매출은 별도 유지 전제.</p>
+</section>
+
+<section class="card">
+  <h2>15. ROI</h2>
+  <table>
+    <tr><th>지표(기본 시나리오)</th><th>값</th><th>산식/가정</th></tr>
+    <tr><td>5년 누적 투자</td><td>약 55억원 (자체 41억)</td><td>11장 합계, 정부과제 충당 반영</td></tr>
+    <tr><td>5년 누적 매출/효과</td><td>약 101억원</td><td>14장 합계(2026~2030)</td></tr>
+    <tr><td><b>손익분기(BEP)</b></td><td><b>2029년</b> (누적 기준)</td><td>누적 효과가 누적 자체 투자를 상회하는 시점</td></tr>
+    <tr><td>2030년 단년 수익성</td><td>매출 44억 vs 투자 16.5억</td><td>플랫폼 매출의 한계비용이 낮아 이후 마진 급개선</td></tr>
+    <tr><td>정성 수익</td><td>회사 가치 재평가</td><td>용역사 → 플랫폼사 전환은 매출 배수(valuation multiple) 자체를 바꿈 — 투자유치·M&amp;A 옵션 확보</td></tr>
+  </table>
+  <p class="small">민감도: 플랫폼 고객 확보가 1년 지연되면 BEP는 2030년으로 밀림 — 이것이 2027~28 고객 PoC 2건이 중요한 이유다.</p>
+</section>
+
+<section class="card">
+  <h2>16. 리스크와 대응</h2>
+  <table>
+    <tr><th>리스크</th><th>내용</th><th>대응 (설계에 이미 반영)</th></tr>
+    <tr><td>AI 신뢰성</td><td>그럴듯하지만 틀린 결과</td><td>검증된 템플릿만 실행 + Quality Gate + 사람 승인 필수 (아키텍처 원칙으로 동결)</td></tr>
+    <tr><td>범위 폭주</td><td>모든 트윈 동시 추진 시 실패</td><td>FMH 단일 제품 완주 → 성공 후 확장. Physical AI는 2029 전 착수 금지</td></tr>
+    <tr><td>플랫폼 고객 확보 지연</td><td>구독 매출 지연 → BEP 밀림</td><td>수익원 5축 분산 — 내부 생산성·프리미엄 용역·정부과제가 먼저 투자 회수</td></tr>
+    <tr><td>핵심 인력 이탈</td><td>플랫폼 지식 유출</td><td>지식의 자산화(Playbook·게이트·원장) 자체가 대응책 — 개인 의존도 축소</td></tr>
+    <tr><td>보안/고객 데이터</td><td>외부 LLM 전송 우려</td><td>마스킹 게이트웨이(가동) + 온프레미스 LLM 전환 경로(2027) 확보</td></tr>
+    <tr><td>대형사 경쟁</td><td>CAE 벤더의 AI 기능 강화</td><td>도구가 아니라 <b>검증된 업무 수행 + 규제 대응 문서</b>를 판매 — 대형사가 진입하지 않는 영역</td></tr>
+  </table>
+</section>
+
+<section class="card">
+  <h2>17. 향후 전략 — 이 문서의 활용</h2>
+  <ol>
+    <li><b>경영 의사결정 (즉시):</b> 본 계획 승인 시 2026 하반기 FMH Twin MVP를 현 TF 체제로 완주 — 추가 투자 결정은 MVP KPI 실측 후</li>
+    <li><b>정부과제 (2026 하반기~):</b> 본 문서를 기준으로 디지털트윈/AI/CM&amp;S 과제 제안서 파생 — 개발비 충당 + 공신력</li>
+    <li><b>고객 제안 (2027~):</b> FMH 실증 결과를 앞세운 자동차·의료기기 고객 PoC 제안서의 모체</li>
+    <li><b>투자유치·제휴 (2029~):</b> 플랫폼 매출 개시 후, 본 문서의 로드맵·KPI 실적을 IR 자료로 발전</li>
+    <li><b>특허·IP:</b> Twin Plugin 구조, 검증 자동화 방법론 등 출원 대상 조기 식별 (2028)</li>
+  </ol>
+  <div class="highlight">
+    <b>결론:</b> VPK는 검증된 도메인 자산과 이미 가동 중인 플랫폼 기반을 가지고 있다.
+    지금 결정하면, 2026년 FMH Twin의 실증이 5년 전환의 첫 번째 증거가 된다.
+    <b>DTOS는 프로젝트가 아니라, VPK의 다음 5년이다.</b>
+  </div>
+</section>
+
+<div class="footer">
+  VPK DTOS Master Plan 2030 · 작성일: 2026-07-05 · Confidential — 재무 수치는 가정 기반 초안이며 경영 검토 후 확정
+</div>
+
+</div>
+</body>
+</html>

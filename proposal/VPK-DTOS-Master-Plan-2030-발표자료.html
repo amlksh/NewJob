@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VPK DTOS Master Plan 2030 — 발표자료</title>
+<style>
+:root{--ink:#1f2937;--muted:#94a3b8;--brand:#0f766e;--teal:#5eead4;--navy:#0f172a;--amber:#f59e0b;--line:#e5e7eb}
+*{box-sizing:border-box}
+html{scroll-snap-type:y mandatory}
+body{margin:0;font-family:Arial,'Noto Sans KR',sans-serif;color:var(--ink);background:#0b1220}
+.slide{min-height:100vh;scroll-snap-align:start;display:flex;flex-direction:column;justify-content:center;padding:6vh 9vw;position:relative}
+.slide .num{position:absolute;bottom:26px;right:36px;color:var(--muted);font-size:13px;letter-spacing:.1em}
+.dark{background:linear-gradient(135deg,#0f172a,#134e4a);color:#fff}
+.light{background:#f8fafc}
+.kicker{font-size:15px;letter-spacing:.18em;text-transform:uppercase;font-weight:800;color:var(--amber);margin-bottom:14px}
+.dark .kicker{color:var(--teal)}
+h1{font-size:56px;line-height:1.15;margin:0 0 18px}
+h2{font-size:40px;line-height:1.2;margin:0 0 22px}
+.light h2{color:var(--navy)}
+p.lead{font-size:22px;line-height:1.6;max-width:900px;color:#334155;margin:0}
+.dark p.lead{color:#ccfbf1}
+ul.big{font-size:21px;line-height:1.75;max-width:960px;color:#334155;padding-left:24px}
+.dark ul.big{color:#e2e8f0}
+ul.big li{margin-bottom:10px}
+ul.big b{color:var(--navy)}
+.dark ul.big b{color:var(--teal)}
+table{width:100%;border-collapse:collapse;background:#fff;font-size:17px;margin-top:10px}
+th,td{border:1px solid var(--line);padding:12px 14px;text-align:left;vertical-align:top}
+th{background:#f1f5f9;color:var(--navy)}
+.transition{display:flex;align-items:center;gap:4vw;flex-wrap:wrap;margin-top:20px}
+.transition .box{padding:34px 40px;border-radius:20px;text-align:center}
+.transition .from{background:#1e293b;color:#94a3b8;border:1px solid #334155}
+.transition .to{background:linear-gradient(135deg,#0f766e,#14b8a6);color:#fff;box-shadow:0 20px 50px rgba(20,184,166,.35)}
+.transition .box .l{font-size:14px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;opacity:.8}
+.transition .box .n{font-size:30px;font-weight:900;margin-top:8px}
+.transition .ar{font-size:56px;color:var(--amber);font-weight:900}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:26px}
+.kpis div{background:rgba(255,255,255,.08);border:1px solid rgba(94,234,212,.25);border-radius:18px;padding:24px 18px;text-align:center}
+.kpis b{display:block;font-size:38px;color:var(--teal)}
+.kpis span{font-size:15px;color:#cbd5e1}
+.light .kpis div{background:#fff;border:1px solid var(--line);box-shadow:0 6px 18px rgba(15,23,42,.06)}
+.light .kpis b{color:var(--brand)}
+.light .kpis span{color:#64748b}
+.flow{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:24px}
+.flow .s{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 20px;font-weight:800;font-size:18px;color:var(--navy);box-shadow:0 4px 12px rgba(15,23,42,.06)}
+.flow .a{color:var(--brand);font-size:26px;font-weight:900}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:10px}
+.note{margin-top:22px;font-size:14px;color:#64748b}
+.dark .note{color:#7dd3c0}
+.warn{display:inline-block;background:#fef2f2;color:#991b1b;border:1px solid #fecaca;border-radius:10px;padding:8px 14px;font-size:14px;font-weight:700;margin-top:16px}
+.roadline{display:flex;gap:0;margin-top:30px;flex-wrap:wrap}
+.roadline .yr{flex:1;min-width:150px;border-top:6px solid var(--brand);padding:16px 14px 0}
+.roadline .yr:nth-child(4),.roadline .yr:nth-child(5){border-top-color:var(--amber)}
+.roadline .yr b{display:block;font-size:22px;color:var(--navy)}
+.roadline .yr em{display:block;font-style:normal;font-weight:800;color:var(--brand);margin:4px 0 8px}
+.roadline .yr:nth-child(4) em,.roadline .yr:nth-child(5) em{color:var(--amber)}
+.roadline .yr span{font-size:15px;color:#475569;line-height:1.55;display:block}
+.hint{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);color:#64748b;font-size:12px;letter-spacing:.1em;z-index:9}
+@media(max-width:900px){h1{font-size:36px}h2{font-size:28px}.kpis{grid-template-columns:1fr 1fr}.grid2{grid-template-columns:1fr}p.lead,ul.big{font-size:18px}.slide{padding:8vh 6vw}}
+</style>
+</head>
+<body>
+
+<!-- 1. 표지 -->
+<section class="slide dark">
+  <div class="kicker">Confidential · VPK Internal</div>
+  <h1>VPK DTOS Master Plan 2030</h1>
+  <p class="lead">우리가 앞으로 5년간 무엇을 먹고 살 것인가에 대한 답</p>
+  <div class="transition">
+    <div class="box from"><div class="l">현재 2026</div><div class="n">CAE 용역회사</div></div>
+    <div class="ar">→</div>
+    <div class="box to"><div class="l">5년 후 2030</div><div class="n">AI 기반 Digital Twin<br>Platform 회사</div></div>
+  </div>
+  <div class="num">1</div>
+</section>
+
+<!-- 2. 문제 -->
+<section class="slide light">
+  <div class="kicker">Why Now</div>
+  <h2>용역 모델은 구조적으로 한계에 도달했다</h2>
+  <ul class="big">
+    <li>매출 = 인력 × 시간 — <b>성장의 유일한 수단이 채용</b></li>
+    <li>프로젝트가 끝나면 노하우는 <b>개인의 머릿속에만</b> 남는다</li>
+    <li>CAE 용역 단가 경쟁은 심화되고, 시니어 의존은 깊어진다</li>
+    <li>그리고 — AI가 해석 업무 자체를 자동화하기 시작했다</li>
+  </ul>
+  <p class="lead" style="margin-top:26px"><b>질문은 "자동화가 오는가"가 아니라 "누가 자동화의 공급자가 되는가"다.</b></p>
+  <div class="num">2</div>
+</section>
+
+<!-- 3. 글로벌 동향 -->
+<section class="slide light">
+  <div class="kicker">Global Trend</div>
+  <h2>시장은 이미 이 방향으로 움직이고 있다</h2>
+  <table>
+    <tr><th style="width:20%">플레이어</th><th>움직임</th><th style="width:34%">VPK 시사점</th></tr>
+    <tr><td><b>OpenAI·Anthropic</b></td><td>LLM → Agent 실행 플랫폼으로 진화</td><td>모델은 사서 쓰는 인프라. 차별화는 <b>도메인 워크플로우</b></td></tr>
+    <tr><td><b>NVIDIA</b></td><td>Omniverse·Isaac — "시뮬레이션이 Physical AI의 학습장"</td><td>CAE 역량이 Physical AI 시대의 입장권</td></tr>
+    <tr><td><b>Palantir</b></td><td>도메인 운영 플랫폼(AIP)으로 고성장</td><td>업무 운영체계 판매 모델이 DTOS의 벤치마크</td></tr>
+    <tr><td><b>Ansys·Siemens</b></td><td>CAE+AI 도구 상용화 가속</td><td>대형사는 도구를 판다 — <b>검증된 업무 수행</b>은 우리 공간</td></tr>
+  </table>
+  <div class="num">3</div>
+</section>
+
+<!-- 4. 자산 -->
+<section class="slide dark">
+  <div class="kicker">Our Assets</div>
+  <h2>우리는 맨손으로 시작하지 않는다</h2>
+  <div class="kpis">
+    <div><b>FMH</b><span>해석 자동화 완성<br>실프로젝트 검증</span></div>
+    <div><b>질환 Solver</b><span>당뇨 cohort 검증<br>의료기기 CM&amp;S</span></div>
+    <div><b>V&amp;V</b><span>ASME V&amp;V 40<br>규제 문서 실무</span></div>
+    <div><b>TwinOS</b><span>플랫폼 저장소·표준 계약<br><b style="font-size:18px">이미 가동 중</b></span></div>
+  </div>
+  <p class="lead" style="margin-top:30px">설계서 12종 · Interface Spec v1.0 · CI 자동 검증 — <b>이 제안은 아이디어가 아니라 진행 중인 실물이다.</b></p>
+  <div class="num">4</div>
+</section>
+
+<!-- 5. DTOS 개념 -->
+<section class="slide light">
+  <div class="kicker">What is DTOS</div>
+  <h2>Digital Twin의 운영체제 — AI가 일하고, 사람이 승인한다</h2>
+  <div class="flow">
+    <div class="s">업무 지시<br><small>자연어</small></div><div class="a">→</div>
+    <div class="s">AI Orchestrator</div><div class="a">→</div>
+    <div class="s">Twin Plugin</div><div class="a">→</div>
+    <div class="s">해석·시뮬레이션<br><small>Abaqus·FMU·Isaac</small></div><div class="a">→</div>
+    <div class="s">자동 검증<br><small>Quality Gate</small></div><div class="a">→</div>
+    <div class="s" style="border-color:var(--brand);color:var(--brand)">사람 승인</div>
+  </div>
+  <ul class="big" style="margin-top:28px">
+    <li><b>Twin Plugin이 사업 단위</b> — 새 도메인 진출 = 플러그인 1개 추가</li>
+    <li><b>신뢰가 제품</b> — 검증된 템플릿만 실행, 모든 결과는 사람 승인 후 발행</li>
+    <li><b>운영할수록 강해짐</b> — 모든 실행·승인 기록이 플랫폼 자산으로 축적</li>
+  </ul>
+  <div class="num">5</div>
+</section>
+
+<!-- 6. 제품 로드맵 -->
+<section class="slide light">
+  <div class="kicker">Product Line</div>
+  <h2>하나의 플랫폼, 여섯 개의 Digital Twin</h2>
+  <table>
+    <tr><th>Twin Plugin</th><th>도메인</th><th>기반 자산</th><th>시기</th></tr>
+    <tr><td><b>FMH Twin</b> ★첫 제품</td><td>자동차 충돌안전 (FMVSS 201U, HIC 자동판정)</td><td>사내 자동화 완성본</td><td><b>2026</b></td></tr>
+    <tr><td><b>Disease Twin</b></td><td>의료기기 In Silico (cohort 검증 + CAR 자동화)</td><td>질환 Solver + V&amp;V</td><td>2027</td></tr>
+    <tr><td>Hearing · Spine · Battery</td><td>의료기기·모빌리티 확장</td><td>Plugin SDK 양산 체계</td><td>2028</td></tr>
+    <tr><td><b>Robot Twin</b></td><td>로봇·제조 (Isaac Sim·ROS2, sim-to-real)</td><td>CAE 자산 + 플랫폼</td><td>2029~30</td></tr>
+  </table>
+  <p class="note">전략: FMH 하나를 끝까지 완주해 신뢰를 입증 → 같은 구조로 복제. 동시 추진 금지.</p>
+  <div class="num">6</div>
+</section>
+
+<!-- 7. FMH -->
+<section class="slide light">
+  <div class="kicker">First Product · 2026</div>
+  <h2>FMH Digital Twin — 가장 확실한 첫 승부</h2>
+  <div class="grid2">
+    <ul class="big">
+      <li>타겟×각도 케이스 매트릭스 <b>자동 생성</b></li>
+      <li>Abaqus 병렬 실행·모니터링 <b>무인화</b></li>
+      <li>HIC(d) <b>자동 판정</b> (규격 기준 명확)</li>
+      <li>보고서 초안 자동 생성 → 엔지니어 승인</li>
+    </ul>
+    <div>
+      <div class="kpis" style="grid-template-columns:1fr 1fr">
+        <div><b>100%</b><span>HIC 판정 일치율<br>(수동 결과 대비)</span></div>
+        <div><b>50%↓</b><span>보고서 작성 시간</span></div>
+        <div><b>80%+</b><span>무인 자동 성공률</span></div>
+        <div><b>1건</b><span>실프로젝트<br>end-to-end 실증</span></div>
+      </div>
+    </div>
+  </div>
+  <p class="note">왜 FMH인가: 자동화가 이미 완성돼 있어 기술 리스크가 최소이고, 판정 기준(HIC≤1000)이 명확해 "AI를 믿어도 되는가"를 숫자로 증명할 수 있다.</p>
+  <div class="num">7</div>
+</section>
+
+<!-- 8. 로드맵 -->
+<section class="slide light">
+  <div class="kicker">Roadmap 2026–2030</div>
+  <h2>5년 로드맵</h2>
+  <div class="roadline">
+    <div class="yr"><b>2026</b><em>MVP 실증</em><span>FMH Twin end-to-end<br>내부 생산성 입증<br>Disease Twin 착수</span></div>
+    <div class="yr"><b>2027</b><em>플랫폼 기반</em><span>Disease Twin 완성<br>정부과제 수주<br>고객 PoC 2건</span></div>
+    <div class="yr"><b>2028</b><em>상용화</em><span>고객 설치형 배포<br><b>플랫폼 매출 개시</b><br>트윈 3종 추가</span></div>
+    <div class="yr"><b>2029</b><em>Physical AI</em><span>Robot Twin PoC<br>대리모델 상용화<br>투자유치 검토</span></div>
+    <div class="yr"><b>2030</b><em>플랫폼 회사</em><span>6개 트윈 운영<br>파트너 생태계<br>플랫폼이 성장 주축</span></div>
+  </div>
+  <div class="num">8</div>
+</section>
+
+<!-- 9. 사업모델 -->
+<section class="slide light">
+  <div class="kicker">Business Model</div>
+  <h2>수익원 5축 — 플랫폼 매출 전에 투자금이 회수되기 시작한다</h2>
+  <table>
+    <tr><th>수익원</th><th>내용</th><th>개시</th></tr>
+    <tr><td>① 내부 생산성</td><td>용역 원가 절감 → 동일 인력으로 수주 확대</td><td>2026</td></tr>
+    <tr><td>② 프리미엄 용역</td><td>"자동 검증+추적성" 차별화로 단가 방어</td><td>2027</td></tr>
+    <tr><td>③ 정부과제</td><td>디지털트윈·AI·CM&amp;S R&amp;D — 개발비 충당</td><td>2027</td></tr>
+    <tr><td><b>④ 플랫폼 구독/라이선스</b></td><td>고객사 설치형 + Twin Plugin별 과금</td><td><b>2028</b></td></tr>
+    <tr><td>⑤ Physical AI 서비스</td><td>로봇/제조 트윈 구축·검증</td><td>2029</td></tr>
+  </table>
+  <div class="num">9</div>
+</section>
+
+<!-- 10. 숫자 -->
+<section class="slide dark">
+  <div class="kicker">Investment &amp; Return</div>
+  <h2>투자와 회수 (기본 시나리오)</h2>
+  <div class="kpis">
+    <div><b>55억</b><span>5년 총 투자<br>(정부과제 충당 시 자체 41억)</span></div>
+    <div><b>101억</b><span>5년 누적 매출/효과</span></div>
+    <div><b>2029</b><span>누적 손익분기(BEP)</span></div>
+    <div><b>44억</b><span>2030년 단년 매출/효과<br>(vs 투자 16.5억)</span></div>
+  </div>
+  <p class="lead" style="margin-top:28px">플랫폼 매출은 한계비용이 낮다 — 2028년 매출 개시 후 마진이 구조적으로 개선된다.<br>
+  그리고 <b>용역사→플랫폼사 전환은 회사 가치평가의 배수 자체를 바꾼다.</b></p>
+  <span class="warn" style="background:rgba(254,242,242,.12);color:#fca5a5;border-color:#7f1d1d">⚠ 가정 기반 추정 — 인건비 단가·고객 확보 수 등 가정은 본문 11·14장 참조, 재무 검토 후 확정</span>
+  <div class="num">10</div>
+</section>
+
+<!-- 11. 조직 -->
+<section class="slide light">
+  <div class="kicker">Organization</div>
+  <h2>엔지니어를 대체하지 않는다 — 승격시킨다</h2>
+  <div class="grid2">
+    <ul class="big">
+      <li>2026: 플랫폼 TF <b>4명</b> (기존 인력 전환 중심)</li>
+      <li>2027~28: 플랫폼사업부 <b>7~9명</b> — 용역 수행이 곧 플랫폼 검증</li>
+      <li>2029~30: Twin별 오너 체계 <b>10명+</b>, Physical AI 전문가 영입</li>
+    </ul>
+    <ul class="big">
+      <li>반복 작업 → 플랫폼이 수행</li>
+      <li>엔지니어 → <b>판단·승인·지식 자산화</b> 담당</li>
+      <li>시니어의 노하우 → Playbook·검증 룰로 회사 자산화</li>
+      <li>새 직무 정체성: <b>"AI를 관리하는 엔지니어"</b></li>
+    </ul>
+  </div>
+  <div class="num">11</div>
+</section>
+
+<!-- 12. 리스크 -->
+<section class="slide light">
+  <div class="kicker">Risk</div>
+  <h2>리스크는 이미 설계에 반영되어 있다</h2>
+  <table>
+    <tr><th>리스크</th><th>대응 (아키텍처 원칙으로 동결)</th></tr>
+    <tr><td>AI가 틀린 결과를 낸다</td><td>검증된 템플릿만 실행 + 자동 Quality Gate + <b>사람 승인 없이는 발행 불가</b></td></tr>
+    <tr><td>범위 폭주로 실패</td><td>FMH 하나를 완주한 뒤에만 확장 — Physical AI는 2029 전 착수 금지</td></tr>
+    <tr><td>플랫폼 고객 확보 지연</td><td>수익원 5축 분산 — 내부 생산성·정부과제가 먼저 회수</td></tr>
+    <tr><td>고객 데이터 보안</td><td>마스킹 게이트웨이 + 온프레미스 LLM 전환 경로(2027)</td></tr>
+    <tr><td>대형 CAE 벤더 경쟁</td><td>도구가 아닌 <b>검증된 업무 수행 + 규제 문서</b> 판매 — 다른 시장</td></tr>
+  </table>
+  <div class="num">12</div>
+</section>
+
+<!-- 13. 요청 결정 -->
+<section class="slide dark">
+  <div class="kicker">Decision</div>
+  <h2>오늘 요청드리는 결정</h2>
+  <ul class="big">
+    <li><b>1. 방향 승인</b> — "DTOS = VPK의 5년 전환 전략"으로 채택, 본 문서를 기준 문서로 확정</li>
+    <li><b>2. 2026 실행 승인</b> — 현 TF 4명 체제로 FMH Twin MVP 완주 (신규 투자 최소, 하반기 내)</li>
+    <li><b>3. 게이트 방식 확대</b> — 추가 투자는 MVP KPI 실측(판정 일치율·시간 단축) 확인 후 단계 결정</li>
+  </ul>
+  <p class="lead" style="margin-top:30px">
+    저장소는 하루면 만들지만, 방향에 대한 공감은 하루아침에 만들어지지 않습니다.<br>
+    <b>DTOS는 프로젝트가 아니라, VPK의 다음 5년입니다.</b>
+  </p>
+  <div class="num">13</div>
+</section>
+
+<div class="hint">↓ 스크롤 또는 방향키로 이동 · 인쇄 시 A4 가로 권장</div>
+<script>
+document.addEventListener('keydown',e=>{
+  const slides=[...document.querySelectorAll('.slide')];
+  const y=window.scrollY,h=window.innerHeight;
+  const idx=Math.round(y/h);
+  if(e.key==='ArrowDown'||e.key==='PageDown'||e.key===' '){e.preventDefault();slides[Math.min(idx+1,slides.length-1)].scrollIntoView({behavior:'smooth'});}
+  if(e.key==='ArrowUp'||e.key==='PageUp'){e.preventDefault();slides[Math.max(idx-1,0)].scrollIntoView({behavior:'smooth'});}
+});
+</script>
+</body>
+</html>
