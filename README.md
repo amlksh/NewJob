@@ -16,3 +16,4 @@
 | [05-WBS-개발일정](docs/05-WBS-개발일정.md) | 12개월 WBS(주 단위), 단계별 산출물, 마일스톤, 인력 배치 |
 | [06-PhysicalAI-확장설계](docs/06-PhysicalAI-확장설계.md) | Isaac Sim/Omniverse/ROS2 확장 구조 및 단계적 도입 계획 |
 | [07-DTOS-Reference-Architecture](docs/07-DTOS-Reference-Architecture.md) | 3~5년 장기 참조 아키텍처: Asset/Agent Registry, Simulation Graph, Twin Versioning, Plugin SDK, Connector 표준, Physical AI Horizon 전략 |
+| [08-FMH-DigitalTwin-Plugin-설계](docs/08-FMH-DigitalTwin-Plugin-설계.md) | **MVP 확정 대상**: FMH Digital Twin Plugin — Twin 중심 재정의, TwinAgent 표준 인터페이스(`prepare/run/validate/report`), `fmh_impact` 워크플로우, FMH KPI, 자산 Lineage 연계 |

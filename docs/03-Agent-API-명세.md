@@ -1,6 +1,8 @@
 # Agent별 개발 범위 및 API 명세
 
 > 계획서 5장(개발 대상 모듈)의 인터페이스 정의. 모든 Agent는 §1의 공통 계약을 구현한다.
+>
+> **주 (Twin 중심 재정의 반영)**: §1의 task-api/v1 전송 계약은 그대로 유효하다. 다만 Digital Twin 중심 재정의([08 문서](08-FMH-DigitalTwin-Plugin-설계.md))에 따라 도메인 Agent는 **Twin Plugin의 `TwinAgent`(`prepare/run/validate/report`, twin-agent/v1)** 로 구현되며, SDK가 이를 task-api action으로 자동 노출한다(08 문서 §4.1). 본 문서의 CAE Agent(§3) action들은 FMH Plugin 내부 구현 + `libs/cae_toolkit`으로 흡수되고, FMU Agent(§4)는 `diabetes_twin` Plugin으로 구현된다. Report(§7)·V&V(§6)·MBSE(§5)는 도메인 공통 **공용 서비스**로 유지된다.
 
 ---
 

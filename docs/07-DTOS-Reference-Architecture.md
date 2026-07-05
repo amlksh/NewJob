@@ -11,7 +11,8 @@
 
 - **운영체제 은유의 실현**: OS가 프로세스·파일·디바이스를 관리하듯, DTOS는 **트윈(Twin)·자산(Asset)·에이전트(Agent)·시뮬레이션(Simulation)** 을 관리하는 실행 기반이 된다.
 - 개별 프로젝트의 자동화 도구가 아니라, **여러 도메인(의료기기·자동차·로봇·제조)의 디지털트윈이 등록·버전관리·실행·검증되는 단일 플랫폼**.
-- 서드파티(고객사 엔지니어, 파트너)가 **Plugin SDK로 자체 Agent/Connector를 추가**할 수 있는 생태계.
+- **Digital Twin 중심 아키텍처**: 플랫폼의 1차 구성 단위는 도구가 아니라 **Digital Twin Plugin**(FMH → Diabetes → Hearing/Spine/Battery → Robot)이다. 첫 번째 플러그인은 FMH Digital Twin이며 MVP의 검증 대상이다(08 문서).
+- 서드파티(고객사 엔지니어, 파트너)가 **Plugin SDK로 자체 Twin/Agent/Connector를 추가**할 수 있는 생태계.
 
 ### 1.2 계층 구조 (참조 아키텍처 전체 뷰)
 
@@ -219,14 +220,27 @@ MVP의 `projects` + run 이력이 원형. Phase 3에서 `twins`, `twin_versions`
 
 ## 6. Plugin SDK
 
-### 6.1 확장점 4종
+### 6.1 확장점
 
 | 확장점 | 만드는 것 | 예 |
 |---|---|---|
+| **Digital Twin Plugin** ★ | 아래 4종을 도메인 단위로 묶은 **복합(최상위) 확장점**. 표준 Twin Agent 인터페이스(`prepare/run/validate/report`) + 템플릿 + 게이트 + KPI + 워크플로우를 하나의 패키지로 제공 | `fmh_twin`(MVP), `diabetes_twin`, `robot_twin` — [08 문서](08-FMH-DigitalTwin-Plugin-설계.md) |
 | **Agent Plugin** | 03 문서 §1 계약을 구현하는 신규 Agent | 고객사 사내 피로해석 Agent |
 | **Connector Plugin** | §7 Connector 계약을 구현하는 도구 연동 | Ansys, Simulink 커넥터 |
 | **Gate Plugin** | Quality Gate 룰 (선언형 YAML 또는 Python 함수) | 사내 설계 기준 검사 |
 | **Template Pack** | 해석/보고서/V&V 템플릿 + param_schema 번들 | 자동차 충돌 템플릿 팩 |
+
+**Twin 중심 재정의**: DTOS의 1차 구성 단위는 도구(Tool)가 아니라 **Digital Twin Plugin**이다. 플러그인이 도메인 지식(템플릿·게이트·KPI·보고서 양식)을 응집 소유하고, 도구 접근은 Connector Layer(§7)를 공유한다. 새 도메인 확장 = `plugins/` 아래 트윈 플러그인 1개 추가이며, Kernel·Registry·UI는 무변경이다. 상세 구조와 manifest 규약, 레퍼런스 구현(FMH)은 [08 문서](08-FMH-DigitalTwin-Plugin-설계.md) 참조.
+
+```
+plugins/
+├── fmh_twin/        # MVP — 최초의 레퍼런스 플러그인 (08 문서)
+├── diabetes_twin/   # P2
+├── hearing_twin/    # P3+
+├── spine_twin/      # P3+
+├── battery_twin/    # P3+
+└── robot_twin/      # P4
+```
 
 ### 6.2 SDK 형태 (Python)
 
