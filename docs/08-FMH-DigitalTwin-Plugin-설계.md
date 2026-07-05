@@ -1,8 +1,8 @@
 # FMH Digital Twin Plugin 설계 (MVP 확정 대상)
 
 > 「DTOS MVP 개발 방향 변경 및 추가 요청사항」 반영 문서.
-> MVP 대상을 일반 Abaqus 낙하해석에서 **FMH(Free Motion Headform) Digital Twin**으로 확정하고, FMH를 **DTOS 최초의 Digital Twin Plugin이자 표준 Agent 레퍼런스 구현**으로 정의한다.
-> 상위 문서: [07-Reference-Architecture](07-DTOS-Reference-Architecture.md) §6.4(Digital Twin Plugin) · 실행 계획 반영: [04-MVP-범위-기술스택](04-MVP-범위-기술스택.md), [05-WBS-개발일정](05-WBS-개발일정.md)
+> MVP 대상을 일반 Abaqus 낙하해석에서 **FMH(Free Motion Headform) Digital Twin**으로 확정하고, FMH를 **V-DTOS 최초의 Digital Twin Plugin이자 표준 Agent 레퍼런스 구현**으로 정의한다.
+> 상위 문서: [07-Reference-Architecture](07-V-DTOS-Reference-Architecture.md) §6.4(Digital Twin Plugin) · 실행 계획 반영: [04-MVP-범위-기술스택](04-MVP-범위-기술스택.md), [05-WBS-개발일정](05-WBS-개발일정.md)
 
 ---
 

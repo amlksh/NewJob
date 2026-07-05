@@ -1,6 +1,6 @@
 # MVP 범위 정의 및 기술 스택 확정안
 
-> **변경 반영**: MVP 대상을 **FMH Digital Twin**으로 확정 (「DTOS MVP 개발 방향 변경 및 추가 요청사항」, [08 문서](08-FMH-DigitalTwin-Plugin-설계.md) 참조). FMH는 DTOS 최초의 Digital Twin Plugin이자 표준 Twin Agent(`prepare/run/validate/report`)의 레퍼런스 구현이다.
+> **변경 반영**: MVP 대상을 **FMH Digital Twin**으로 확정 (「DTOS MVP 개발 방향 변경 및 추가 요청사항」, [08 문서](08-FMH-DigitalTwin-Plugin-설계.md) 참조). FMH는 V-DTOS 최초의 Digital Twin Plugin이자 표준 Twin Agent(`prepare/run/validate/report`)의 레퍼런스 구현이다.
 
 ---
 
@@ -28,7 +28,7 @@
 | `libs/cae_toolkit` | INP 조립, ODB 추출, .sta/.msg 파싱 등 도구 공통 로직 (구 CAE Agent 로직의 라이브러리화) |
 | Abaqus Runner | 큐 폴링 실행, .sta/.msg 파싱, 진행 이벤트, 라이선스 확인, 취소 |
 | Report Agent(공용) | `generate`(docx+html, FMVSS 템플릿), `revise`, 수치 일관성 검사 — Twin의 `report()`가 호출 |
-| Web UI | 프로젝트/run 목록, 진행 모니터링(WebSocket), 승인/반려 화면, 산출물 뷰어 |
+| Web UI | 프로젝트/run 목록, 진행 모니터링(WebSocket), 승인/반려 화면(반려 시 **사유 코드 + 코멘트** 필수 입력 — 09 문서 학습 루프의 원료), 산출물 뷰어 |
 | 저장소 | Postgres 스키마(01 문서 5.1) + 자산 URN/lineage 컬럼, MinIO, Template DB, Material DB(수동 등록) |
 | LLM Gateway | 마스킹, 비용 계측, 프롬프트/응답 로깅 |
 | Quality Gate | `gate.input.*`, `gate.run.convergence`, `gate.fmh.*`(energy, target_grid, hic_sanity), `gate.report.consistency` |

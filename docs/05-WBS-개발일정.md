@@ -1,4 +1,4 @@
-# DTOS 개발 일정 (WBS) 및 단계별 산출물
+# V-DTOS 개발 일정 (WBS) 및 단계별 산출물
 
 > 전제 인력: PM 1, Digital Twin Architect 1, CAE/Solver Specialist 1, AI Platform Engineer 1 (+P2부터 Domain/V&V Expert 0.5)
 > 계획서 7장·14장의 로드맵을 주 단위 WBS로 구체화. MVP Use Case는 1개로 축소(00 문서 2.3)하며, 대상은 **FMH Digital Twin으로 확정**(08 문서). 기존 FMH 자동화 자산 이식으로 M1 템플릿 리스크가 낮아진 만큼, 확보 여유는 Plugin 구조화(TwinAgent·manifest)에 투입한다 — 일정 총량 불변.
