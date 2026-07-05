@@ -19,3 +19,5 @@
 | [07-V-DTOS-Reference-Architecture](docs/07-V-DTOS-Reference-Architecture.md) | 3~5년 장기 참조 아키텍처: Asset/Agent Registry, Simulation Graph, Twin Versioning, Plugin SDK, Connector 표준, Physical AI Horizon 전략 |
 | [08-FMH-DigitalTwin-Plugin-설계](docs/08-FMH-DigitalTwin-Plugin-설계.md) | **MVP 확정 대상**: FMH Digital Twin Plugin — Twin 중심 재정의, TwinAgent 표준 인터페이스(`prepare/run/validate/report`), `fmh_impact` 워크플로우, FMH KPI, 자산 Lineage 연계 |
 | [09-Learning-and-Evolution](docs/09-Learning-and-Evolution.md) | 학습·진화 체계: 4개 학습 루프(지식/템플릿/프롬프트/대리모델), 승격 게이트, 승인 위임 단계화, 단계별 가동 로드맵 |
+| [10-Architecture-Freeze-실행-우선순위](docs/10-Architecture-Freeze-실행-우선순위.md) | 실행 우선순위 검토(Walking Skeleton 제안), Architecture Freeze 동결 목록(F1~F8) + ADR 절차, Repo 초기 구조 |
+| [11-V-DTOS-Interface-Specification-v1.0](docs/11-V-DTOS-Interface-Specification-v1.0.md) | ⭐ **인터페이스 명세 v1.0(Draft)**: 8개 계약(task-api, twin-agent, tooljob, Artifact/URN, Workflow, Gate, 외부 API, Manifest), 상태 기계, 에러 모델, 버전 규칙, 적합성 테스트 |
