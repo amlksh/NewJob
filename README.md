@@ -15,3 +15,4 @@
 | [04-MVP-범위-기술스택](docs/04-MVP-범위-기술스택.md) | MVP 필수/후속 기능 구분, 기술 스택 확정안, 모노레포 구조 |
 | [05-WBS-개발일정](docs/05-WBS-개발일정.md) | 12개월 WBS(주 단위), 단계별 산출물, 마일스톤, 인력 배치 |
 | [06-PhysicalAI-확장설계](docs/06-PhysicalAI-확장설계.md) | Isaac Sim/Omniverse/ROS2 확장 구조 및 단계적 도입 계획 |
+| [07-DTOS-Reference-Architecture](docs/07-DTOS-Reference-Architecture.md) | 3~5년 장기 참조 아키텍처: Asset/Agent Registry, Simulation Graph, Twin Versioning, Plugin SDK, Connector 표준, Physical AI Horizon 전략 |
