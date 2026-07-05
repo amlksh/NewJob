@@ -48,7 +48,7 @@
 | ROS2 Bridge | 실기-시뮬레이션 동일 토픽 인터페이스. sim-to-real 검증의 기준면 |
 | Asset Pipeline | CAD→USD 변환 (CAE 모델 자산 재활용 경로) |
 
-## 3. CAE ↔ Physical AI 시너지 시나리오 (V-DTOS 차별화 포인트)
+## 3. CAE ↔ Physical AI 시너지 시나리오 (DTOS 차별화 포인트)
 
 1. **모델 일관성**: 동일 제품의 CAE 모델(변형/강도)과 Isaac Sim 모델(동역학/센서)을 같은 프로젝트 아티팩트 계보로 관리 → Traceability Matrix가 "요구사항 → CAE 검증 + Sim 검증"을 한 표에서 추적
 2. **FMU 연계**: FMU Agent의 플랜트 모델을 Isaac Sim에 co-simulation으로 연결 (FMI↔ROS2 브리지)

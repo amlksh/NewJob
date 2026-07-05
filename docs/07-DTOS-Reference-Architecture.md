@@ -1,4 +1,4 @@
-# V-DTOS Reference Architecture (3~5년 장기 청사진)
+# DTOS Reference Architecture (3~5년 장기 청사진)
 
 > 본 문서는 01~06 문서(MVP~Phase 4 실행 설계)의 상위 문서로, VPK가 장기 보유할 **Digital Twin Operating System 플랫폼**의 참조 아키텍처를 정의한다.
 > 원칙: **MVP에서 만든 것을 버리지 않고 승격(promote)한다.** 각 장 끝에 "MVP → 플랫폼 진화 경로"를 명시했다.
@@ -7,9 +7,9 @@
 
 ## 1. 비전과 범위
 
-### 1.1 3~5년 후 V-DTOS가 되어야 하는 것
+### 1.1 3~5년 후 DTOS가 되어야 하는 것
 
-- **운영체제 은유의 실현**: OS가 프로세스·파일·디바이스를 관리하듯, V-DTOS는 **트윈(Twin)·자산(Asset)·에이전트(Agent)·시뮬레이션(Simulation)** 을 관리하는 실행 기반이 된다.
+- **운영체제 은유의 실현**: OS가 프로세스·파일·디바이스를 관리하듯, DTOS는 **트윈(Twin)·자산(Asset)·에이전트(Agent)·시뮬레이션(Simulation)** 을 관리하는 실행 기반이 된다.
 - 개별 프로젝트의 자동화 도구가 아니라, **여러 도메인(의료기기·자동차·로봇·제조)의 디지털트윈이 등록·버전관리·실행·검증되는 단일 플랫폼**.
 - **Digital Twin 중심 아키텍처**: 플랫폼의 1차 구성 단위는 도구가 아니라 **Digital Twin Plugin**(FMH → Diabetes → Hearing/Spine/Battery → Robot)이다. 첫 번째 플러그인은 FMH Digital Twin이며 MVP의 검증 대상이다(08 문서).
 - 서드파티(고객사 엔지니어, 파트너)가 **Plugin SDK로 자체 Twin/Agent/Connector를 추가**할 수 있는 생태계.
@@ -22,7 +22,7 @@
 │  Project Workspace · Twin Explorer · Approval Center · KPI     │
 └────────────────────────────┬────────────────────────────────────┘
 ┌────────────────────────────▼────────────────────────────────────┐
-│ Orchestration Kernel  (V-DTOS의 "커널")                            │
+│ Orchestration Kernel  (DTOS의 "커널")                            │
 │  Intent Service · Workflow Engine · Scheduler · HITL Gate      │
 │  Policy/Quality Engine · Ledger(감사·KPI)                       │
 └──┬──────────┬──────────┬──────────┬─────────────────────────────┘
@@ -230,7 +230,7 @@ MVP의 `projects` + run 이력이 원형. Phase 3에서 `twins`, `twin_versions`
 | **Gate Plugin** | Quality Gate 룰 (선언형 YAML 또는 Python 함수) | 사내 설계 기준 검사 |
 | **Template Pack** | 해석/보고서/V&V 템플릿 + param_schema 번들 | 자동차 충돌 템플릿 팩 |
 
-**Twin 중심 재정의**: V-DTOS의 1차 구성 단위는 도구(Tool)가 아니라 **Digital Twin Plugin**이다. 플러그인이 도메인 지식(템플릿·게이트·KPI·보고서 양식)을 응집 소유하고, 도구 접근은 Connector Layer(§7)를 공유한다. 새 도메인 확장 = `plugins/` 아래 트윈 플러그인 1개 추가이며, Kernel·Registry·UI는 무변경이다. 상세 구조와 manifest 규약, 레퍼런스 구현(FMH)은 [08 문서](08-FMH-DigitalTwin-Plugin-설계.md) 참조.
+**Twin 중심 재정의**: DTOS의 1차 구성 단위는 도구(Tool)가 아니라 **Digital Twin Plugin**이다. 플러그인이 도메인 지식(템플릿·게이트·KPI·보고서 양식)을 응집 소유하고, 도구 접근은 Connector Layer(§7)를 공유한다. 새 도메인 확장 = `plugins/` 아래 트윈 플러그인 1개 추가이며, Kernel·Registry·UI는 무변경이다. 상세 구조와 manifest 규약, 레퍼런스 구현(FMH)은 [08 문서](08-FMH-DigitalTwin-Plugin-설계.md) 참조.
 
 ```
 plugins/
@@ -272,7 +272,7 @@ MVP의 `agents/common`(공통 서버 베이스)이 SDK의 전신이다. Phase 2~
 
 ### 7.1 Connector 계약 (Runner의 일반화)
 
-01 문서의 Runner를 **Connector 계약**으로 표준화한다. Connector = "특정 외부 도구를 V-DTOS 작업 큐에 연결하는 결정적(deterministic) 실행기".
+01 문서의 Runner를 **Connector 계약**으로 표준화한다. Connector = "특정 외부 도구를 DTOS 작업 큐에 연결하는 결정적(deterministic) 실행기".
 
 ```yaml
 connector_manifest:
@@ -322,7 +322,7 @@ connector_manifest:
 1. **Telemetry Store**: 실기 센서 데이터는 배치 아티팩트가 아니라 시계열 스트림이다. H3에서 TimescaleDB/Parquet 레이크를 Data Plane에 추가한다 — MVP에서 미리 만들 필요는 없으나, **진행 이벤트 스키마를 범용 시계열 채널로 설계**(06 문서 §1)해 두는 것이 그 준비의 전부다.
 2. **대리모델 학습 루프**: 축적된 해석 결과(lineage 완비)가 곧 학습 데이터셋이다 — lineage를 MVP부터 기록하는 이유가 여기서 회수된다. `ml.surrogate` 자산 타입과 Simulation Graph의 fidelity_policy(§4)가 수용 구조.
 3. **검증 프레임의 확장**: ASME V&V 40 기반 신뢰성 평가를 sim-to-real gap 평가로 확장 — V&V Agent와 twin_version.credibility(§5)가 그대로 재사용된다.
-4. **하지 않는 것**: 실시간 제어 루프(트윈이 실기를 직접 제어)는 5년 범위에서 제외한다. 안전 인증 부담이 플랫폼 전체 리스크가 되므로, V-DTOS는 **분석·검증·의사결정 지원**에 집중한다.
+4. **하지 않는 것**: 실시간 제어 루프(트윈이 실기를 직접 제어)는 5년 범위에서 제외한다. 안전 인증 부담이 플랫폼 전체 리스크가 되므로, DTOS는 **분석·검증·의사결정 지원**에 집중한다.
 
 ---
 

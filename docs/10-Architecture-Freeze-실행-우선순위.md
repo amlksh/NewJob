@@ -6,7 +6,7 @@
 
 ## 1. 제안 검토 결과: 동의 + 수정의견 3건
 
-**"Interface Specification이 최우선"이라는 판단에 전적으로 동의한다.** 03/08 문서는 계약의 *존재와 역할*을 정의했지만, 여러 개발자가 동시 작업하려면 필드 단위 스키마·상태 기계·에러 의미까지 확정한 명세가 필요하다. → [11-V-DTOS-Interface-Specification-v1.0](11-V-DTOS-Interface-Specification-v1.0.md)으로 작성 완료.
+**"Interface Specification이 최우선"이라는 판단에 전적으로 동의한다.** 03/08 문서는 계약의 *존재와 역할*을 정의했지만, 여러 개발자가 동시 작업하려면 필드 단위 스키마·상태 기계·에러 의미까지 확정한 명세가 필요하다. → [11-DTOS-Interface-Specification-v1.0](11-DTOS-Interface-Specification-v1.0.md)으로 작성 완료.
 
 다만 ④~⑦의 실행 순서에 수정의견이 있다.
 
@@ -97,15 +97,15 @@ docs/adr/NNNN-제목.md  (1페이지 고정)
 
 | 저장소 | 용도 | 비고 |
 |---|---|---|
-| `v-dtos` (신규, 권장명) | 플랫폼 모노레포 — 코드 전체 | 04 문서 §3 구조로 스캐폴드 |
-| 본 저장소(NewJob) | 설계 문서(00~11) 보관 | 코드 저장소 확정 후 `v-dtos/docs/design/`으로 이관 권장 |
+| `TwinOS` (확정 — amlksh/TwinOS, Private, VPK 조직 이전 예정) | 플랫폼 모노레포 — 코드 전체 | 04 문서 §3 구조로 스캐폴드 |
+| 본 저장소(NewJob) | 설계 문서(00~11) 보관 | 코드 저장소 확정 후 `TwinOS/docs/design/`으로 이관 권장 |
 
-> **사용자 결정 필요**: 신규 저장소의 조직/이름/공개범위(사내 private 권장). 결정되면 스캐폴드를 바로 생성할 수 있다.
+> **결정 완료**: 저장소명 TwinOS, Private, 브랜치 main+develop. 현재는 amlksh 계정에 생성하며 VPK 조직 개설 시 Transfer한다. 브랜드 규칙: 코드명 TwinOS / 기술 문서 정식 명칭 DTOS.
 
 ### 3.2 초기 구조 (04 문서 §3 확정판 + 초기화 항목)
 
 ```
-v-dtos/
+TwinOS/
 ├── apps/{gateway, orchestrator, web}
 ├── apps/runners/abaqus_runner
 ├── sdk/                      # TwinAgent 베이스, 계약 모델(Pydantic), 계약 테스트

@@ -1,6 +1,6 @@
-# V-DTOS Interface Specification v1.0 (Draft for Review)
+# DTOS Interface Specification v1.0 (Draft for Review)
 
-> **문서 지위**: 본 명세는 V-DTOS 컴포넌트 간 통신·구현 계약의 단일 기준이다. 리뷰 통과 시 v1.0으로 태깅되어 Architecture Freeze 항목 F1이 된다(10 문서 §2).
+> **문서 지위**: 본 명세는 DTOS 컴포넌트 간 통신·구현 계약의 단일 기준이다. 리뷰 통과 시 v1.0으로 태깅되어 Architecture Freeze 항목 F1이 된다(10 문서 §2).
 > **표기**: MUST/SHOULD/MAY는 RFC 2119 의미로 사용한다.
 > **기계가독 사본**: 본 문서의 모든 스키마는 코드 저장소 `contracts/` 디렉터리에 JSON Schema로 등록되며, 문서와 스키마가 다를 경우 **스키마가 우선**한다.
 

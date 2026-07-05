@@ -1,6 +1,6 @@
 # MVP 범위 정의 및 기술 스택 확정안
 
-> **변경 반영**: MVP 대상을 **FMH Digital Twin**으로 확정 (「DTOS MVP 개발 방향 변경 및 추가 요청사항」, [08 문서](08-FMH-DigitalTwin-Plugin-설계.md) 참조). FMH는 V-DTOS 최초의 Digital Twin Plugin이자 표준 Twin Agent(`prepare/run/validate/report`)의 레퍼런스 구현이다.
+> **변경 반영**: MVP 대상을 **FMH Digital Twin**으로 확정 (「DTOS MVP 개발 방향 변경 및 추가 요청사항」, [08 문서](08-FMH-DigitalTwin-Plugin-설계.md) 참조). FMH는 DTOS 최초의 Digital Twin Plugin이자 표준 Twin Agent(`prepare/run/validate/report`)의 레퍼런스 구현이다.
 
 ---
 
