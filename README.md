@@ -22,6 +22,7 @@
 | [10-Architecture-Freeze-실행-우선순위](docs/10-Architecture-Freeze-실행-우선순위.md) | 실행 우선순위 검토(Walking Skeleton 제안), Architecture Freeze 동결 목록(F1~F8) + ADR 절차, Repo 초기 구조 |
 | [12-DTOS-Operations-Administration-Architecture](docs/12-DTOS-Operations-Administration-Architecture.md) | Enterprise 운영 기준: User/Auth/RBAC 설계, Project·Run History·**Audit Log**, Plugin/Template/Model Registry, Prompt Version, 모니터링 — MVP 구현 범위 명시 |
 | [11-DTOS-Interface-Specification-v1.0](docs/11-DTOS-Interface-Specification-v1.0.md) | ⭐ **인터페이스 명세 v1.0(Draft)**: 8개 계약(task-api, twin-agent, tooljob, Artifact/URN, Workflow, Gate, 외부 API, Manifest), 상태 기계, 에러 모델, 버전 규칙, 적합성 테스트 |
+| [13-AI-Orchestration-Layer](docs/13-AI-Orchestration-Layer.md) | **Sprint 1**: AI Orchestration Layer — Planner/Conversation/Memory/Knowledge Registry/Reviewer/Reasoning Trace, LLM 비종속(LLMProvider+결정적 폴백), Plugin manifest `nl` 메타데이터로 AI 도메인 독립 보장 |
 
 ## TwinOS 저장소 스캐폴드
 
