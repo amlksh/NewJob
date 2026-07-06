@@ -1,6 +1,6 @@
-# DTOS Interface Specification v1.0 (Draft for Review)
+# DTOS Interface Specification v1.0 (**FROZEN** — Baseline 발효)
 
-> **문서 지위**: 본 명세는 DTOS 컴포넌트 간 통신·구현 계약의 단일 기준이다. 리뷰 통과 시 v1.0으로 태깅되어 Architecture Freeze 항목 F1이 된다(10 문서 §2).
+> **문서 지위**: 본 명세는 DTOS 컴포넌트 간 통신·구현 계약의 단일 기준이다. **Sprint 1.5에서 v1.0 Baseline으로 동결 발효**(ADR-0001 accepted, ADR-0005, 태그 `interface-spec/v1.0.0`) — Architecture Freeze 항목 F1. 이후 변경은 §1.6 버전 규칙 + ADR로만 가능하다.
 > **표기**: MUST/SHOULD/MAY는 RFC 2119 의미로 사용한다.
 > **기계가독 사본**: 본 문서의 모든 스키마는 코드 저장소 `contracts/` 디렉터리에 JSON Schema로 등록되며, 문서와 스키마가 다를 경우 **스키마가 우선**한다.
 
@@ -15,7 +15,11 @@
 | E | Workflow Definition Schema v1 | 카탈로그 ↔ Orchestrator | §7 |
 | F | Gate 정의·판정 규약 | Quality Gate 엔진 ↔ 워크플로우 | §8 |
 | G | Orchestrator 외부 API (UI-facing) | Web UI ↔ Gateway | §9 |
-| H | Twin Plugin Manifest v1 | Plugin ↔ Kernel 로더 | §10 |
+| H | Twin Plugin Manifest v1 (+optional `nl`) | Plugin ↔ Kernel 로더 | §10 |
+| I | `ai-planner/v1` Task Plan | Planner → Conversation/Engine | §13 |
+| J | `ai-reviewer/v1` Review Findings | Reviewer → 사용자/Audit | §13 |
+| K | `ai-runtime/v1` AI Call Audit·Memory Record | AI Runtime ↔ 원장 | §13 |
+| L | Disease Solver Adapter 계약 | Runner ↔ 기존 Solver 자산 | §14 |
 
 ---
 
@@ -459,3 +463,37 @@ Orch → A:POST /v1/tasks(validate)  → verdicts(26 pass/2 fail), worst=[A17,B0
 Orch → A:POST /v1/tasks(report)    → report.docx + numbers_manifest             (gate.report.consistency)
 Orch ⏸ hitl.requested(report_approval) … 승인 → run.status=succeeded
 ```
+
+---
+
+## 13. Contract I·J·K — AI Layer 계약 (Sprint 1/1.5 추가, v1 동결)
+
+| 계약 | 스키마 | 산출 주체 |
+|---|---|---|
+| Task Plan | `contracts/ai-planner/v1/task-plan.schema.json` | Planner Agent (LLM·폴백 두 경로 동일) |
+| Review Findings | `contracts/ai-reviewer/v1/review-findings.schema.json` | Reviewer Agent (수정 금지 — 지적·제안만) |
+| AI Call Audit | `contracts/ai-runtime/v1/ai-call-audit.schema.json` | AI Runtime — **모든 LLM 호출(실패 포함)** 기록 시 검증 |
+| Memory Record | `contracts/ai-runtime/v1/memory-record.schema.json` | Memory Manager — 기록 시 검증 |
+
+**동결된 Python 인터페이스 표면** (변경 = ADR, 14 문서):
+- Runtime API: `AiRuntime.complete_json(agent, prompt, variables, schema, session_id)`
+- Provider Interface: `complete(system, user) -> ProviderResponse(text, input_tokens, output_tokens)`
+- Tool Registry 카탈로그 항목: `{name, kind, description, plugin, workflow, keywords, required_params}`
+- Prompt Registry 규약: `prompts/<name>/<version>.md`, `===USER===` 구분자, `{변수}` 렌더링
+
+## 14. Contract L — Disease Solver Adapter (Sprint 1.5, 실자산 연결)
+
+기존 Solver 자산은 **수정하지 않는다**. 연결은 Adapter 수명주기 계약으로만:
+
+```
+initialize(workdir, params)   # 커맨드 해석·입력 검증 (TWINOS_DISEASE_SOLVER_CMD)
+execute()                     # 외부 Solver 프로세스 실행
+collect() -> ToolResult       # glucose.csv 계약 검증·아티팩트 수집
+shutdown()                    # 잔류 프로세스/자원 정리 (실패 시에도 반드시 호출)
+```
+
+커맨드 I/O 계약 (MUST):
+- 호출: `<cmd> scenario.json glucose.csv` (cwd = 작업 디렉터리)
+- 입력 `scenario.json`: `{duration_h, dt_min, meals_h[], patients[{id, ...}]}`
+- 출력 `glucose.csv` 헤더: `patient_id,t_min,glucose_mgdl` (환자별 동일 표본 수 — Execution Success)
+- 참조 스텁: `plugins/diabetes_twin/tests/fake_solver.py`

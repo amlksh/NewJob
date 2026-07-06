@@ -4,6 +4,9 @@
 > 목적: DTOS를 Workflow Engine에서 **AI가 계획(Planning)·실행(Execution)·검토(Review)·
 > 기록(Memory)하는 AI Operating System**으로 발전 — 단, Core·Plugin은 변경하지 않는다.
 
+
+> **[동결]** Sprint 1.5에서 본 설계의 구현이 v1.0 Baseline으로 동결되었다 (ADR-0005). Planner·Reviewer·Conversation·Memory·Trace 인터페이스 변경은 ADR 필수.
+
 ---
 
 ## 1. Architecture Diagram — AI Layer는 Core와 사용자 사이에 위치한다

@@ -4,6 +4,9 @@
 > 목적: **Planner보다 AI Runtime을 먼저 구축**하고, 모든 AI Agent가 Runtime을 통해서만
 > LLM을 호출하게 한다. 직접 LLM API 호출은 금지한다. Core·Plugin은 변경하지 않는다.
 
+
+> **[동결]** Sprint 1.5에서 Runtime API·Provider Interface·Tool/Prompt Registry·Audit/Memory Schema가 v1.0 Baseline으로 동결되었다 (ADR-0005, 계약: contracts/ai-runtime/v1).
+
 ---
 
 ## 1. 위치 — Runtime은 모든 Agent 아래, Core 밖에 있다
