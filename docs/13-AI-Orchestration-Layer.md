@@ -42,7 +42,7 @@
 | Core는 AI를 모른다 | AI Layer가 Core의 공개 API(`engine.execute`)만 호출. Core 코드는 무변경 — CI의 import 정적 검사 유지 |
 | Plugin은 AI를 모른다 | Plugin 코드·4메서드 인터페이스 무변경. Plugin은 **manifest의 `nl` 메타데이터**(설명·키워드·필수 파라미터 질문)만 선언 |
 | AI는 도메인 지식을 갖지 않는다 | Planner/Reviewer의 판단 재료는 전부 **plugin manifest·계약 산출물(판정표·numbers_manifest)** — 의료/CAE 로직은 AI Layer 코드에 등장하지 않는다 |
-| LLM 비종속 (CTO §14.1~2) | `LLMProvider` 인터페이스(complete/json) + Anthropic/OpenAI 어댑터 + **provider 없음(결정적 휴리스틱) 폴백** — 모델 교체는 provider 주입 교체로 끝남 |
+| LLM 비종속 (CTO §14.1~2) | **모든 LLM 호출은 AI Runtime(14 문서) 경유** — Provider Interface(Mock·Claude·OpenAI·Gemini·Local) + **provider 없음(결정적 휴리스틱) 폴백**. 모델 교체는 provider 주입 교체로 끝남. Agent의 SDK 직접 호출 금지 |
 
 ## 2. 컴포넌트 설계
 
@@ -96,8 +96,11 @@ User          Conversation   Planner      Knowledge/Memory   Core(Engine)   Plug
 
 ## 4. 구현 범위 (업무지시서 §10 준수)
 
-구현: Planner · Conversation · Memory · Reviewer · Reasoning Trace · Knowledge Registry
-미구현(다음 Sprint 이후): RAG · Vector DB · Long-term Memory · Auto Learning · Fine Tuning · Autonomous/Self-Improving Agent
+구현: **AI Runtime(14 문서 — Runtime First)** · Planner · Conversation · Memory · Reviewer · Reasoning Trace · Knowledge Registry
+미구현(다음 Sprint 이후): RAG · Vector DB · Long-term Memory · Auto Learning · Fine Tuning · Autonomous/Self-Improving Agent · Multi-Agent Collaboration
+
+> 수정 지시서(AI Runtime First) 반영: 실행 흐름은 **AI Runtime → Planner → Conversation →
+> Workflow → Plugin → Reviewer → Memory**이며, Runtime 상세 설계는 14 문서를 따른다.
 
 ## 5. Demo Scenario (완료 기준 §13)
 
