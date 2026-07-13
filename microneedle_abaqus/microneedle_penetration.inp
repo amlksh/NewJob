@@ -1,0 +1,127 @@
+*HEADING
+Microneedle penetration into skin - Abaqus/Explicit + VUMAT (axisymmetric)
+Units: mm, N, MPa, tonne, s
+**
+** ============================================================
+**  기하 / 메시  (2D 축대칭, r=X, z=Y)
+**  피부 블록 : r in [0, 2.0] mm , z in [0, 1.5] mm
+**  요소       : CAX4R  (nr=20, nz=15 -> 300개 요소)
+**  절점 번호  : N = 1 + i + 140*j   (i:0..20 열, j:0..15 행)
+** ============================================================
+*NODE
+      1,   0.0,   0.0
+     21,   2.0,   0.0
+   2101,   0.0,   1.5
+   2121,   2.0,   1.5
+*NGEN, NSET=NBOT
+      1,     21,   1
+*NGEN, NSET=NTOP
+   2101,   2121,   1
+*NFILL, NSET=NALL
+NBOT, NTOP, 15, 140
+**
+*NSET, NSET=NAXIS, GENERATE
+      1,   2101,   140
+*NSET, NSET=NRIGHT, GENERATE
+     21,   2121,   140
+**
+*ELEMENT, TYPE=CAX4R
+   1,  1,  2, 142, 141
+*ELGEN, ELSET=SKIN
+   1,  20,  1,  1,  15, 140, 100
+**
+*SURFACE, TYPE=ELEMENT, NAME=SKIN_SURF
+SKIN,
+**
+** ============================================================
+**  강체 마이크로니들 (해석적 강체, 원뿔형 첨두)
+**  r-z 평면 프로파일 : 축(r=0)에서 시작해 위로 전개
+**  첨두 반경 0.02, 원뿔부, 샤프트 반경 0.15 mm
+**  첨두를 피부 상면(z=1.5) 바로 위(z=1.52)에 배치
+** ============================================================
+*NODE
+   9999,   0.0,   1.52
+*NSET, NSET=NREF
+   9999,
+*SURFACE, TYPE=SEGMENTS, NAME=NEEDLE, FILLET RADIUS=0.01
+START,   0.02,  1.52
+LINE,    0.15,  1.90
+LINE,    0.15,  3.50
+*RIGID BODY, ANALYTICAL SURFACE=NEEDLE, REF NODE=NREF
+**
+** ============================================================
+**  재료 : VUMAT (Neo-Hookean + 손상/삭제)
+**    C10=0.02 MPa, D1=1.0 /MPa (K=2 MPa, 준-비압축)
+**    손상개시 주신축비 lam_d=1.6, 파단 lam_f=2.2
+**    밀도 1.1e-9 tonne/mm^3 (=1100 kg/m^3)
+** ============================================================
+*MATERIAL, NAME=SKIN_MAT
+*DENSITY
+1.1e-9,
+*USER MATERIAL, CONSTANTS=4
+0.02, 1.0, 1.6, 2.2
+*DEPVAR, DELETE=1
+4
+1, DELFLAG, deletion flag
+2, LAMMAX,  max principal stretch
+3, DAMAGE,  damage variable D
+4, JVOL,    relative volume J
+**
+*SOLID SECTION, ELSET=SKIN, MATERIAL=SKIN_MAT
+**
+** ============================================================
+**  초기/경계 조건
+** ============================================================
+** NBOT: 하면 z-고정 / NAXIS: 대칭축 r-고정 / NRIGHT: 우측 경계 r-고정
+*BOUNDARY
+NBOT,  2, 2
+NAXIS, 1, 1
+NRIGHT,1, 1
+**
+** 니들 참조점 : 회전/횡방향 구속, 수직 하강만 허용 (진폭으로 부여)
+*BOUNDARY
+NREF, 1, 1
+NREF, 6, 6
+**
+** 부드러운 하강 진폭 (0 -> 1.2 mm)
+*AMPLITUDE, NAME=PUSH, DEFINITION=SMOOTH STEP
+0.0, 0.0, 0.01, 1.0
+**
+** ============================================================
+**  해석 스텝 : 동적-외연(준정적), step time = 0.01 s
+**  연조직은 매우 무르므로 필요 시 질량 스케일링 사용 권장
+** ============================================================
+*STEP, NAME=PENETRATION
+*DYNAMIC, EXPLICIT
+, 0.01
+**
+** 준정적 안정화를 위한 고정 질량 스케일링(선택) : 목표 dt=5e-7 s
+*FIXED MASS SCALING, DT=5.0e-7, TYPE=BELOW MIN
+**
+** 니들을 1.2 mm 하강
+*BOUNDARY, AMPLITUDE=PUSH
+NREF, 2, 2, -1.2
+**
+** --- 전역 접촉 (요소 침식 대응) ---
+*CONTACT
+*CONTACT INCLUSIONS, ALL EXTERIOR
+*CONTACT INCLUSIONS
+NEEDLE, SKIN_SURF
+*CONTACT PROPERTY ASSIGNMENT
+ ,  , IPROP
+*SURFACE INTERACTION, NAME=IPROP
+*FRICTION
+0.1,
+**
+** --- 출력 ---
+*OUTPUT, FIELD, NUMBER INTERVAL=25
+*ELEMENT OUTPUT, ELSET=SKIN
+S, LE, SDV, STATUS
+*NODE OUTPUT
+U, V
+*OUTPUT, HISTORY, TIME INTERVAL=1.0e-4
+*NODE OUTPUT, NSET=NREF
+U2, V2, RF2
+*ENERGY OUTPUT
+ALLIE, ALLKE, ALLSE, ALLWK
+*END STEP
