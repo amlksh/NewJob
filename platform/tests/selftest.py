@@ -14,6 +14,10 @@ sys.path.insert(0, PLAT)
 import inp_lint      # noqa: E402
 import diagnose      # noqa: E402
 import gen_subroutine  # noqa: E402
+import regression    # noqa: E402
+import optimize      # noqa: E402
+import md2docx       # noqa: E402
+import zipfile       # noqa: E402
 
 fails = []
 
@@ -101,6 +105,36 @@ def main():
         f = os.path.join(d, 'x_' + t + '.f')
         ok = os.path.exists(f) and os.path.getsize(f) > 200
         check("스켈레톤 생성 " + t, ok)
+
+    print("== regression ==")
+    fdp = w("time,depth,force\n0,0,0\n1,0.5,0.18\n2,1.0,0.06\n", ".csv")
+    m = regression.metrics_from_fd(fdp)
+    check("metrics peak_force=0.18", abs(m.get('peak_force', 0) - 0.18) < 1e-9)
+    check("metrics peak_depth=0.5", abs(m.get('peak_depth', 0) - 0.5) < 1e-9)
+    os.remove(fdp)
+
+    print("== optimize (mock 이분탐색) ==")
+    f = lambda x: 0.5 * x            # noqa: E731
+    x, fx = optimize.bisect_to_target(f, 0.0, 1.0, 0.2, 0.01, 30, lambda s: None)
+    check("target 0.2 수렴(x≈0.4)", fx is not None and abs(fx - 0.2) <= 0.01)
+
+    print("== md2docx ==")
+    md = w("# 제목\n\n본문 **굵게**.\n\n| a | b |\n|---|---|\n| 1 | 2 |\n", ".md")
+    dx = md[:-3] + ".docx"
+    sys.argv = ['m', md, dx]
+    md2docx.main()
+    okz = False
+    try:
+        z = zipfile.ZipFile(dx)
+        okz = (z.testzip() is None and
+               'word/document.xml' in z.namelist() and
+               b'<w:document' in z.read('word/document.xml'))
+    except Exception:
+        okz = False
+    check("유효한 .docx(zip+OOXML) 생성", okz)
+    for p in (md, dx):
+        if os.path.exists(p):
+            os.remove(p)
 
     print()
     if fails:

@@ -1,0 +1,51 @@
+*HEADING
+다물리(열-구조) 연계 스켈레톤 — UMATHT(열) + UMAT/VUMAT(구조)
+(fire-sim 계열: 이동열원 DFLUX + 온도의존 물성)  단위: mm,N,MPa,tonne,s,mJ,C
+**  ※ 템플릿(스켈레톤)입니다. {{...}} 값과 메쉬/경계를 채워 사용하세요.
+**  ================================================================
+**  요소: 온도-변위 커플드
+**    - Standard : *COUPLED TEMPERATURE-DISPLACEMENT, 요소 C3D8T/CAX4T
+**    - Explicit : *DYNAMIC TEMPERATURE-DISPLACEMENT, EXPLICIT, 요소 ...T
+**  서브루틴:
+**    - 열: UMATHT  (내부에너지·열유속)   실행옵션 user=xxx.f
+**    - 구조: UMAT(Standard) 또는 VUMAT(Explicit)  double=both(VUMAT)
+**  ================================================================
+**
+** ---- (예시) 절점/요소는 여기에 정의 (생성기/메쉬로 대체) ----
+** *NODE ... / *ELEMENT, TYPE=C3D8T ... / *ELSET, ELSET=PART ...
+**
+** ---- 재료: 사용자 열+구조 ----
+*MATERIAL, NAME=MAT
+*DENSITY
+{{RHO}},
+*USER MATERIAL, CONSTANTS={{NPROPS}}
+{{PROPS}}
+*DEPVAR
+{{NSDV}}
+** 온도의존 열물성(내장) 또는 UMATHT로 처리
+*CONDUCTIVITY
+{{K}},
+*SPECIFIC HEAT
+{{CP}},
+**
+*SOLID SECTION, ELSET=PART, MATERIAL=MAT
+**
+** ---- 초기조건 ----
+*INITIAL CONDITIONS, TYPE=TEMPERATURE
+NALL, {{T0}}
+**
+** ---- 스텝 (택1) ----
+** [Standard 커플드]
+*STEP, NAME=COUPLED, INC=1000
+*COUPLED TEMPERATURE-DISPLACEMENT, DELTMX={{DELTMX}}
+{{DT0}}, {{TTOTAL}}
+** 이동열원(체적) — DFLUX 서브루틴
+*DFLUX
+PART, BFNU
+** 경계/하중: *BOUNDARY, *TEMPERATURE 등
+*OUTPUT, FIELD
+*NODE OUTPUT
+NT, U
+*ELEMENT OUTPUT
+S, SDV, HFL
+*END STEP

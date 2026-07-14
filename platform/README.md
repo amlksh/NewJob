@@ -19,6 +19,11 @@ Abaqus 서브루틴 해석의 **린트 → 실행 → 보고서**를 자동화�
 | **`doe.py`** | 파라메트릭 스터디 생성 + 케이스 비교 리포트 (Phase 2) |
 | **`gen_subroutine.py`** | 서브루틴 스켈레톤 생성기(VUMAT/UMAT/UMATHT/VDLOAD/DFLUX) (Phase 2) |
 | `tests/selftest.py` · `.github/workflows/ci.yml` | 자기검증 + GitHub Actions CI (Phase 2) |
+| **`regression.py`** | 회귀 테스트 — 골든 기준선 대비 결과 diff (Phase 3) |
+| **`optimize.py`** | 1D 자동 최적화 — 목표 지표에 파라미터 이분탐색 (Phase 3) |
+| **`md2docx.py`** | Markdown→Word(.docx) 변환(라이브러리 없이 OOXML) (Phase 3) |
+| **`gh_repo.ps1`** | GitHub 저장소 자동생성·push (Phase 3) |
+| `templates/coupled_thermal_struct.inp` | 다물리(열-구조) 연계 스켈레톤 (Phase 3) |
 
 ## 1) 원클릭 셋업
 
@@ -127,11 +132,53 @@ REM 타입: vumat | umat | umatht | vdload | dflux
   (Abaqus 불필요한 정적 점검).
 - `python tests/selftest.py` 로 로컬에서도 검증 가능.
 
+## 9) 회귀 테스트 (Phase 3)
+
+물성/버전 변경 후에도 핵심 결과가 유지되는지 자동 확인:
+```bat
+python regression.py save  --key ref04 --from ref04_fd.csv --extra deleted=12
+python regression.py check --key ref04 --from ref04_fd.csv --tol 0.05
+```
+peak 관통력·깊이 등을 `regression_baseline.json` 과 허용오차로 비교(초과 시 종료코드 1).
+
+## 10) 자동 최적화 루프 (Phase 3)
+
+목표 지표(예: peak 관통력)에 맞춰 파라미터를 이분탐색으로 자동 조정:
+```bat
+python optimize.py --template base.inp --param C10 --job opt ^
+       --target 0.25 --lo 0.01 --hi 0.10 --user vumat_skin.f --maxit 8
+```
+매 반복마다 `{{C10}}` 값을 바꿔 해석→peak 추출→구간 갱신. (지표가 param에
+단조라고 가정. 브래킷 안 되면 경고 후 근사값.)
+
+## 11) Word(.docx) 리포트 (Phase 3)
+
+```bat
+python md2docx.py ref04_report_summary.md ref04.docx
+```
+`python-docx` 없이 유효한 OOXML .docx 생성(헤더·문단·굵게·표·목록).
+그림 포함 보고서는 HTML(`report.py`)을 브라우저에서 PDF로 저장하세요.
+
+## 12) GitHub 저장소 자동화 (Phase 3)
+
+```powershell
+pwsh -File gh_repo.ps1 -Repo owner/name -Path C:\...\project -Visibility private
+```
+`gh` 로 저장소 생성·연결·push. PR 템플릿은 `.github/pull_request_template.md`
+(린트/셀프테스트/회귀 체크리스트 포함).
+
+## 13) 다물리(열-구조) 연계 스켈레톤 (Phase 3)
+
+`templates/coupled_thermal_struct.inp` — 온도-변위 커플드 + UMATHT(열) +
+UMAT/VUMAT(구조) + 이동열원 DFLUX 구조의 시작 템플릿(fire-sim 계열).
+서브루틴 스켈레톤은 `gen_subroutine.py --type umatht|dflux` 로 생성.
+
 ---
 
 ### 검증 상태
 - **Python 도구 전부 실제 테스트 완료**: `inp_lint`(정상/오류), `diagnose`,
   `doe`(gen/agg), `report`(렌더링), `gen_subroutine`, `run_job`(dry-run),
-  `tests/selftest.py`(8/8 PASS), 전체 .inp 린트 게이트 통과.
+  `regression`(save/check), `optimize`(mock 수렴), `md2docx`(유효 .docx),
+  `tests/selftest.py`(**14/14 PASS**), 전체 .inp 린트 게이트 통과.
 - `bootstrap.ps1`·`setup.bat` 는 **Windows에서 실행 검증 필요**(작성 환경에
   PowerShell/winget 부재). 첫 실행은 `-DryRun` 으로 미리보기 권장.
