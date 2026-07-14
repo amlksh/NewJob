@@ -48,7 +48,7 @@ tr:nth-child(even) td{background:#f6f8fa}
 <p>Claude를 깔기 전에, <strong>Abaqus 서브루틴을 손으로 돌릴 수 있는 환경</strong>이 먼저 갖춰져 있어야 합니다. Claude는 그 환경을 "대신 조작"할 뿐이기 때문입니다.</p>
 <h3>2.1 Abaqus 본체</h3>
 <ul><li>Abaqus 2023 이상 권장 (본 매뉴얼은 <strong>Abaqus 2025.HF4</strong> 기준).</li><li>명령창에서 아래가 동작해야 합니다:</li></ul>
-<p>  <code></code><code>bat   abaqus information=release   </code><code></code>   회사 환경에 따라 명령 이름이 <code>abaqus</code> / <code>abq2025</code> / <code>abq2025hf4</code> 중   하나일 수 있습니다. 동작하는 이름을 확인해 두세요.</p>
+<p>  <code></code><code>bat   abaqus information=release   </code><code></code>   본 매뉴얼은 실행 명령을 **<code>abaqus</code>로 통일**합니다(검증 환경에서 동작 확인).</p>
 <h3>2.2 Fortran 컴파일러 (Intel oneAPI)</h3>
 <p>사용자 서브루틴(UMAT/VUMAT 등)은 <strong>실행 시점에 Fortran으로 컴파일</strong>됩니다. 따라서 Abaqus와 호환되는 컴파일러가 필요합니다.</p>
 <ul><li><strong>Intel oneAPI Fortran</strong> (<code>ifort</code> 클래식 또는 <code>ifx</code> LLVM기반) + Windows는</li></ul>
@@ -58,10 +58,9 @@ tr:nth-child(even) td{background:#f6f8fa}
 <ul><li>oneAPI 2024부터 클래식 <code>ifort</code>는 지원 종료 예정 → 신규/클러스터는</li></ul>
 <p>  <code>ifx</code>로 전환될 수 있습니다(경고 #10448은 무해).</p>
 <h3>2.3 컴파일러–Abaqus 연동 방식 (중요)</h3>
-<p>컴파일러 환경(vcvars64 + oneAPI vars)은 보통 <strong>전역 PATH가 아니라 Abaqus 실행 드라이버 배치파일에 주입</strong>되어 있습니다. 예:</p>
-<pre><code>C:\SIMULIA\Commands\abq2025hf4.bat  &lt;-- 이 안에 컴파일러 환경 로드가 삽입됨</code></pre>
-<p>그래서 **일반 셸에서 <code>ifort</code> 단독 호출은 안 보이는 게 정상**이고, <code>abaqus</code>(=이 드라이버)를 통해 부를 때만 컴파일이 됩니다.</p>
-<blockquote>재설치 시 이 주입이 사라지므로, <code>abq2025hf4.bat.orig</code> 같은 백업을 두고 다시 적용하는 관리가 필요합니다.</blockquote>
+<p>컴파일러 환경(vcvars64 + oneAPI vars)은 보통 **전역 PATH가 아니라 Abaqus 실행 명령(<code>abaqus</code>)이 내부적으로 부르는 드라이버 배치파일에 주입**되어 있습니다. 그래서:</p>
+<ul><li>**일반 셸에서 <code>ifort</code> 단독 호출은 안 보이는 게 정상**이고,</li><li>**<code>abaqus</code> 로 호출할 때만** 서브루틴 컴파일이 동작합니다.</li></ul>
+<blockquote>Abaqus를 재설치하면 이 주입이 사라질 수 있으므로, 담당자가 드라이버 배치파일 백업을 두고 다시 적용하는 관리가 필요합니다.</blockquote>
 <h3>2.4 라이선스 (자주 걸림)</h3>
 <ul><li><strong>Abaqus/Standard(또는 Foundation)</strong> 토큰: <code>*STATIC</code>, <code>*BUCKLE</code> 등.</li><li><strong>Abaqus/Explicit</strong> 토큰: <code>*DYNAMIC, EXPLICIT</code> (VUMAT 관통 해석은 이것!).</li><li>Standard만 있고 <strong>Explicit 라이선스가 없으면 VUMAT 관통 해석이 막힙니다.</strong></li><li>확인: <code>abaqus licensing ru</code> (사용 가능 토큰 목록).</li><li>라이선스 서버(예: <code>27001@localhost</code>) 데몬이 죽으면 컴파일과 무관하게</li></ul>
 <p>  실행이 막힙니다 — 그 경우 서버 재기동 필요.</p>

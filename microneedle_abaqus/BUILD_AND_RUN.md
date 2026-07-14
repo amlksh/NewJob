@@ -21,7 +21,7 @@ abaqus info=system
 ```
 ```bash
 # Linux 클러스터
-abaqus info=system        # 또는 abq2025, 모듈 로드 후
+abaqus info=system        # 필요 시 모듈 로드 후
 ```
 출력의 **Fortran Compiler / C++ Compiler 경로·버전**이 실제 링크 값입니다.
 이어서 아래로 "컴파일러가 실제로 동작하는지"까지 검증하세요.
@@ -39,7 +39,7 @@ abaqus verify -user_std         REM UMAT 등 Standard 유저루틴 링크 검증
 | 항목 | 값(로컬 기준) |
 |------|--------------|
 | Abaqus | 2025, `ABA_HOME = C:\SIMULIA\EstProducts\2025\win_b64` |
-| 실행 명령 | `abaqus` (내부적으로 `abq2025hf4.bat` 드라이버로 연결) |
+| 실행 명령 | `abaqus` |
 | Fortran | Intel oneAPI 2024 `ifort` (`IFORT_COMPILER24 = C:\Program Files (x86)\Intel\oneAPI\compiler\2024.0\windows\`) |
 | `ifort.exe` | `...\2024.0\windows\bin\intel64\ifort.exe` |
 | C++ | Visual Studio `cl` (`compile_cpp`) |
@@ -76,9 +76,8 @@ abaqus job=buck03 input=03_needle_buckling.inp
 REM 후처리
 abaqus python postprocess.py hgo02.odb
 ```
-> `abaqus` 로 서브루틴 컴파일이 안 되면(컴파일러 미주입) 컴파일러 환경이
-> 주입된 `abq2025hf4` 로 같은 명령을 실행하세요. 이 PC에서는 `abaqus`
-> 실행이 확인되었습니다(job buck03 COMPLETED, 2026-07-14).
+> 이 환경에서는 `abaqus` 실행이 확인되었습니다
+> (job buck03 COMPLETED, ref04 VUMAT COMPLETED, 2026-07-14).
 
 ---
 
@@ -124,9 +123,8 @@ abaqus job=hgo02 input=02_hgo_pretension.inp   user=vumat_skin_hgo.f double=both
 abaqus job=buck03 input=03_needle_buckling.inp
 abaqus python postprocess.py hgo02.odb
 ```
-클러스터에서는 `abaqus` 대신 모듈/버전 별칭(`abq2025` 등)일 수 있으니
-사이트 안내를 따르세요. Explicit 다중 CPU는 `cpus=N`(자동 도메인 분할)로
-지정합니다.
+클러스터에서는 `abaqus` 실행 전에 모듈 로드가 필요할 수 있으니 사이트
+안내를 따르세요. Explicit 다중 CPU는 `cpus=N`(자동 도메인 분할)로 지정합니다.
 
 ---
 
