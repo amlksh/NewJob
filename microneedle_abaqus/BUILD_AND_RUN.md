@@ -16,8 +16,8 @@
 Abaqus에 어떤 컴파일러가 연결됐는지 실제 값을 출력합니다.
 
 ```bat
-REM Windows (호트픽스 드라이버)
-abq2025hf4 info=system
+REM Windows
+abaqus info=system
 ```
 ```bash
 # Linux 클러스터
@@ -27,8 +27,8 @@ abaqus info=system        # 또는 abq2025, 모듈 로드 후
 이어서 아래로 "컴파일러가 실제로 동작하는지"까지 검증하세요.
 
 ```bat
-abq2025hf4 verify -user_explicit    REM VUMAT/VEXTERNALDB 등 Explicit 유저루틴 링크 검증
-abq2025hf4 verify -user_std         REM UMAT 등 Standard 유저루틴 링크 검증
+abaqus verify -user_explicit    REM VUMAT/VEXTERNALDB 등 Explicit 유저루틴 링크 검증
+abaqus verify -user_std         REM UMAT 등 Standard 유저루틴 링크 검증
 ```
 `PASS` 가 나오면 우리 VUMAT도 동일 경로로 컴파일됩니다.
 
@@ -39,7 +39,7 @@ abq2025hf4 verify -user_std         REM UMAT 등 Standard 유저루틴 링크 �
 | 항목 | 값(로컬 기준) |
 |------|--------------|
 | Abaqus | 2025, `ABA_HOME = C:\SIMULIA\EstProducts\2025\win_b64` |
-| 실행 드라이버 | `abq2025hf4.bat` |
+| 실행 명령 | `abaqus` (내부적으로 `abq2025hf4.bat` 드라이버로 연결) |
 | Fortran | Intel oneAPI 2024 `ifort` (`IFORT_COMPILER24 = C:\Program Files (x86)\Intel\oneAPI\compiler\2024.0\windows\`) |
 | `ifort.exe` | `...\2024.0\windows\bin\intel64\ifort.exe` |
 | C++ | Visual Studio `cl` (`compile_cpp`) |
@@ -58,24 +58,27 @@ compile_fortran = ['ifort', '/c', '/fpp', '/extend-source',
 ```bat
 call "C:\Program Files (x86)\Intel\oneAPI\setvars.bat" intel64 vs2022
 ```
-그 뒤 같은 명령창에서 `abq2025hf4 ...` 를 실행하세요. (경로에 공백이
+그 뒤 같은 명령창에서 `abaqus ...` 를 실행하세요. (경로에 공백이
 있으므로 반드시 따옴표로 감쌉니다.)
 
 ### 실행 명령 (Windows)
 ```bat
 REM (a) 3층 피부
-abq2025hf4 job=ml01  input=01_multilayer_skin.inp   user=vumat_skin.f     double=both cpus=4
+abaqus job=ml01  input=01_multilayer_skin.inp   user=vumat_skin.f     double=both cpus=4
 
 REM (b) HGO + 사전인장  (먼저 입력파일 생성)
 python gen_hgo_model.py
-abq2025hf4 job=hgo02 input=02_hgo_pretension.inp     user=vumat_skin_hgo.f double=both cpus=4
+abaqus job=hgo02 input=02_hgo_pretension.inp     user=vumat_skin_hgo.f double=both cpus=4
 
 REM (c) 니들 좌굴 (서브루틴 불필요)
-abq2025hf4 job=buck03 input=03_needle_buckling.inp
+abaqus job=buck03 input=03_needle_buckling.inp
 
 REM 후처리
-abq2025hf4 python postprocess.py hgo02.odb
+abaqus python postprocess.py hgo02.odb
 ```
+> `abaqus` 로 서브루틴 컴파일이 안 되면(컴파일러 미주입) 컴파일러 환경이
+> 주입된 `abq2025hf4` 로 같은 명령을 실행하세요. 이 PC에서는 `abaqus`
+> 실행이 확인되었습니다(job buck03 COMPLETED, 2026-07-14).
 
 ---
 

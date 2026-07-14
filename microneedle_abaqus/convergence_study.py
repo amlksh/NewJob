@@ -62,9 +62,9 @@ def do_gen(reg):
     with open("run_convergence.bat", "w") as f:
         f.write("@echo off\n")
         for jt, ne, dr, dz in jobs:
-            f.write("call abq2025hf4 job=%s input=%s.inp %s\n"
+            f.write("call abaqus job=%s input=%s.inp %s\n"
                     % (jt, jt, common))
-            f.write("call abq2025hf4 python postprocess.py %s.odb\n" % jt)
+            f.write("call abaqus python postprocess.py %s.odb\n" % jt)
 
     # 메타(집계 시 dr/dz/elems 참조)
     with open("convergence_jobs.csv", "w") as f:
