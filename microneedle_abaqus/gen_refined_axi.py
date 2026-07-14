@@ -162,6 +162,10 @@ def generate(outfile="04_refined_path.inp", dr_fine=0.03, dz_sc=0.005,
     for lay in ("STRATUM", "EPIDERMIS", "DERMIS"):
         w("*SOLID SECTION, ELSET=%s, MATERIAL=MAT_%s" % (lay, lay))
 
+    # 접촉 상호작용(마찰)은 모델 데이터 -> 첫 *STEP 앞에 정의해야 함
+    w("*SURFACE INTERACTION, NAME=IPROP")
+    w("*FRICTION")
+    w("0.1,")
     w("*BOUNDARY")
     w("NBOT, 2, 2")
     w("NAXIS, 1, 1")
@@ -182,9 +186,6 @@ def generate(outfile="04_refined_path.inp", dr_fine=0.03, dz_sc=0.005,
     w("NEEDLE, SKIN_SURF")
     w("*CONTACT PROPERTY ASSIGNMENT")
     w(" ,  , IPROP")
-    w("*SURFACE INTERACTION, NAME=IPROP")
-    w("*FRICTION")
-    w("0.1,")
     w("*OUTPUT, FIELD, NUMBER INTERVAL=25")
     w("*ELEMENT OUTPUT, ELSET=SKIN_ALL")
     w("S, LE, SDV, STATUS")

@@ -167,6 +167,10 @@ def main():
       " RESPONSE=TRACTION SEPARATION, THICKNESS=SPECIFIED")
     w("1.0,")
 
+    # ---- 접촉 상호작용(모델 데이터: 첫 *STEP 앞) ----
+    w("*SURFACE INTERACTION, NAME=IPROP")
+    w("*FRICTION")
+    w("0.1,")
     # ---- 경계 / 스텝 ----
     w("*BOUNDARY")
     w("NBOT, 1, 2")
@@ -186,9 +190,6 @@ def main():
     w("NEEDLE, SKIN_SURF")
     w("*CONTACT PROPERTY ASSIGNMENT")
     w(" ,  , IPROP")
-    w("*SURFACE INTERACTION, NAME=IPROP")
-    w("*FRICTION")
-    w("0.1,")
     w("*OUTPUT, FIELD, NUMBER INTERVAL=25")
     w("*ELEMENT OUTPUT, ELSET=BULK")
     w("S, LE")
