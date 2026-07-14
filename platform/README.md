@@ -14,6 +14,11 @@ Abaqus 서브루틴 해석의 **린트 → 실행 → 보고서**를 자동화�
 | `inp_lint.py` | **입력파일 린터** (실행 전 오류 사전 검출) |
 | `report.py` | **보고서 엔진** (결과→표·SVG그래프·이미지 임베드 HTML) |
 | `postprocess.py`·`odb_snapshot.py`·`md2html.py`·`gen_mindmap.py` | 후처리·이미지·문서 도구 |
+| **`run_job.py`** | 잡 오케스트레이터 — 린트→실행→상태확인→진단→후처리→보고서 (Phase 2) |
+| **`diagnose.py`** | 실패 로그(.dat/.msg/.log) 자동진단 (Phase 2) |
+| **`doe.py`** | 파라메트릭 스터디 생성 + 케이스 비교 리포트 (Phase 2) |
+| **`gen_subroutine.py`** | 서브루틴 스켈레톤 생성기(VUMAT/UMAT/UMATHT/VDLOAD/DFLUX) (Phase 2) |
+| `tests/selftest.py` · `.github/workflows/ci.yml` | 자기검증 + GitHub Actions CI (Phase 2) |
 
 ## 1) 원클릭 셋업
 
@@ -77,10 +82,56 @@ REM -> results\ref04_report.html
 
 `.claude/settings.json`으로 적용되어 반복 안전명령의 승인 피로를 줄입니다.
 
+## 4) 엔드투엔드 오케스트레이터 (Phase 2)
+
+한 줄로 린트→실행→진단→후처리→보고서까지:
+```bat
+python run_job.py --job ref04 --input 04_refined_path.inp ^
+       --user vumat_skin.f --project "마이크로니들" --pcr 0.219 --images
+REM 옵션: --dry-run(미리보기) --no-run(기존 odb로 후처리만) --force(린트오류 무시)
+```
+- 린트에서 **ERROR면 실행 전 중단**(수정 유도).
+- `.sta`가 완료 아니면 **`diagnose.py` 자동 호출**로 원인·조치 제시.
+- 성공 시 `postprocess`·(이미지)·`report` 자동 실행 → `<job>_report.html`.
+
+## 5) 실패 자동진단 (Phase 2)
+
+```bat
+python diagnose.py ref04        REM ref04.dat/.msg/.log/.sta 자동탐색
+```
+알려진 패턴(이 프로젝트에서 실제로 겪은 것 포함)을 원인·조치로 매핑:
+SURFACE INTERACTION 위치 오류, 라이선스/토큰, 컴파일·링크 오류, 요소 과도
+왜곡, 증분 수렴 실패 등.
+
+## 6) 파라메트릭 스터디(DOE) + 비교 리포트 (Phase 2)
+
+```bat
+REM 템플릿 inp의 {{C10}} {{LAMF}} 자리에 그리드값 대입해 케이스 생성
+python doe.py gen --template base.inp --grid grid.csv --prefix dh --user vumat_skin.f
+run_doe.bat                                  REM 케이스 일괄 해석+후처리
+python doe.py agg --grid grid.csv --prefix dh   REM -> doe_comparison.html (곡선 오버레이+peak표)
+```
+`grid.csv` 예: `case,C10,LAMF` / `soft,0.02,2.5` / `stiff,0.05,2.0`
+
+## 7) 서브루틴 스켈레톤 생성 (Phase 2)
+
+```bat
+python gen_subroutine.py --type vumat --name mymat --out subroutines
+REM 타입: vumat | umat | umatht | vdload | dflux
+```
+
+## 8) CI / 자기검증 (Phase 2)
+
+- `.github/workflows/ci.yml`: push/PR마다 **Python 컴파일 + 자기검증 +
+  전체 .inp 린트 게이트**(ERROR 있으면 CI 실패). GitHub 러너에서 실제 동작
+  (Abaqus 불필요한 정적 점검).
+- `python tests/selftest.py` 로 로컬에서도 검증 가능.
+
 ---
 
 ### 검증 상태
-- `inp_lint.py`·`report.py` 는 이 저장소에서 실제 테스트 완료(정상/오류 검출,
-  보고서 렌더링 확인).
+- **Python 도구 전부 실제 테스트 완료**: `inp_lint`(정상/오류), `diagnose`,
+  `doe`(gen/agg), `report`(렌더링), `gen_subroutine`, `run_job`(dry-run),
+  `tests/selftest.py`(8/8 PASS), 전체 .inp 린트 게이트 통과.
 - `bootstrap.ps1`·`setup.bat` 는 **Windows에서 실행 검증 필요**(작성 환경에
   PowerShell/winget 부재). 첫 실행은 `-DryRun` 으로 미리보기 권장.

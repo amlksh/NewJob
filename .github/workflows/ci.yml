@@ -1,0 +1,33 @@
+name: platform-ci
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Python 구문 컴파일 체크
+        run: |
+          python -m py_compile platform/*.py platform/tests/*.py
+          python -m py_compile microneedle_abaqus/*.py
+
+      - name: 플랫폼 자기검증 (린터·진단·스켈레톤)
+        run: python platform/tests/selftest.py
+
+      - name: 입력파일 린트 게이트 (ERROR 있으면 실패)
+        run: |
+          set -e
+          rc=0
+          for f in microneedle_abaqus/*.inp; do
+            python platform/inp_lint.py "$f" || rc=1
+          done
+          exit $rc
