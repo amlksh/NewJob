@@ -1,0 +1,100 @@
+*HEADING
+(3) ALE adaptive mesh - deep indentation (distortion control, no deletion)
+Axisymmetric skin, built-in Neo-Hookean (no subroutine needed)
+Units: mm, N, MPa, tonne, s
+**
+** ============================================================
+**  목적: ALE 적응메쉬가 "재료 분리(절개)는 못 만들지만" 압입 단계의
+**  요소 왜곡을 억제해 해석을 안정화함을 보이는 예시.
+**  -> 따라서 요소 삭제 없이(파단 없음) 니들이 깊이 압입되는 상황만 모사.
+**  실제 관통(절개)은 요소 삭제(01/04) 또는 cohesive(07) 로 처리.
+** ============================================================
+*NODE
+      1,   0.0,   0.0
+     21,   2.0,   0.0
+   2101,   0.0,   1.5
+   2121,   2.0,   1.5
+*NGEN, NSET=NBOT
+      1,     21,   1
+*NGEN, NSET=NTOP
+   2101,   2121,   1
+*NFILL, NSET=NALL
+NBOT, NTOP, 15, 140
+*NSET, NSET=NAXIS, GENERATE
+      1,   2101, 140
+*NSET, NSET=NRIGHT, GENERATE
+     21,   2121, 140
+**
+*ELEMENT, TYPE=CAX4R
+   1, 1, 2, 142, 141
+*ELGEN, ELSET=SKIN
+   1, 20, 1, 1, 15, 140, 100
+*SURFACE, TYPE=ELEMENT, NAME=SKIN_SURF
+SKIN,
+**
+** --- 강체 니들 (해석적 강체, 둥근 첨두) ---
+*NODE
+   9999, 0.0, 1.52
+*NSET, NSET=NREF
+9999,
+*SURFACE, TYPE=SEGMENTS, NAME=NEEDLE, FILLET RADIUS=0.03
+START, 0.02, 1.52
+LINE,  0.15, 1.90
+LINE,  0.15, 3.50
+*RIGID BODY, ANALYTICAL SURFACE=NEEDLE, REF NODE=NREF
+**
+** --- 재료 : 내장 Neo-Hookean (파단/삭제 없음) ---
+*MATERIAL, NAME=SKIN
+*DENSITY
+1.1e-9,
+*HYPERELASTIC, NEO HOOKE
+0.05, 0.5
+*SOLID SECTION, ELSET=SKIN, MATERIAL=SKIN
+**
+*BOUNDARY
+NBOT,   2, 2
+NAXIS,  1, 1
+NRIGHT, 1, 1
+NREF,   1, 1
+NREF,   6, 6
+**
+*AMPLITUDE, NAME=PUSH, DEFINITION=SMOOTH STEP
+0.0, 0.0, 0.02, 1.0
+**
+*STEP, NAME=INDENT
+*DYNAMIC, EXPLICIT
+, 0.02
+*FIXED MASS SCALING, DT=5.0e-7, TYPE=BELOW MIN
+**
+** --- ALE 적응메쉬 : 압입 영역 왜곡 완화 ---
+**  FREQUENCY 증분마다 재분할, MESH SWEEPS 회수만큼 평활화
+*ADAPTIVE MESH, ELSET=SKIN, FREQUENCY=10, MESH SWEEPS=5
+*ADAPTIVE MESH CONTROLS, NAME=ALEC
+*ADAPTIVE MESH CONTROLS ASSIGNMENT
+SKIN, ALEC
+**
+** 니들 0.6 mm 압입 (관통 아님, 깊은 압입)
+*BOUNDARY, AMPLITUDE=PUSH
+NREF, 2, 2, -0.6
+**
+*CONTACT
+*CONTACT INCLUSIONS, ALL EXTERIOR
+*CONTACT INCLUSIONS
+NEEDLE, SKIN_SURF
+*CONTACT PROPERTY ASSIGNMENT
+ ,  , IPROP
+*SURFACE INTERACTION, NAME=IPROP
+*FRICTION
+0.1,
+**
+*OUTPUT, FIELD, NUMBER INTERVAL=25
+*ELEMENT OUTPUT, ELSET=SKIN
+S, LE, EVOL
+*NODE OUTPUT
+U, V
+*OUTPUT, HISTORY, TIME INTERVAL=1.0e-4
+*NODE OUTPUT, NSET=NREF
+U2, V2, RF2
+*ENERGY OUTPUT
+ALLIE, ALLKE, ALLSE, ALLAE
+*END STEP

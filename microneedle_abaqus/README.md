@@ -16,13 +16,18 @@ VUMAT 안에 구현하여, 니들이 조직을 절개하며 전진하는 과정�
 |------|------|
 | `vumat_skin.f` | 피부 재료 VUMAT (Neo-Hookean 초탄성 + 주신축비 손상/삭제) |
 | `vumat_skin_hgo.f` | 이방성 HGO 초탄성 VUMAT (3D, 섬유 2족 + 손상/삭제) |
+| `vumat_skin_reg.f` | 파단에너지(charLength) 정규화 VUMAT (메쉬 객관적 손상) |
 | `microneedle_penetration.inp` | 2D 축대칭 기본 관통 모델 (니들=해석적 강체) |
 | `01_multilayer_skin.inp` | **(a)** 3층 피부(각질층/표피/진피) 관통 모델 |
 | `02_hgo_pretension.inp` | **(b)** 3D HGO 이방성 + 사전인장 관통 모델 (생성물) |
 | `gen_hgo_model.py` | (b) 3D 입력파일 생성기 |
 | `03_needle_buckling.inp` | **(c)** 니들 좌굴 파괴력 검증(`*BUCKLE`) 모델 |
 | `04_refined_path.inp` | **경로 세밀화** 3층 관통 모델 (생성물) |
-| `gen_refined_axi.py` | 경로 바이어스 세밀화 입력파일 생성기 |
+| `gen_refined_axi.py` | 경로 바이어스 세밀화 입력파일 생성기 (수렴성 스터디에서 재사용) |
+| `06_ale_indentation.inp` | **ALE 적응메쉬** 깊은 압입(왜곡 완화) 예시 |
+| `07_cohesive_cut.inp` | **Cohesive 절개** 대안 모델 (평면변형, 생성물) |
+| `gen_cohesive.py` | (07) Cohesive 모델 생성기 |
+| `convergence_study.py` | **메쉬 수렴성 스터디** 도구(생성/실행스크립트/집계) |
 | `postprocess.py` | `.odb`에서 관통력–침투깊이 곡선 추출 |
 | `ANALYSIS_PLAN.md` | 문헌 기반 해석 방안 |
 | `BUILD_AND_RUN.md` | **서브루틴 컴파일·실행 가이드** (Windows 로컬 / Linux 클러스터) |
@@ -253,3 +258,76 @@ abaqus python postprocess.py ref04.odb
 - 세 모델 모두 물성·치수는 **예시값**이며 실제 데이터로 보정 필요.
 - 연조직·얇은 각질층으로 안정증분이 작으므로 질량 스케일링 사용 시
   반드시 `ALLKE ≪ ALLIE` (준정적성)를 확인하세요.
+
+---
+
+## 9. 고급 기능 (파단에너지 정규화 · 수렴성 · ALE · Cohesive)
+
+### 9.1 파단에너지 정규화 VUMAT — `vumat_skin_reg.f`
+요소 삭제 손상의 **메쉬 크기 의존성**을 없애는 정공법입니다. 손상 진전을
+요소 특성길이(`charLength`)로 정규화(Hillerborg crack-band)하여, 파단에
+소산되는 **단위면적당 에너지가 메쉬와 무관**하도록 만듭니다.
+
+- PROPS(=4): `C10, D1, lam_d, uf` — 4번째가 파단신축비 대신 **파단
+  개구변위 `uf`[mm]**(에너지 파라미터, `G ≈ 0.5·σ0·uf`).
+- 등가 개구변위 `w = charLength·max(0, λ̂−lam_d)`, 손상 `D = w/uf`.
+  요소가 작아지면 같은 D 도달에 더 큰 λ 가 필요 → 에너지 일정.
+
+```bash
+# 04 경로세밀 격자를 에너지정규화 재료로 생성해 실행하려면
+python -c "import gen_refined_axi as g; g.generate('04r_reg.inp', reg=True)"
+abaqus job=r04reg input=04r_reg.inp user=vumat_skin_reg.f double=both cpus=4
+```
+
+### 9.2 메쉬 수렴성 스터디 — `convergence_study.py`
+여러 해상도의 입력파일을 자동 생성하고, 실행 후 산출된 `*_fd.csv` 들을
+모아 **peak 관통력 vs 메쉬 크기** 수렴 곡선을 만듭니다.
+
+```bash
+# 1) 생성 (변형률기반 / 파단에너지정규화)
+python convergence_study.py gen            # 또는  gen --reg
+#    -> conv_r0.060.inp ... conv_r0.015.inp, run_convergence.sh/.bat
+# 2) 실행 (Abaqus 환경)
+bash run_convergence.sh                     # Windows: run_convergence.bat
+# 3) 집계/그래프
+python convergence_study.py agg
+#    -> convergence.csv, convergence.png, "2 finest 상대변화 %" 출력
+```
+정규화 재료(`--reg`)와 변형률기반을 각각 돌려 비교하면, **정규화 쪽이
+메쉬 세밀화에 따라 peak force 가 더 빨리 수렴**함을 확인할 수 있습니다.
+
+### 9.3 ALE 적응메쉬 — `06_ale_indentation.inp`
+`*ADAPTIVE MESH` 는 **위상을 유지한 채 절점만 재배치**해 압입 단계의
+요소 왜곡을 억제합니다(절개는 못 만듦 — 앞선 리메쉬 답변 참조). 따라서
+본 예시는 **요소 삭제 없이 깊은 압입(0.6 mm)** 만 모사하여 ALE 효과를
+보입니다. 벌크는 **내장 Neo-Hookean → 서브루틴 불필요**.
+
+```bash
+abaqus job=ale06 input=06_ale_indentation.inp double=both cpus=4
+```
+> 실제 관통(절개)은 요소 삭제(01/04) 또는 cohesive(07) 로 처리하고,
+> ALE 는 관통 전 왜곡으로 해석이 중단될 때 벌크 안정화 보조로 병용합니다.
+
+### 9.4 Cohesive 절개 대안 — `07_cohesive_cut.inp` (+`gen_cohesive.py`)
+요소 삭제 대신 **사전 정의된 균열면(중앙 x=0)에 두께-0 cohesive 층**을
+두고, 강체 쐐기가 내려오며 견인-분리(traction–separation + 에너지손상)로
+조직을 가릅니다. 벌크는 내장 Neo-Hookean → **서브루틴 불필요**.
+
+- 균열 경로가 정해져 **지그재그·질량손실이 없고** 파단에너지 `Gc` 를
+  물리량으로 직접 입력(`*DAMAGE EVOLUTION, TYPE=ENERGY`).
+- 평면변형(CPE4R 벌크 + COH2D4 cohesive), 좌/우 블록이 중앙 cohesive 로
+  결합되었다가 손상 시 분리·삭제되어 쐐기가 진입.
+- 한계: 균열 경로를 미리 알아야 함(직선 삽입에 적합).
+
+```bash
+python gen_cohesive.py                       # -> 07_cohesive_cut.inp
+abaqus job=coh07 input=07_cohesive_cut.inp double=both cpus=4
+```
+
+### 절개(분리) 방법 선택 가이드
+| 방법 | 파일 | 서브루틴 | 경로 자유도 | 특징 |
+|------|------|:--:|:--:|------|
+| 요소 삭제 | 01/04 | 필요(VUMAT) | 자유 | 표준·강건, 메쉬 의존·질량손실 |
+| 요소 삭제+에너지정규화 | `vumat_skin_reg.f` | 필요 | 자유 | 메쉬 객관적 손상 |
+| ALE(왜곡완화, 절개 X) | 06 | 불필요 | — | 압입 안정화 보조 |
+| Cohesive | 07 | 불필요 | **사전정의** | 경로 정확·에너지 물리량, 경로 고정 |

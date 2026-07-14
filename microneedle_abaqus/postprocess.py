@@ -57,14 +57,17 @@ def extract(odb_path):
 
 
 def main():
+    import os
     odb_path = sys.argv[1] if len(sys.argv) > 1 else 'microneedle.odb'
+    base = os.path.splitext(os.path.basename(odb_path))[0]
     rows = extract(odb_path)
 
-    with open('force_displacement.csv', 'w') as f:
+    csv_name = base + '_fd.csv'
+    with open(csv_name, 'w') as f:
         f.write('time_s,depth_mm,force_N\n')
         for t, d, p in rows:
             f.write('%.6e,%.6e,%.6e\n' % (t, d, p))
-    print('wrote force_displacement.csv (%d points)' % len(rows))
+    print('wrote %s (%d points)' % (csv_name, len(rows)))
 
     # 관통 개시(peak) 지점 리포트
     if rows:
@@ -81,11 +84,11 @@ def main():
         plt.plot(d, p, '-b', lw=1.6)
         plt.xlabel('Penetration depth [mm]')
         plt.ylabel('Insertion force [N]')
-        plt.title('Microneedle insertion force-depth')
+        plt.title('Insertion force-depth: ' + base)
         plt.grid(True, ls=':')
         plt.tight_layout()
-        plt.savefig('force_displacement.png', dpi=150)
-        print('wrote force_displacement.png')
+        plt.savefig(base + '_fd.png', dpi=150)
+        print('wrote %s_fd.png' % base)
     except Exception as e:
         print('plot skipped: %s' % e)
 
