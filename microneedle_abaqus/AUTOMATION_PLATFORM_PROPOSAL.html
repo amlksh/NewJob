@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Abaqus × Claude 자동화 플랫폼 — 기능 검토 및 제안서</title><style>
+:root{color-scheme:light dark}
+*{box-sizing:border-box}
+body{margin:0;padding:0;background:#f7f7f8;color:#1a1a1a;
+ font-family:-apple-system,"Segoe UI","Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+ line-height:1.7;font-size:16px}
+.wrap{max-width:900px;margin:0 auto;padding:40px 24px 80px;background:#fff;
+ box-shadow:0 0 0 1px #eee}
+h1,h2,h3,h4{line-height:1.3;margin:1.6em 0 .6em;font-weight:700}
+h1{font-size:2em;border-bottom:3px solid #2b6cb0;padding-bottom:.3em;margin-top:0}
+h2{font-size:1.5em;border-bottom:1px solid #e2e8f0;padding-bottom:.25em;color:#2b6cb0}
+h3{font-size:1.2em}h4{font-size:1.05em;color:#444}
+p{margin:.7em 0}
+a{color:#2b6cb0;text-decoration:none}a:hover{text-decoration:underline}
+code{background:#eef1f5;padding:.12em .38em;border-radius:4px;
+ font-family:"Consolas","SFMono-Regular",Menlo,monospace;font-size:.9em;color:#c026a0}
+pre{background:#1e293b;color:#e2e8f0;padding:16px 18px;border-radius:8px;
+ overflow-x:auto;line-height:1.5}
+pre code{background:none;color:inherit;padding:0}
+blockquote{margin:1em 0;padding:.6em 1em;border-left:4px solid #f0b429;
+ background:#fffbeb;color:#5b4a12;border-radius:0 6px 6px 0}
+blockquote code{background:#fdf3d0}
+ul,ol{margin:.6em 0;padding-left:1.6em}li{margin:.25em 0}
+hr{border:none;border-top:1px solid #e2e8f0;margin:2em 0}
+.tablewrap{overflow-x:auto;margin:1em 0}
+.svgbox{overflow-x:auto;margin:1.2em 0;border:1px solid #e2e8f0;border-radius:10px;background:#fff;padding:6px}
+.svgbox svg{display:block;min-width:900px}
+table{border-collapse:collapse;width:100%;font-size:.95em}
+th,td{border:1px solid #dfe3e8;padding:8px 12px;text-align:left;vertical-align:top}
+th{background:#2b6cb0;color:#fff;font-weight:600}
+tr:nth-child(even) td{background:#f6f8fa}
+@media print{body{background:#fff}.wrap{box-shadow:none;max-width:100%}
+ pre{background:#f2f2f2;color:#111;border:1px solid #ccc}
+ th{background:#ccc;color:#000}}
+@media (max-width:640px){.wrap{padding:20px 14px}body{font-size:15px}}
+</style></head><body><div class="wrap"><h1>Abaqus × Claude 자동화 플랫폼 — 기능 검토 및 제안서</h1>
+<blockquote><strong>비전</strong>: 사용자가 <strong>프로젝트명</strong>과 <strong>Claude 환경(챗봇 / 협업 / 코드)</strong> 을 고르면, Abaqus–서브루틴 연계 해석·자동화·<strong>보고서 자동생성</strong>이 바로 가능한 작업공간이 만들어지고, <strong>GitHub·PowerShell·툴 업데이트 등 환경 셋업까지 배치파일 한 번</strong>으로 끝나는 시스템.</blockquote>
+<p>이 문서는 그 시스템을 만들기 위해 <strong>추가로 필요한 기능</strong>을 검토·제안합니다. 우선순위: <strong>P0</strong>(최소기능·필수) / <strong>P1</strong>(핵심 확장) / <strong>P2</strong>(고도화).</p>
+<hr>
+<h2>1. 사용자 플로우 (목표 경험)</h2>
+<pre><code>[실행] setup.bat
+   │
+   ├─ (대화형) 프로젝트명 입력  ─────────────┐
+   ├─ (대화형) Claude 환경 선택               │  chatbot / collab / code
+   │                                          │
+   ├─ 1) 환경 점검·자동설치 (Git/PS7/Claude/Python/WT)
+   ├─ 2) GitHub 연결 (repo 생성·인증)
+   ├─ 3) Abaqus·컴파일러 연동 검증
+   ├─ 4) 프로젝트 스캐폴딩 (폴더·템플릿·CLAUDE.md)
+   ├─ 5) Claude 환경 프로파일 적용 (권한/훅/MCP)
+   └─ 6) 셀프체크 리포트 (무엇이 OK/누락)
+   ▼
+[준비완료] → 해석 실행·자동화·보고서 생성 사용</code></pre>
+<hr>
+<h2>2. 추가 제안 기능 (카테고리별)</h2>
+<h3>A. 원클릭 환경 부트스트랩 (배치/PowerShell)</h3>
+<div class="tablewrap"><table><thead><tr><th>#</th><th>기능</th><th>우선</th></tr></thead><tbody><tr><td>A1</td><td><strong>사전점검</strong>: OS 버전·관리자권한·디스크·네트워크 정책 확인</td><td>P0</td></tr><tr><td>A2</td><td><strong>툴 자동설치</strong>(winget): Git, <strong>PowerShell 7</strong>, Windows Terminal, Python, Claude Code CLI</td><td>P0</td></tr><tr><td>A3</td><td><strong>PATH 자동등록</strong>(<code>.local\bin</code> 등) + 터미널 VT 활성화</td><td>P0</td></tr><tr><td>A4</td><td><strong>멱등성</strong>: 여러 번 실행해도 안전(이미 있으면 스킵)</td><td>P0</td></tr><tr><td>A5</td><td><strong>로그 + 실패 롤백/재시도</strong>(지수 백오프), <code>--dry-run</code> 모드</td><td>P1</td></tr><tr><td>A6</td><td><strong>버전 업데이트 모드</strong>: 설치된 툴 최신화(<code>winget upgrade</code>, <code>pip</code>, <code>gh</code>)</td><td>P1</td></tr><tr><td>A7</td><td><strong>환경 드리프트 감지</strong>: Abaqus 재설치로 컴파일러 주입이 사라졌는지 등 점검·재적용</td><td>P2</td></tr></tbody></table></div>
+<h3>B. GitHub 연동</h3>
+<div class="tablewrap"><table><thead><tr><th>#</th><th>기능</th><th>우선</th></tr></thead><tbody><tr><td>B1</td><td>Git 전역 config(user, credential manager, <code>core.longpaths</code>, autocrlf)</td><td>P0</td></tr><tr><td>B2</td><td><strong>인증</strong>: <code>gh auth login</code> 또는 SSH 키 생성·등록</td><td>P0</td></tr><tr><td>B3</td><td>프로젝트 <strong>repo 자동 생성</strong>·초기 push, 브랜치 전략 세팅</td><td>P1</td></tr><tr><td>B4</td><td><strong>PR 템플릿·CODEOWNERS·라벨</strong> 배치</td><td>P1</td></tr><tr><td>B5</td><td><strong>GitHub Actions CI</strong>: inp 린트/스모크 잡(가능하면 셀프호스트 러너로 실제 해석)</td><td>P2</td></tr></tbody></table></div>
+<h3>C. Claude 환경 프로파일 (챗봇/협업/코드)</h3>
+<div class="tablewrap"><table><thead><tr><th>#</th><th>기능</th><th>우선</th></tr></thead><tbody><tr><td>C1</td><td><strong>code 모드</strong>: <code>settings.json</code>(권한 allowlist: <code>abaqus*</code>,<code>python*</code>,<code>git*</code>), 훅, MCP(github) 연결</td><td>P0</td></tr><tr><td>C2</td><td><strong>collab 모드</strong>: PR 리뷰 훅, CI 연동, 팀 규칙(CLAUDE.md), 리뷰 체크리스트</td><td>P1</td></tr><tr><td>C3</td><td><strong>chatbot 모드</strong>: 프로젝트 문서/이론/매뉴얼을 지식베이스로 묶어 Q&amp;A(로컬 문서 인덱스)</td><td>P1</td></tr><tr><td>C4</td><td>모드별 <strong>자동승인 세트</strong>(반복 안전명령) → 승인 피로 감소</td><td>P0</td></tr><tr><td>C5</td><td><strong>hooks</strong>: 커밋 전 inp 린트, 잡 완료 시 알림/리포트 자동생성</td><td>P1</td></tr></tbody></table></div>
+<h3>D. Abaqus–서브루틴 연계·자동화</h3>
+<div class="tablewrap"><table><thead><tr><th>#</th><th>기능</th><th>우선</th></tr></thead><tbody><tr><td>D1</td><td><strong>잡 실행 래퍼</strong>: <code>verify</code> → 컴파일 → 실행 → 상태폴링(.sta) → 완료판정 → 요약</td><td>P0</td></tr><tr><td>D2</td><td><strong>에러 자동진단</strong>: <code>.dat</code>/<code>.msg</code> 파싱 → 알려진 오류 패턴 매칭 → 수정 제안 (예: *SURFACE INTERACTION 위치, double=both 누락)</td><td>P0</td></tr><tr><td>D3</td><td><strong>라이선스 인지 스케줄러</strong>: <code>licensing ru</code> 확인 후 토큰 가능할 때 실행/대기</td><td>P1</td></tr><tr><td>D4</td><td><strong>파라메트릭/DOE</strong>: 물성·형상·메쉬 스윕 일반화(현 <code>convergence_study</code> 확장)</td><td>P1</td></tr><tr><td>D5</td><td><strong>배치 큐</strong>: 다중 잡 순차/병렬, 실패 격리, 재시작(restart)</td><td>P1</td></tr><tr><td>D6</td><td><strong>서브루틴 스켈레톤 생성기</strong>: VUMAT/UMAT/UMATHT/DFLUX/VDLOAD 템플릿 + 단위계·상태변수</td><td>P1</td></tr><tr><td>D7</td><td><strong>열-구조 등 다물리 연계</strong> 템플릿(예: UMATHT+VUMAT)</td><td>P2</td></tr></tbody></table></div>
+<h3>E. 보고서 자동화</h3>
+<div class="tablewrap"><table><thead><tr><th>#</th><th>기능</th><th>우선</th></tr></thead><tbody><tr><td>E1</td><td>결과 수집→표·그래프→<strong>템플릿 리포트</strong>(HTML/PDF) 자동 생성(현 <code>postprocess</code>+<code>md2html</code> 확장)</td><td>P0</td></tr><tr><td>E2</td><td><strong>이미지 자동추출</strong> 일반화(현 <code>odb_snapshot</code>: 임의 변수/뷰/스텝/애니메이션 GIF)</td><td>P0</td></tr><tr><td>E3</td><td><strong>리포트 템플릿</strong>: 표지·요약·물성·메쉬·결과·검증·결론 + 로고/작성자/버전</td><td>P1</td></tr><tr><td>E4</td><td><strong>비교 리포트</strong>(케이스 A vs B, 수렴성, 실험 대조)</td><td>P1</td></tr><tr><td>E5</td><td>PPTX/DOCX 출력, 다이어그램/마인드맵 자동첨부(현 <code>gen_mindmap</code>)</td><td>P2</td></tr></tbody></table></div>
+<h3>F. 품질·검증·거버넌스</h3>
+<div class="tablewrap"><table><thead><tr><th>#</th><th>기능</th><th>우선</th></tr></thead><tbody><tr><td>F1</td><td><strong>입력파일 린터</strong>: 우리가 겪은 규칙(*SURFACE INTERACTION 모델데이터, DEPVAR/DELETE, double=both)을 사전 점검</td><td>P0</td></tr><tr><td>F2</td><td><strong>서브루틴 단위테스트</strong>: 단일요소 vs 해석해 자동 비교</td><td>P1</td></tr><tr><td>F3</td><td><strong>회귀테스트</strong>: 골든 결과 저장·diff(물성/버전 바뀌어도 안전)</td><td>P1</td></tr><tr><td>F4</td><td><strong>준정적성/에너지 밸런스 게이트</strong>(현 postprocess의 ALLKE/ALLIE 판정을 합격/불합격 기준으로)</td><td>P1</td></tr></tbody></table></div>
+<h3>G. 안전·신뢰성 (배치 개발 필수 원칙)</h3>
+<ul><li><strong>관리자권한 필요 항목 분리</strong>(자동설치 vs 안내), 실패해도 이어가기</li><li><strong>비밀정보 안전저장</strong>: 토큰은 Windows Credential Manager/<code>gh</code> 사용(평문 금지)</li><li><strong>네트워크 정책 인지</strong>: 사내 프록시/오프라인 환경에서의 대체 경로</li><li><strong>모든 단계 로깅</strong> + 최종 <strong>셀프체크 표</strong>(OK/누락/조치)</li></ul>
+<hr>
+<h2>3. 제안 배치 아키텍처 (모듈식)</h2>
+<pre><code>setup.bat                     ← 진입점(관리자 권한 요청, PS7 없으면 5.1로 부트스트랩)
+ └ bootstrap.ps1 -Project &lt;name&gt; -Mode &lt;code|collab|chatbot&gt; [-Update] [-DryRun]
+     ├ 00_preflight.ps1       OS·권한·디스크·네트워크
+     ├ 10_tools.ps1           winget: git, pwsh7, terminal, python, claude
+     ├ 20_git_github.ps1      git config, gh auth, repo 생성/연결
+     ├ 30_claude_profile.ps1  settings.json/훅/MCP/권한 (모드별)
+     ├ 40_abaqus_verify.ps1   info=system, verify -user_*, licensing ru
+     ├ 50_scaffold.ps1        프로젝트 폴더·템플릿·CLAUDE.md·.gitignore
+     └ 90_selfcheck.ps1       최종 점검 리포트(HTML)</code></pre>
+<p><strong>설계 원칙</strong>: 각 모듈 <strong>멱등</strong>, 실패 시 <strong>명확한 메시지+건너뛰기</strong>, 전 과정 로그(<code>setup_YYYYMMDD.log</code>), <code>-DryRun</code>으로 미리보기, <code>-Update</code>로 유지보수.</p>
+<hr>
+<h2>4. 자동화가 "안 되는/조심할" 항목 (정직한 한계)</h2>
+<div class="tablewrap"><table><thead><tr><th>항목</th><th>이유</th><th>대안</th></tr></thead><tbody><tr><td><strong>Intel oneAPI + Visual Studio 설치</strong></td><td>대용량·라이선스·관리자, 무인설치 취약</td><td><strong>탐지 + 설치 안내</strong>(자동설치는 옵션)</td></tr><tr><td><strong>Abaqus 본체·라이선스 서버</strong></td><td>사내 배포·라이선스 정책</td><td><strong>탐지·검증만</strong>, 없으면 담당자 안내</td></tr><tr><td><strong>Claude 로그인</strong></td><td>브라우저 대화형 인증</td><td>배치는 여기서 잠깐 멈춰 안내</td></tr><tr><td><strong>컴파일러 드라이버 주입 복원</strong></td><td>사이트별 상이</td><td>드리프트 감지 후 <strong>재적용 스크립트 제공</strong></td></tr></tbody></table></div>
+<blockquote>즉 배치는 "<strong>되는 건 자동, 안 되는 건 정확히 탐지·안내</strong>"가 원칙입니다.</blockquote>
+<hr>
+<h2>5. 단계별 로드맵</h2>
+<ul><li><strong>Phase 1 (P0, 1차 목표)</strong> — <code>setup.bat</code> + <code>bootstrap.ps1</code>(A1~A4, B1~B2, C1/C4,</li></ul>
+<p>  D1~D2, E1~E2, F1) + 프로젝트 스캐폴딩. <strong>"원클릭 셋업→해석→기본 리포트"</strong> 완성.</p>
+<ul><li><strong>Phase 2 (P1)</strong> — GitHub repo/CI, 파라메트릭/DOE, 배치 큐, 리포트 템플릿,</li></ul>
+<p>  단위/회귀 테스트, chatbot·collab 모드.</p>
+<ul><li><strong>Phase 3 (P2)</strong> — 다물리 연계, PPTX/DOCX, Actions 셀프호스트 실제 해석,</li></ul>
+<p>  드리프트 자동복원, 최적화 루프.</p>
+<hr>
+<h2>6. 이미 만든 자산 재사용 (바로 편입 가능)</h2>
+<div class="tablewrap"><table><thead><tr><th>기존 산출물</th><th>플랫폼에서의 역할</th></tr></thead><tbody><tr><td><code>postprocess.py</code></td><td>E1 리포트 코어(힘-깊이·준정적성·삭제)</td></tr><tr><td><code>odb_snapshot.py</code></td><td>E2 이미지 자동추출</td></tr><tr><td><code>gen_mindmap.py</code>·<code>md2html.py</code></td><td>E5 다이어그램·HTML 리포트</td></tr><tr><td><code>convergence_study.py</code></td><td>D4 파라메트릭 스터디</td></tr><tr><td><code>BUILD_AND_RUN.md</code>·<code>USER_MANUAL</code></td><td>C3 챗봇 지식베이스</td></tr><tr><td>VUMAT <code>.f</code>들</td><td>D6 서브루틴 템플릿</td></tr><tr><td>(경험) *SURFACE INTERACTION 오류</td><td>F1 린터 규칙 1호</td></tr></tbody></table></div>
+<hr>
+<h2>7. 권고</h2>
+<p>**Phase 1의 <code>setup.bat</code> + <code>bootstrap.ps1</code>(멱등·로그·셀프체크)<strong> 부터 만드는 것을 권합니다. 실제로 이번 세션에서 겪은 </strong>PATH·터미널·라이선스·입력파일 오류**가 그대로 자동점검 항목이 되므로, 초기 버전만으로도 온보딩 시간이 크게 줄어듭니다.</p>
+<blockquote>다음 단계로 어떤 걸 만들지 알려주시면 (예: <strong>P0 부트스트랩 배치 초안</strong>, <strong>입력파일 린터</strong>, <strong>리포트 템플릿 엔진</strong>) 바로 구현에 들어가겠습니다.</blockquote></div></body></html>
