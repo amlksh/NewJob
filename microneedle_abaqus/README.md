@@ -31,6 +31,7 @@ VUMAT 안에 구현하여, 니들이 조직을 절개하며 전진하는 과정�
 | `postprocess.py` | `.odb`에서 관통력–침투깊이 곡선 추출 |
 | `ANALYSIS_PLAN.md` | 문헌 기반 해석 방안 |
 | `BUILD_AND_RUN.md` | **서브루틴 컴파일·실행 가이드** (Windows 로컬 / Linux 클러스터) |
+| `USER_MANUAL_Claude_Abaqus.md` | **동료 공유용 매뉴얼** — Claude로 Abaqus 서브루틴 해석하기(기초 환경설정→실전) |
 | `README.md` | 본 문서 |
 
 > **실행 환경**: VUMAT은 실행 시 Fortran 컴파일러(Intel oneAPI `ifort`/`ifx`)로
