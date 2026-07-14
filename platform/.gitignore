@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+setup_*.log
+report_preview.png

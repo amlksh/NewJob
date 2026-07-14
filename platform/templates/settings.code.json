@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(abaqus:*)",
+      "Bash(python:*)",
+      "Bash(py:*)",
+      "Bash(git status:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git push:*)",
+      "Bash(git pull:*)",
+      "Bash(dir:*)",
+      "Bash(type:*)",
+      "Bash(findstr:*)",
+      "Read(*)",
+      "Edit(*)",
+      "Write(*)"
+    ],
+    "deny": [
+      "Bash(del /s:*)",
+      "Bash(rmdir /s:*)",
+      "Bash(format:*)"
+    ]
+  }
+}

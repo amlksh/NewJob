@@ -1,0 +1,30 @@
+# {{PROJECT}} — 프로젝트 지침 (CLAUDE.md)
+
+이 파일은 Claude가 이 프로젝트에서 작업할 때 지켜야 할 규칙입니다.
+
+## 프로젝트 개요
+- 목적: (Abaqus 사용자 서브루틴 연계 해석)
+- 해석 유형: (VUMAT / UMAT / UMATHT ...)
+- 단위계: mm, N, MPa, tonne, s (일관 단위)
+
+## 폴더 구조
+- `inp/` 입력파일(.inp)   · `subroutines/` 서브루틴(.f)
+- `scripts/` 자동화·후처리 · `results/` odb 등 산출물(git 무시)
+- `reports/` 보고서        · `docs/` 문서
+
+## 해석 실행 규칙 (중요)
+- 서브루틴 잡은 항상 **`user=..f double=both`**.
+- 실행 전 **`python scripts/inp_lint.py inp/<파일>.inp`** 로 린트.
+- 장시간 잡은 `interactive` 로 완료 확인, 완료 후 `scripts/postprocess.py`.
+- Explicit 해석은 실행 전 `abaqus licensing ru` 로 토큰 확인.
+
+## 입력파일 필수 규칙 (린터가 점검)
+- `*SURFACE INTERACTION` 은 **첫 `*STEP` 앞(모델 데이터)** 에 정의.
+- `*DEPVAR, DELETE=k` 의 k ≤ SDV 개수.
+
+## 서브루틴 규칙
+- 고정형식 `.f`(7열부터 코드), `include 'vaba_param.inc'`.
+- 응력은 동회전 좌표계로 반환. 상태변수는 `*DEPVAR`로 선언.
+
+## 보고서
+- `python scripts/report.py --job <job> --project "{{PROJECT}}"` 로 자동 생성.
