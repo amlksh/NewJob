@@ -16,28 +16,41 @@ import sys
 from odbAccess import openOdb
 
 
+def _find_reg(step):
+    """니들 참조점 히스토리 영역과 하강방향 성분(U2/RF2 또는 U3/RF3)을 탐색."""
+    for name, hr in step.historyRegions.items():
+        ho = hr.historyOutputs
+        for u, rf in (('U3', 'RF3'), ('U2', 'RF2')):
+            if (u in ho) and (rf in ho):
+                return hr, u, rf
+    return None, None, None
+
+
 def extract(odb_path):
     odb = openOdb(odb_path, readOnly=True)
-    step = odb.steps['PENETRATION']
 
-    # 니들 참조점 히스토리 영역 탐색
-    reg = None
-    for name, hr in step.historyRegions.items():
-        if ('U2' in hr.historyOutputs) and ('RF2' in hr.historyOutputs):
-            reg = hr
-            break
+    # 삽입 스텝 자동 선택 (INSERTION > PENETRATION > 마지막 스텝)
+    names = list(odb.steps.keys())
+    if 'INSERTION' in names:
+        step = odb.steps['INSERTION']
+    elif 'PENETRATION' in names:
+        step = odb.steps['PENETRATION']
+    else:
+        step = odb.steps[names[-1]]
+
+    reg, uc, rfc = _find_reg(step)
     if reg is None:
-        raise RuntimeError('RF2/U2 history output not found - '
-                           'check *NODE OUTPUT for NREF')
+        raise RuntimeError('RF/U history output for NREF not found - '
+                           'check *NODE OUTPUT (U2/RF2 or U3/RF3)')
 
-    u2 = dict(reg.historyOutputs['U2'].data)
-    rf2 = dict(reg.historyOutputs['RF2'].data)
+    uu = dict(reg.historyOutputs[uc].data)
+    rr = dict(reg.historyOutputs[rfc].data)
 
     rows = []
-    for t in sorted(u2.keys()):
-        if t in rf2:
-            depth = -u2[t]          # 하강(+) 침투깊이
-            force = -rf2[t]          # 조직이 니들에 가하는 저항력(+)
+    for t in sorted(uu.keys()):
+        if t in rr:
+            depth = -uu[t]          # 하강(+) 침투깊이
+            force = -rr[t]           # 조직이 니들에 가하는 저항력(+)
             rows.append((t, depth, force))
     odb.close()
     return rows

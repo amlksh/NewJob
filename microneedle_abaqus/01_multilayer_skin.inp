@@ -1,0 +1,169 @@
+*HEADING
+(a) Multilayer skin microneedle penetration - CAX4R + VUMAT
+Layers: stratum corneum / epidermis / dermis  (axisymmetric, r=X z=Y)
+Units: mm, N, MPa, tonne, s
+**
+** ============================================================
+**  절점 격자 (열 21개, 열증분 1 / 행증분 140)
+**  z-레벨 : 진피 0.0->1.40 (14행) / 표피 1.40->1.48 (4행)
+**           각질층 1.48->1.50 (4행)   총 22 요소행, 23 절점행
+** ============================================================
+*NODE
+      1,   0.0,   0.00
+     21,   2.0,   0.00
+   1961,   0.0,   1.40
+   1981,   2.0,   1.40
+   2521,   0.0,   1.48
+   2541,   2.0,   1.48
+   3081,   0.0,   1.50
+   3101,   2.0,   1.50
+*NGEN, NSET=R0
+      1,     21,   1
+*NGEN, NSET=R14
+   1961,   1981,   1
+*NGEN, NSET=R18
+   2521,   2541,   1
+*NGEN, NSET=R22
+   3081,   3101,   1
+*NFILL, NSET=NDERM
+R0,  R14, 14, 140
+*NFILL, NSET=NEPI
+R14, R18,  4, 140
+*NFILL, NSET=NSC
+R18, R22,  4, 140
+**
+** --- 경계 절점 집합 ---
+*NSET, NSET=NBOT
+R0,
+*NSET, NSET=NAXIS, GENERATE
+      1,   3081, 140
+*NSET, NSET=NRIGHT, GENERATE
+     21,   3101, 140
+**
+** ============================================================
+**  요소 (층별 ELSET)
+** ============================================================
+*ELEMENT, TYPE=CAX4R
+   1,  1,  2, 142, 141
+*ELGEN, ELSET=DERMIS
+   1,  20, 1, 1,  14, 140, 100
+**
+*ELEMENT, TYPE=CAX4R
+   1401,  1961, 1962, 2102, 2101
+*ELGEN, ELSET=EPIDERMIS
+   1401,  20, 1, 1,  4, 140, 100
+**
+*ELEMENT, TYPE=CAX4R
+   1801,  2521, 2522, 2662, 2661
+*ELGEN, ELSET=STRATUM
+   1801,  20, 1, 1,  4, 140, 100
+**
+*ELSET, ELSET=SKIN_ALL
+DERMIS, EPIDERMIS, STRATUM
+*SURFACE, TYPE=ELEMENT, NAME=SKIN_SURF
+SKIN_ALL,
+**
+** ============================================================
+**  강체 마이크로니들 (해석적 강체, 원뿔형)
+** ============================================================
+*NODE
+   9999,   0.0,   1.52
+*NSET, NSET=NREF
+   9999,
+*SURFACE, TYPE=SEGMENTS, NAME=NEEDLE, FILLET RADIUS=0.01
+START,   0.02,  1.52
+LINE,    0.15,  1.90
+LINE,    0.15,  3.50
+*RIGID BODY, ANALYTICAL SURFACE=NEEDLE, REF NODE=NREF
+**
+** ============================================================
+**  층별 재료 (VUMAT: Neo-Hookean + 주신축비 손상/삭제)
+**  각질층: 딱딱·저파단  / 표피: 중간 / 진피: 무름·고파단
+**    PROPS = C10[MPa], D1[1/MPa], lam_d, lam_f
+** ============================================================
+*MATERIAL, NAME=MAT_SC
+*DENSITY
+1.2e-9,
+*USER MATERIAL, CONSTANTS=4
+1.0, 0.02, 1.2, 1.5
+*DEPVAR, DELETE=1
+4
+1, DELFLAG, deletion flag
+2, LAMMAX,  max principal stretch
+3, DAMAGE,  damage variable
+4, JVOL,    relative volume
+**
+*MATERIAL, NAME=MAT_EPI
+*DENSITY
+1.1e-9,
+*USER MATERIAL, CONSTANTS=4
+0.1, 0.1, 1.4, 1.9
+*DEPVAR, DELETE=1
+4
+1, DELFLAG, deletion flag
+2, LAMMAX,  max principal stretch
+3, DAMAGE,  damage variable
+4, JVOL,    relative volume
+**
+*MATERIAL, NAME=MAT_DERM
+*DENSITY
+1.1e-9,
+*USER MATERIAL, CONSTANTS=4
+0.02, 1.0, 1.6, 2.5
+*DEPVAR, DELETE=1
+4
+1, DELFLAG, deletion flag
+2, LAMMAX,  max principal stretch
+3, DAMAGE,  damage variable
+4, JVOL,    relative volume
+**
+*SOLID SECTION, ELSET=STRATUM,   MATERIAL=MAT_SC
+*SOLID SECTION, ELSET=EPIDERMIS, MATERIAL=MAT_EPI
+*SOLID SECTION, ELSET=DERMIS,    MATERIAL=MAT_DERM
+**
+** ============================================================
+**  경계조건
+** ============================================================
+*BOUNDARY
+NBOT,   2, 2
+NAXIS,  1, 1
+NRIGHT, 1, 1
+NREF,   1, 1
+NREF,   6, 6
+**
+*AMPLITUDE, NAME=PUSH, DEFINITION=SMOOTH STEP
+0.0, 0.0, 0.01, 1.0
+**
+** ============================================================
+**  스텝
+** ============================================================
+*STEP, NAME=PENETRATION
+*DYNAMIC, EXPLICIT
+, 0.01
+** 얇고 딱딱한 각질층 때문에 안정증분이 작음 -> 질량 스케일링
+*FIXED MASS SCALING, DT=2.0e-7, TYPE=BELOW MIN
+**
+*BOUNDARY, AMPLITUDE=PUSH
+NREF, 2, 2, -1.2
+**
+*CONTACT
+*CONTACT INCLUSIONS, ALL EXTERIOR
+*CONTACT INCLUSIONS
+NEEDLE, SKIN_SURF
+*CONTACT PROPERTY ASSIGNMENT
+ ,  , IPROP
+*SURFACE INTERACTION, NAME=IPROP
+*FRICTION
+0.1,
+**
+*OUTPUT, FIELD, NUMBER INTERVAL=25
+*ELEMENT OUTPUT, ELSET=SKIN_ALL
+S, LE, SDV, STATUS
+*NODE OUTPUT
+U, V
+*OUTPUT, HISTORY, TIME INTERVAL=1.0e-4
+*NODE OUTPUT, NSET=NREF
+U2, V2, RF2
+*ENERGY OUTPUT
+ALLIE, ALLKE, ALLSE, ALLWK
+*END STEP
