@@ -37,15 +37,25 @@ setup.bat microneedle code
 REM 미리보기(변경 없음) / 툴 최신화
 setup.bat microneedle code -DryRun
 setup.bat -Update
+
+REM GitHub 저장소 자동생성·push (gh 인증 필요)
+setup.bat microneedle code -GitHub owner/microneedle
+
+REM 스캐폴딩 되돌리기(undo)
+setup.bat microneedle -Rollback
 ```
+> **재시도·롤백**: winget/Claude 설치·git push 등 네트워크 작업은 실패 시
+> 지수 백오프(2/4/8/16s)로 최대 4회 재시도. 스캐폴딩 중 오류가 나면
+> **새로 만든 프로젝트 폴더를 자동 롤백**(기존 폴더는 보존).
 하는 일(멱등·로그·롤백):
 1. **사전점검** OS·권한·디스크
 2. **툴 설치**(winget): Git·PowerShell7·Windows Terminal·Python·Claude Code
 3. **PATH** `.local\bin` 등록
 4. **Git/GitHub** 전역설정·`gh` 인증 확인
 5. **Abaqus 검증** `verify -user_explicit`·라이선스 토큰
-6. **프로젝트 스캐폴딩** 폴더·CLAUDE.md·.gitignore·서브루틴 템플릿·`.claude/settings.json`·도구 복사·git init
-7. **셀프체크 리포트**(HTML) 자동 생성·열기
+6. **프로젝트 스캐폴딩** 폴더·CLAUDE.md·.gitignore·서브루틴 템플릿·`.claude/settings.json`·도구 복사·git init (실패 시 자동 롤백)
+7. **(옵션) GitHub 저장소** `-GitHub owner/name` 이면 repo 생성·push
+8. **셀프체크 리포트**(HTML) 자동 생성·열기
 
 > Abaqus·Intel oneAPI·Visual Studio는 대용량·라이선스라 **탐지·검증만** 하고,
 > 없으면 안내합니다(자동설치 안 함). Claude 로그인은 브라우저 대화형.

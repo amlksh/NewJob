@@ -7,6 +7,9 @@ REM    setup.bat                         (대화형: 프로젝트명/모드 물�
 REM    setup.bat MyProject code          (프로젝트명, 모드 지정)
 REM    setup.bat MyProject code -DryRun  (미리보기, 실제 변경 없음)
 REM    setup.bat -Update                 (설치된 툴 최신화)
+REM    setup.bat MyProject code -GitHub owner/name   (repo 자동생성·push)
+REM    setup.bat MyProject -Rollback     (스캐폴딩한 폴더 되돌리기)
+REM  특징: 네트워크 작업 재시도(2/4/8/16s), 스캐폴딩 실패 시 자동 롤백
 REM
 REM  하는 일: 툴 설치(Git/PowerShell7/Claude/Python/Terminal) → PATH →
 REM           Git/GitHub → Abaqus 연동검증 → 프로젝트 스캐폴딩 →

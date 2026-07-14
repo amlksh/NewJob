@@ -12,10 +12,12 @@ param(
   [ValidateSet("code", "collab", "chatbot", "")]
   [string]$Mode = "",
   [string]$Root = "$env:USERPROFILE\ClaudeAbaqus",
-  [string]$GitHubUser = "",
+  [string]$GitHub = "",              # owner/name -> repo 자동생성·push
+  [ValidateSet("private", "public")][string]$Visibility = "private",
   [switch]$DryRun,
   [switch]$Update,
-  [switch]$SkipTools
+  [switch]$SkipTools,
+  [switch]$Rollback                  # 스캐폴딩한 프로젝트 폴더 제거(undo)
 )
 
 $ErrorActionPreference = "Continue"
@@ -42,6 +44,23 @@ function Act($desc, [scriptblock]$sb) {
   Log $desc
   try { & $sb; return $true } catch { Log "실패: $($_.Exception.Message)" "ERR"; return $false }
 }
+# 네트워크성 작업 재시도(지수 백오프 2,4,8,16s). 스크립트블록은 실패 시 throw 해야 함
+function Retry($desc, [scriptblock]$sb, $max = 4) {
+  if ($DryRun) { Log "[DRY-RUN] $desc" "WARN"; return $true }
+  for ($i = 1; $i -le $max; $i++) {
+    Log ("{0} (시도 {1}/{2})" -f $desc, $i, $max)
+    try { & $sb; return $true }
+    catch {
+      Log "실패: $($_.Exception.Message)" "WARN"
+      if ($i -lt $max) {
+        $wait = [int][math]::Pow(2, $i)
+        Log "재시도 대기 ${wait}s"
+        Start-Sleep -Seconds $wait
+      }
+    }
+  }
+  return $false
+}
 
 # ---------- 대화형 입력 ----------
 if (-not $Project) { $Project = Read-Host "프로젝트명 (예: microneedle)" }
@@ -53,6 +72,16 @@ if (-not $Mode) {
   if (-not $Mode) { $Mode = "code" }
 }
 Log "프로젝트=$Project  모드=$Mode  Root=$Root  DryRun=$DryRun  Update=$Update" "STEP"
+
+# ---------- 롤백(undo): 스캐폴딩한 프로젝트 폴더 제거 ----------
+$projDir = Join-Path $Root $Project
+if ($Rollback) {
+  if (Test-Path $projDir) {
+    if (-not $DryRun) { Remove-Item -Recurse -Force $projDir }
+    Log "롤백: $projDir 제거함" "WARN"
+  } else { Log "롤백 대상 없음: $projDir" "WARN" }
+  exit 0
+}
 
 # ================= 00 사전점검 =================
 Log "== 00 사전점검 ==" "STEP"
@@ -72,7 +101,10 @@ if (-not $SkipTools) {
     if ((Have $cmd) -and (-not $Update)) { Rec $label "OK" "이미 설치됨"; return }
     if (-not (Have winget)) { Rec $label "SKIP" "winget 없음 → 수동설치 필요"; return }
     $verb = if ($Update) { "upgrade" } else { "install" }
-    $ok = Act "winget $verb $id" { winget $verb --id $id -e --accept-source-agreements --accept-package-agreements | Out-Null }
+    $ok = Retry "winget $verb $id" {
+      winget $verb --id $id -e --accept-source-agreements --accept-package-agreements | Out-Null
+      if ($LASTEXITCODE -ne 0) { throw "winget exit $LASTEXITCODE" }
+    }
     Rec $label $(if ($ok) { "OK" } else { "FAIL" }) "winget $verb"
   }
   Ensure-Tool "Git.Git" "git" "Git"
@@ -83,7 +115,7 @@ if (-not $SkipTools) {
   if ((Have claude) -and (-not $Update)) {
     Rec "Claude Code" "OK" "이미 설치됨"
   } else {
-    $ok = Act "Claude Code 설치" { irm https://claude.ai/install.ps1 | iex }
+    $ok = Retry "Claude Code 설치" { irm https://claude.ai/install.ps1 | iex }
     Rec "Claude Code" $(if ($ok) { "OK" } else { "FAIL" }) ""
   }
 } else { Log "툴 설치 건너뜀(-SkipTools)" "WARN" }
@@ -138,10 +170,12 @@ if (Have abaqus) {
   } else { Rec "Abaqus 검증" "SKIP" "DryRun" }
 } else { Rec "abaqus 명령" "WARN" "PATH에 abaqus 없음 → Abaqus 설치/환경 확인" }
 
-# ================= 50 프로젝트 스캐폴딩 =================
+# ================= 50 프로젝트 스캐폴딩 (롤백 트랜잭션) =================
 Log "== 50 프로젝트 스캐폴딩 ==" "STEP"
 $proj = Join-Path $Root $Project
 $tpl = Join-Path $PSScriptRoot "templates"
+$projExisted = Test-Path $proj
+try {
 foreach ($d in @("inp", "subroutines", "scripts", "results", "reports", "docs", ".claude")) {
   $p = Join-Path $proj $d
   if (-not (Test-Path $p)) { Act "폴더 생성 $d" { New-Item -ItemType Directory -Force -Path $p | Out-Null } | Out-Null }
@@ -178,6 +212,46 @@ if ((Have git) -and (-not (Test-Path (Join-Path $proj ".git")))) {
     Pop-Location
   } | Out-Null
   Rec "git init" "OK" ""
+}
+}
+catch {
+  Rec "스캐폴딩" "FAIL" $_.Exception.Message
+  if ((-not $projExisted) -and (-not $DryRun) -and (Test-Path $proj)) {
+    Log "롤백: 새로 생성한 $proj 제거" "WARN"
+    try { Remove-Item -Recurse -Force $proj } catch {}
+    Rec "롤백" "OK" "새 프로젝트 폴더 제거"
+  }
+}
+
+# ================= 60 GitHub 저장소 (옵션: -GitHub owner/name) =========
+if ($GitHub -and (Test-Path $proj)) {
+  Log "== 60 GitHub 저장소 ==" "STEP"
+  if (-not (Have gh)) {
+    Rec "GitHub repo" "SKIP" "gh 없음 → winget install GitHub.cli; gh auth login"
+  }
+  else {
+    gh auth status 2>$null
+    if ($LASTEXITCODE -ne 0) {
+      Rec "GitHub repo" "SKIP" "gh 인증 필요(gh auth login)"
+    }
+    else {
+      $pushed = Retry "gh repo create/push $GitHub" {
+        Push-Location $proj
+        try {
+          if ((git remote) -notcontains "origin") {
+            gh repo create $GitHub --$Visibility --source=. --push --remote=origin
+            if ($LASTEXITCODE -ne 0) { throw "repo create exit $LASTEXITCODE" }
+          }
+          else {
+            git push -u origin HEAD
+            if ($LASTEXITCODE -ne 0) { throw "push exit $LASTEXITCODE" }
+          }
+        }
+        finally { Pop-Location }
+      }
+      Rec "GitHub repo" $(if ($pushed) { "OK" } else { "FAIL" }) $GitHub
+    }
+  }
 }
 
 # ================= 90 셀프체크 리포트 =================
