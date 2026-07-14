@@ -40,8 +40,26 @@ def extract(odb_path):
 
     reg, uc, rfc = _find_reg(step)
     if reg is None:
+        # 진단: odb에 실제로 무엇이 들어있는지 출력
+        print('=' * 60)
+        print('[진단] NREF의 RF/U 이력출력을 찾지 못했습니다.')
+        print('  steps in odb:', list(odb.steps.keys()))
+        print('  selected step:', step.name,
+              ' frames:', len(step.frames))
+        hrs = step.historyRegions
+        if not hrs:
+            print('  -> 이 스텝에 history output이 전혀 없습니다.')
+            print('     (잡이 완료 전이거나 중단됨 -> interactive 로 재실행,')
+            print('      COMPLETED 확인 후 다시 후처리하세요.)')
+        else:
+            print('  history regions:')
+            for nm, hr in hrs.items():
+                print('    %-28s outputs=%s'
+                      % (nm, list(hr.historyOutputs.keys())))
+        print('=' * 60)
+        odb.close()
         raise RuntimeError('RF/U history output for NREF not found - '
-                           'check *NODE OUTPUT (U2/RF2 or U3/RF3)')
+                           '위 진단 출력을 확인하세요.')
 
     uu = dict(reg.historyOutputs[uc].data)
     rr = dict(reg.historyOutputs[rfc].data)
