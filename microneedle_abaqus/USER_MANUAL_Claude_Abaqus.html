@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Claude로 Abaqus 사용자 서브루틴 해석하기 — 사용자 매뉴얼</title><style>
+:root{color-scheme:light dark}
+*{box-sizing:border-box}
+body{margin:0;padding:0;background:#f7f7f8;color:#1a1a1a;
+ font-family:-apple-system,"Segoe UI","Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+ line-height:1.7;font-size:16px}
+.wrap{max-width:900px;margin:0 auto;padding:40px 24px 80px;background:#fff;
+ box-shadow:0 0 0 1px #eee}
+h1,h2,h3,h4{line-height:1.3;margin:1.6em 0 .6em;font-weight:700}
+h1{font-size:2em;border-bottom:3px solid #2b6cb0;padding-bottom:.3em;margin-top:0}
+h2{font-size:1.5em;border-bottom:1px solid #e2e8f0;padding-bottom:.25em;color:#2b6cb0}
+h3{font-size:1.2em}h4{font-size:1.05em;color:#444}
+p{margin:.7em 0}
+a{color:#2b6cb0;text-decoration:none}a:hover{text-decoration:underline}
+code{background:#eef1f5;padding:.12em .38em;border-radius:4px;
+ font-family:"Consolas","SFMono-Regular",Menlo,monospace;font-size:.9em;color:#c026a0}
+pre{background:#1e293b;color:#e2e8f0;padding:16px 18px;border-radius:8px;
+ overflow-x:auto;line-height:1.5}
+pre code{background:none;color:inherit;padding:0}
+blockquote{margin:1em 0;padding:.6em 1em;border-left:4px solid #f0b429;
+ background:#fffbeb;color:#5b4a12;border-radius:0 6px 6px 0}
+blockquote code{background:#fdf3d0}
+ul,ol{margin:.6em 0;padding-left:1.6em}li{margin:.25em 0}
+hr{border:none;border-top:1px solid #e2e8f0;margin:2em 0}
+.tablewrap{overflow-x:auto;margin:1em 0}
+table{border-collapse:collapse;width:100%;font-size:.95em}
+th,td{border:1px solid #dfe3e8;padding:8px 12px;text-align:left;vertical-align:top}
+th{background:#2b6cb0;color:#fff;font-weight:600}
+tr:nth-child(even) td{background:#f6f8fa}
+@media print{body{background:#fff}.wrap{box-shadow:none;max-width:100%}
+ pre{background:#f2f2f2;color:#111;border:1px solid #ccc}
+ th{background:#ccc;color:#000}}
+@media (max-width:640px){.wrap{padding:20px 14px}body{font-size:15px}}
+</style></head><body><div class="wrap"><h1>Claude로 Abaqus 사용자 서브루틴 해석하기 — 사용자 매뉴얼</h1>
+<blockquote><strong>대상 독자</strong>: Abaqus는 다뤄봤지만 Claude(Claude Code)로 서브루틴 해석을 자동화해 본 적 없는 동료. <strong>환경설정 기초부터</strong> 시작해 <strong>마이크로니들 피부 관통 해석 샘플의 실사용 예시</strong>까지 따라 하면 되도록 구성했습니다.  <strong>한 줄 요약</strong>: Claude Code를 <strong>당신 PC에 로컬로 설치</strong>하면, Claude가 당신 PC의 Abaqus를 <strong>직접 실행하고 로그를 읽어 리포트</strong>해 줍니다. (웹/클라우드 Claude로는 당신 PC의 Abaqus를 못 돌립니다 — 아래 1장.)</blockquote>
+<hr>
+<h2>목차</h2>
+<ol><li>큰 그림 — 로컬 vs 웹 Claude Code (가장 중요)</li><li>사전 준비 (Abaqus · Fortran 컴파일러 · 라이선스)</li><li>Claude Code 설치 (CLI / 데스크톱 앱)</li><li>연동 검증 — 서브루틴이 실제로 컴파일되는지</li><li>Claude로 작업하는 법 (프롬프트·승인·로그 읽기)</li><li>실전 예제 — 마이크로니들 피부 관통 해석</li><li>자주 겪는 문제 &amp; 해결 (실전 트러블슈팅)</li><li>서브루틴(VUMAT) 작성·디버깅을 Claude에게 시키기</li><li>부록 — 명령어 치트시트 · 파일 목록</li></ol>
+<hr>
+<h2>1. 큰 그림 — 로컬 vs 웹 Claude Code (가장 중요)</h2>
+<p>Claude Code는 <strong>실행 위치가 두 종류</strong>입니다. 이걸 먼저 이해해야 합니다.</p>
+<div class="tablewrap"><table><thead><tr><th></th><th><strong>로컬 Claude Code</strong></th><th><strong>웹/클라우드 Claude Code</strong></th></tr></thead><tbody><tr><td>설치/실행</td><td>내 PC (CLI 또는 데스크톱 앱)</td><td>브라우저 <code>claude.ai/code</code></td></tr><tr><td>내 PC 파일 접근</td><td>✅ 직접</td><td>❌ (원격 컨테이너)</td></tr><tr><td><strong>내 PC의 Abaqus 실행</strong></td><td>✅ <strong>가능</strong></td><td>❌ 불가</td></tr><tr><td>결과 로그 읽고 리포트</td><td>✅</td><td>파일을 업로드해야 함</td></tr></tbody></table></div>
+<p><strong>결론: Abaqus 서브루틴 해석은 반드시 "로컬 Claude Code"로 합니다.</strong> 웹 세션은 코드 편집·저장소 정리엔 좋지만, 당신 PC에 설치된 Abaqus· 컴파일러·라이선스에 접근할 수 없습니다.</p>
+<blockquote>로컬로 시작하는 법 = **내 PC의 터미널(또는 데스크톱 앱)에서 <code>claude</code> 실행**. 브라우저에서 시작하면 웹 세션이 됩니다. (3장 참조)</blockquote>
+<hr>
+<h2>2. 사전 준비 (환경)</h2>
+<p>Claude를 깔기 전에, <strong>Abaqus 서브루틴을 손으로 돌릴 수 있는 환경</strong>이 먼저 갖춰져 있어야 합니다. Claude는 그 환경을 "대신 조작"할 뿐이기 때문입니다.</p>
+<h3>2.1 Abaqus 본체</h3>
+<ul><li>Abaqus 2023 이상 권장 (본 매뉴얼은 <strong>Abaqus 2025.HF4</strong> 기준).</li><li>명령창에서 아래가 동작해야 합니다:</li></ul>
+<p>  <code></code><code>bat   abaqus information=release   </code><code></code>   회사 환경에 따라 명령 이름이 <code>abaqus</code> / <code>abq2025</code> / <code>abq2025hf4</code> 중   하나일 수 있습니다. 동작하는 이름을 확인해 두세요.</p>
+<h3>2.2 Fortran 컴파일러 (Intel oneAPI)</h3>
+<p>사용자 서브루틴(UMAT/VUMAT 등)은 <strong>실행 시점에 Fortran으로 컴파일</strong>됩니다. 따라서 Abaqus와 호환되는 컴파일러가 필요합니다.</p>
+<ul><li><strong>Intel oneAPI Fortran</strong> (<code>ifort</code> 클래식 또는 <code>ifx</code> LLVM기반) + Windows는</li></ul>
+<p>  **Visual Studio C++ (<code>cl</code>)** 도 필요.</p>
+<ul><li>본 매뉴얼 검증 환경: <strong>Intel oneAPI 2024</strong> <code>ifort</code> (버전 2021.11.1) +</li></ul>
+<p>  VS2022 <code>cl</code>, Abaqus 2025.</p>
+<ul><li>oneAPI 2024부터 클래식 <code>ifort</code>는 지원 종료 예정 → 신규/클러스터는</li></ul>
+<p>  <code>ifx</code>로 전환될 수 있습니다(경고 #10448은 무해).</p>
+<h3>2.3 컴파일러–Abaqus 연동 방식 (중요)</h3>
+<p>컴파일러 환경(vcvars64 + oneAPI vars)은 보통 <strong>전역 PATH가 아니라 Abaqus 실행 드라이버 배치파일에 주입</strong>되어 있습니다. 예:</p>
+<pre><code>C:\SIMULIA\Commands\abq2025hf4.bat  &lt;-- 이 안에 컴파일러 환경 로드가 삽입됨</code></pre>
+<p>그래서 **일반 셸에서 <code>ifort</code> 단독 호출은 안 보이는 게 정상**이고, <code>abaqus</code>(=이 드라이버)를 통해 부를 때만 컴파일이 됩니다.</p>
+<blockquote>재설치 시 이 주입이 사라지므로, <code>abq2025hf4.bat.orig</code> 같은 백업을 두고 다시 적용하는 관리가 필요합니다.</blockquote>
+<h3>2.4 라이선스 (자주 걸림)</h3>
+<ul><li><strong>Abaqus/Standard(또는 Foundation)</strong> 토큰: <code>*STATIC</code>, <code>*BUCKLE</code> 등.</li><li><strong>Abaqus/Explicit</strong> 토큰: <code>*DYNAMIC, EXPLICIT</code> (VUMAT 관통 해석은 이것!).</li><li>Standard만 있고 <strong>Explicit 라이선스가 없으면 VUMAT 관통 해석이 막힙니다.</strong></li><li>확인: <code>abaqus licensing ru</code> (사용 가능 토큰 목록).</li><li>라이선스 서버(예: <code>27001@localhost</code>) 데몬이 죽으면 컴파일과 무관하게</li></ul>
+<p>  실행이 막힙니다 — 그 경우 서버 재기동 필요.</p>
+<hr>
+<h2>3. Claude Code 설치</h2>
+<h3>3.1 CLI 설치 (Windows, WSL 불필요)</h3>
+<p><strong>PowerShell</strong>에서:</p>
+<pre><code>irm https://claude.ai/install.ps1 | iex</code></pre>
+<p>(대안: <code>winget install Anthropic.ClaudeCode</code>)</p>
+<p>설치 후 확인:</p>
+<pre><code>claude --version</code></pre>
+<h3>3.2 PATH 등록 (설치 직후 흔한 함정)</h3>
+<p>설치 시 *"<code>C:\Users\&lt;이름&gt;\.local\bin</code> is not in your PATH"* 경고가 뜨면 <code>claude</code>가 인식되지 않습니다. <strong>사용자 PATH에 영구 등록</strong>:</p>
+<pre><code>$p = [Environment]::GetEnvironmentVariable("Path","User")
+[Environment]::SetEnvironmentVariable("Path", $p + ";$env:USERPROFILE\.local\bin", "User")</code></pre>
+<p>→ <strong>터미널을 닫았다 새로 열면</strong> 어디서든 <code>claude</code>가 됩니다.</p>
+<h3>3.3 터미널 — Windows Terminal 권장</h3>
+<p>구형 PowerShell 콘솔은 Claude 화면(ANSI)이 <code>^[[35m...</code>처럼 <strong>깨져 보일 수</strong> 있습니다. <strong>Windows Terminal</strong>을 쓰면 깔끔합니다:</p>
+<pre><code>winget install Microsoft.WindowsTerminal</code></pre>
+<p>(임시 대안: <code>Set-ItemProperty -Path HKCU:\Console -Name VirtualTerminalLevel -Value 1</code> 후 터미널 재시작)</p>
+<h3>3.4 로그인</h3>
+<ul><li>첫 <code>claude</code> 실행 시 브라우저로 로그인. <strong>Claude Pro/Max 구독</strong> 필요</li></ul>
+<p>  (무료 플랜은 Claude Code 미포함).</p>
+<h3>3.5 데스크톱 앱 대안 (GUI 선호 시)</h3>
+<p><a href="https://claude.com/download">claude.com/download</a> 설치 → **<code>Code</code><strong> 탭 → </strong>Environment<strong> 드롭다운 </strong><code>Local</code><strong> → </strong>Select folder**로 프로젝트 폴더 선택. GUI라 터미널 렌더링 문제가 없고, 시각적 diff·내장 터미널(<code>Ctrl+\</code><code>)이 편합니다. (Windows에서는 **Git 설치가 필수**.)</code></p>
+<hr>
+<h2>4. 연동 검증 — 서브루틴이 실제로 컴파일되는지 (건너뛰지 말 것)</h2>
+<p>Claude로 뭘 하기 전에, <strong>Abaqus–컴파일러 연동이 실제로 되는지</strong> 확인합니다.</p>
+<pre><code>abaqus info=system            REM 링크된 Fortran/C++ 컴파일러 경로·버전 출력
+abaqus verify -user_std       REM UMAT 등 Standard 유저루틴 컴파일·링크 검증
+abaqus verify -user_explicit  REM VUMAT 등 Explicit 유저루틴 컴파일·링크 검증</code></pre>
+<p><code>PASS</code>가 나오면, 우리 서브루틴도 <strong>동일 경로로 컴파일</strong>됩니다. 여기서 실패하면 Claude 문제가 아니라 <strong>환경(컴파일러/VS/라이선스) 문제</strong>이므로 먼저 해결해야 합니다.</p>
+<hr>
+<h2>5. Claude로 작업하는 법</h2>
+<h3>5.1 로컬 세션 시작</h3>
+<pre><code>cd "C:\Users\&lt;이름&gt;\Documents\...\프로젝트폴더"
+claude</code></pre>
+<blockquote>경로에 <strong>공백</strong>이 있으면 반드시 <strong>따옴표</strong>로 감쌉니다. (<code>cd C:\Users\SEONGHOON KIM\...</code> → 오류. <code>cd "C:\...\SEONGHOON KIM\..."</code> → OK)</blockquote>
+<h3>5.2 지시는 "Claude 안"에서 (PowerShell 아님!)</h3>
+<p><code>claude</code>가 뜨면 화면이 PowerShell(<code>PS C:\...&gt;</code>)과 <strong>다른 입력창</strong>으로 바뀝니다. <strong>자연어 지시는 그 입력창에</strong> 입력합니다.</p>
+<ul><li>❌ PowerShell 프롬프트(<code>PS ...&gt;</code>)에 자연어를 치면 "명령 인식 안됨" 오류</li><li>✅ Claude 입력창(<code>PS</code> 없음)에 한국어로 지시</li></ul>
+<p>예시 지시:</p>
+<pre><code>microneedle_abaqus 폴더에서 04_refined_path 모델(job 이름 ref04)을
+interactive로 실행하고, ref04.log·sta·msg 를 읽어 결과를 리포트해줘.
+postprocess.py로 관통력-깊이 곡선도 뽑아줘.</code></pre>
+<h3>5.3 승인(manual mode)</h3>
+<p>기본은 <code>manual mode</code>라, Claude가 명령 실행 전 <strong>"실행할까요?"</strong>를 묻습니다. 읽기 전용(<code>which</code>, <code>type</code> 등)이나 의도한 실행이면 <strong>승인(1. Yes)</strong>. 자주 쓰는 안전한 명령은 "2. 이 폴더에서 다시 안 물어보기"로 등록 가능.</p>
+<h3>5.4 abaqus.bat + bash 주의 (실전 팁)</h3>
+<p>Claude는 내부적으로 <strong>bash(Git Bash)</strong> 로 명령을 실행할 때가 있는데, 당신 Abaqus는 **<code>abaqus.bat</code><strong>(배치파일)이라 </strong>bash에서 <code>which abaqus</code>가 "없음"** 으로 나올 수 있습니다(PowerShell에선 되는데도). 그럴 땐 Claude에게:</p>
+<blockquote>abaqus는 abaqus.bat이야. bash에서 안 잡히면 <code>cmd //c "abaqus job=... "</code> 또는 PowerShell로 실행해줘.</blockquote>
+<h3>5.5 결과를 "읽고 리포트"하게 하기</h3>
+<p>실행 후 생성되는 <code>*.log</code>(컴파일), <code>*.sta</code>(증분·에너지), <code>*.msg</code>(경고/에러), <code>*.dat</code>(입력검증·결과), <code>*.odb</code>(결과DB)를 Claude가 읽어 요약하게 합니다.</p>
+<blockquote>"ref04.sta랑 msg 읽고, 준정적성(ALLKE/ALLIE)이랑 요소삭제 여부 판단해줘."</blockquote>
+<hr>
+<h2>6. 실전 예제 — 마이크로니들 피부 관통 해석</h2>
+<p>피부에 마이크로니들이 삽입·관통되는 현상을 <strong>Abaqus/Explicit + VUMAT</strong> (초탄성 + 손상 기반 요소 삭제)로 모사하는 샘플입니다.</p>
+<h3>6.1 저장소 받기</h3>
+<pre><code>cd "C:\Users\&lt;이름&gt;\Documents\Claude"
+git clone &lt;저장소주소&gt; NewJob
+cd NewJob
+git checkout claude/microneedle-abaqus-subroutine-vumii3
+cd microneedle_abaqus</code></pre>
+<h3>6.2 파일 구성 (요약)</h3>
+<div class="tablewrap"><table><thead><tr><th>파일</th><th>내용</th></tr></thead><tbody><tr><td><code>vumat_skin.f</code></td><td>피부 VUMAT (Neo-Hookean + 주신축비 손상/삭제)</td></tr><tr><td><code>vumat_skin_reg.f</code></td><td>파단에너지(charLength) 정규화 VUMAT</td></tr><tr><td><code>vumat_skin_hgo.f</code></td><td>이방성 HGO VUMAT (3D)</td></tr><tr><td><code>04_refined_path.inp</code></td><td>경로 세밀화 3층 피부 관통 (권장 첫 실행)</td></tr><tr><td><code>03_needle_buckling.inp</code></td><td>니들 좌굴 임계하중(<code>*BUCKLE</code>) — 서브루틴 불필요</td></tr><tr><td><code>postprocess.py</code></td><td>관통력-깊이 + 준정적성 + 삭제요소 종합 리포트</td></tr><tr><td><code>README.md</code> / <code>BUILD_AND_RUN.md</code></td><td>모델 설명 / 빌드·실행 가이드</td></tr></tbody></table></div>
+<h3>6.3 STEP 1 — 서브루틴 없이 sanity 체크 (좌굴)</h3>
+<p>먼저 서브루틴이 필요 없는 좌굴 해석으로 <strong>모델·환경</strong>을 확인합니다.</p>
+<pre><code>abaqus job=buck03 input=03_needle_buckling.inp interactive</code></pre>
+<ul><li>마지막에 <code>Abaqus JOB buck03 COMPLETED</code> 확인.</li><li><code>buck03.dat</code>의 EIGENVALUE 표 → <strong>임계 좌굴하중 P_cr</strong>.</li><li><strong>검증 실측값</strong>: 최저 모드 <strong>P_cr ≈ 0.219 N</strong> (모드 1=2 쌍중복 = 원형단면</li></ul>
+<p>  기둥의 정상 거동).</p>
+<h3>6.4 STEP 2 — VUMAT 관통 해석 (핵심)</h3>
+<pre><code>abaqus job=ref04 input=04_refined_path.inp user=vumat_skin.f double=both cpus=4 interactive</code></pre>
+<ul><li>**<code>double=both</code> 필수** (VUMAT 배정밀도).</li><li><code>ref04.log</code>에서 <strong>VUMAT 컴파일·링크 성공</strong> 확인 (ifort 경고 #10448은 무해).</li><li><code>ref04.sta</code> 마지막에 <code>THE ANALYSIS HAS COMPLETED SUCCESSFULLY</code>.</li><li><strong>검증 실측</strong>: Explicit 8토큰 체크아웃, VUMAT 컴파일 성공, 418요소 완주.</li></ul>
+<h3>6.5 STEP 3 — 결과 리포트</h3>
+<pre><code>abaqus python postprocess.py ref04.odb</code></pre>
+<p>자동 출력:</p>
+<ul><li><strong>[1] 관통력–침투깊이</strong>: peak 관통력·깊이, puncture(급락) 감지 →</li></ul>
+<p>  <code>ref04_fd.csv</code>, <code>ref04_fd.png</code></p>
+<ul><li><strong>[2] 준정적성</strong>: <code>ALLKE/ALLIE(max)</code> — <strong>&lt;5% 양호</strong>, &gt;10%면 질량스케일링</li></ul>
+<p>  재검토 (얇은 각질층 때문에 질량 스케일링이 크게 걸릴 수 있음).</p>
+<ul><li><strong>[3] 요소 삭제</strong>: 삭제(=관통)된 요소 수. **0이면 "압입만" 하고</li></ul>
+<p>  절개 미발생** → 물성(λ_f / uf)·하강량 조정 검토.</p>
+<h3>6.6 STEP 4 — 공학적 판정 (삽입 성공 여부)</h3>
+<p>문헌(*Int. J. Pharm.* 2025) 기준:</p>
+<blockquote><strong>삽입 성공 ⇔ 삽입력 F_ins &lt; 니들 좌굴하중 P_cr</strong></blockquote>
+<ul><li>(6.5)의 peak 관통력 = <code>F_ins</code></li><li>(6.3)의 <code>P_cr = 0.219 N</code></li><li><code>F_ins &lt; 0.219 N</code> → 니들이 좌굴 전에 관통(성공). 아니면 니들 재설계.</li></ul>
+<h3>6.7 Claude에게 통째로 시키기 (권장 실사용 흐름)</h3>
+<p>로컬 Claude 입력창에 한 번에:</p>
+<pre><code>microneedle_abaqus 폴더에서:
+1) buck03(03_needle_buckling.inp) 실행하고 dat에서 P_cr 읽어줘.
+2) ref04(04_refined_path.inp, user=vumat_skin.f, double=both) interactive 실행.
+3) ref04.log 컴파일 성공여부, sta 완료여부 확인.
+4) postprocess.py로 관통력-깊이·준정적성·삭제요소 리포트.
+5) F_ins와 P_cr 비교해서 삽입 성공여부까지 판정해줘.</code></pre>
+<p>Claude가 각 명령을 (승인받아) 실행하고 로그를 읽어 단계별로 리포트합니다.</p>
+<hr>
+<h2>7. 자주 겪는 문제 &amp; 해결 (실전 트러블슈팅)</h2>
+<p>아래는 <strong>이 프로젝트를 세팅하며 실제로 겪은</strong> 문제들입니다.</p>
+<div class="tablewrap"><table><thead><tr><th>증상</th><th>원인</th><th>해결</th></tr></thead><tbody><tr><td><code>'claude' 인식되지 않습니다</code></td><td><code>.local\bin</code>이 PATH에 없음</td><td>3.2 PATH 영구 등록 후 터미널 재시작</td></tr><tr><td><code>cd C:\...\홍 길동\...</code> 오류(위치 매개변수)</td><td>경로 <strong>공백</strong></td><td>경로를 <strong>따옴표</strong>로 감싸기</td></tr><tr><td>화면이 <code>^[[35m...</code>로 깨짐</td><td>구형 콘솔이 ANSI 미지원</td><td><strong>Windows Terminal</strong> 사용 (3.3)</td></tr><tr><td>입력창에 붙여넣기 안됨</td><td>콘솔 붙여넣기 단축키 차이</td><td><strong>우클릭</strong>(구형) / <strong>Ctrl+Shift+V</strong>(신형)</td></tr><tr><td>자연어 쳤더니 <code>명령 인식 안됨</code></td><td><strong>PowerShell에 입력</strong>함(Claude 밖)</td><td><code>PS &gt;</code> 없는 <strong>Claude 입력창</strong>에 입력 (5.2)</td></tr><tr><td>bash에서 <code>abaqus</code> 못 찾음</td><td><code>abaqus.bat</code>을 bash가 못 잡음</td><td><code>cmd //c "abaqus ..."</code> 또는 PowerShell (5.4)</td></tr><tr><td>job이 순식간에 끝나고 결과 없음</td><td><strong>백그라운드 제출</strong></td><td>명령 끝에 **<code>interactive</code>** 추가</td></tr><tr><td><code>postprocess</code>가 RF/U 이력 못 찾음</td><td>잡 미완료/중단</td><td><code>interactive</code>로 완주 후 다시 후처리</td></tr><tr><td><code>*CONTACT PROPERTY ASSIGNMENT CAN ONLY REFERENCE SURFACE INTERACTIONS</code></td><td><code>*SURFACE INTERACTION</code>이 <strong>스텝 안</strong>에 있음</td><td>첫 <code>*STEP</code> <strong>앞(모델 데이터)</strong> 으로 이동</td></tr><tr><td>Explicit 잡이 라이선스로 막힘</td><td>Foundation/Standard만 보유</td><td><strong>Abaqus/Explicit</strong> 토큰 확보 (<code>abaqus licensing ru</code>)</td></tr><tr><td><code>PERCENT CHNG MASS</code>가 큼(수백%)</td><td>얇은 요소로 질량 스케일링 큼</td><td><code>ALLKE/ALLIE&lt;5~10%</code> 확인, 안되면 목표 dt·메쉬 조정</td></tr><tr><td>컴파일은 되는데 결과 이상/발산</td><td><code>double=both</code> 누락</td><td>반드시 <code>double=both</code> 지정</td></tr></tbody></table></div>
+<blockquote><strong>오류 진단의 왕도</strong>: 실행이 막히면 **<code>job.dat</code>의 <code>***ERROR</code> 줄**을 먼저 보세요. 정확한 원인과 줄이 거기 있습니다. (위 표의 SURFACE INTERACTION 오류도 <code>.dat</code>가 정확히 짚어줬습니다.)</blockquote>
+<hr>
+<h2>8. 서브루틴(VUMAT) 작성·디버깅을 Claude에게 시키기</h2>
+<h3>8.1 VUMAT 기본 규칙 (Claude가 지켜야 할 것)</h3>
+<ul><li>**고정형식 <code>.f</code>** (7열부터 코드, 6열 연속행), <code>include 'vaba_param.inc'</code>.</li><li>응력은 <strong>동회전(co-rotational) 좌표계</strong>로 반환 → 등방성은 신축텐서 <code>U</code>로</li></ul>
+<p>  <code>B=U·U</code> 계산이 편함.</p>
+<ul><li>상태변수: <code>*DEPVAR, DELETE=n</code> 으로 요소 삭제 변수 지정(예: STATEV(1)).</li><li>실행은 <code>user=xxx.f double=both</code>.</li></ul>
+<h3>8.2 Claude 활용 팁</h3>
+<ul><li><strong>작성</strong>: "축대칭/3D VUMAT로 Neo-Hookean+주신축비 손상 삭제 구현해줘.</li></ul>
+<p>  PROPS는 C10,D1,lam_d,lam_f." 처럼 <strong>물성식·상태변수·삭제기준을 명시</strong>.</p>
+<ul><li><strong>디버깅</strong>: 컴파일 오류가 나면 <code>ref04.log</code>의 ifort 메시지를 Claude에게</li></ul>
+<p>  그대로 주고 "이 줄 고쳐줘"라고 하면 됩니다.</p>
+<ul><li><strong>검증</strong>: "단일요소 단축인장으로 손상 끄고 Neo-Hookean 해석해랑 응력</li></ul>
+<p>  비교해줘"처럼 <strong>검증 케이스</strong>를 시키면 신뢰도가 올라갑니다.</p>
+<hr>
+<h2>9. 부록</h2>
+<h3>9.1 명령어 치트시트</h3>
+<pre><code>REM 환경/검증
+abaqus info=system
+abaqus verify -user_explicit
+abaqus licensing ru
+
+REM 실행 (서브루틴 없음 / 있음)
+abaqus job=buck03 input=03_needle_buckling.inp interactive
+abaqus job=ref04  input=04_refined_path.inp user=vumat_skin.f double=both cpus=4 interactive
+
+REM 후처리
+abaqus python postprocess.py ref04.odb</code></pre>
+<pre><code>REM Claude 로컬 세션
+cd "C:\경로\프로젝트"
+claude</code></pre>
+<h3>9.2 결과 파일 빠른 안내</h3>
+<div class="tablewrap"><table><thead><tr><th>확장자</th><th>무엇</th><th>언제 보나</th></tr></thead><tbody><tr><td><code>.log</code></td><td>컴파일/실행 로그</td><td>서브루틴 컴파일 성공여부</td></tr><tr><td><code>.dat</code></td><td>입력검증·결과</td><td>**<code>***ERROR</code> 진단**, 좌굴 고유값</td></tr><tr><td><code>.sta</code></td><td>증분·에너지 진행</td><td>완료여부·준정적성·질량변화</td></tr><tr><td><code>.msg</code></td><td>경고/에러 상세</td><td>접촉·수렴·삭제 경고</td></tr><tr><td><code>.odb</code></td><td>결과 데이터베이스</td><td>후처리/시각화</td></tr></tbody></table></div>
+<h3>9.3 더 읽을거리 (이 저장소 안)</h3>
+<ul><li><code>README.md</code> — 물리 모델·구성식·전체 모델 설명</li><li><code>BUILD_AND_RUN.md</code> — Windows/Linux 빌드·실행 상세</li><li><code>ANALYSIS_PLAN.md</code> — 문헌 기반 해석 방안</li><li><code>03_needle_buckling.inp</code> / <code>04_refined_path.inp</code> — 실행용 입력파일</li></ul>
+<hr>
+<h3>부탁 / 피드백</h3>
+<p>이 매뉴얼대로 따라 하다 막히는 지점이 있으면, **그 화면(캡처)과 <code>job.dat</code>/<code>.log</code>/<code>.sta</code>** 를 로컬 Claude에게 그대로 주면서 물어보세요. 대부분 원인이 로그에 그대로 적혀 있습니다.</p></div></body></html>
