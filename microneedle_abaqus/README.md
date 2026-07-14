@@ -23,7 +23,12 @@ VUMAT 안에 구현하여, 니들이 조직을 절개하며 전진하는 과정�
 | `03_needle_buckling.inp` | **(c)** 니들 좌굴 파괴력 검증(`*BUCKLE`) 모델 |
 | `postprocess.py` | `.odb`에서 관통력–침투깊이 곡선 추출 |
 | `ANALYSIS_PLAN.md` | 문헌 기반 해석 방안 |
+| `BUILD_AND_RUN.md` | **서브루틴 컴파일·실행 가이드** (Windows 로컬 / Linux 클러스터) |
 | `README.md` | 본 문서 |
+
+> **실행 환경**: VUMAT은 실행 시 Fortran 컴파일러(Intel oneAPI `ifort`/`ifx`)로
+> 컴파일됩니다. Windows 로컬(Abaqus 2025 + oneAPI 2024) 및 Linux 클러스터
+> (cae20~cae23)에서의 링크 확인·빌드·실행 절차는 **`BUILD_AND_RUN.md`** 참조.
 
 > `microneedle_penetration.inp` 는 최소 기본 예제, `01`/`02`/`03` 은
 > 참고문헌을 반영해 단계적으로 고도화한 확장 모델입니다(아래 8절).
