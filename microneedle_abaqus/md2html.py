@@ -38,6 +38,8 @@ blockquote code{background:#fdf3d0}
 ul,ol{margin:.6em 0;padding-left:1.6em}li{margin:.25em 0}
 hr{border:none;border-top:1px solid #e2e8f0;margin:2em 0}
 .tablewrap{overflow-x:auto;margin:1em 0}
+.svgbox{overflow-x:auto;margin:1.2em 0;border:1px solid #e2e8f0;border-radius:10px;background:#fff;padding:6px}
+.svgbox svg{display:block;min-width:900px}
 table{border-collapse:collapse;width:100%;font-size:.95em}
 th,td{border:1px solid #dfe3e8;padding:8px 12px;text-align:left;vertical-align:top}
 th{background:#2b6cb0;color:#fff;font-weight:600}
@@ -168,7 +170,28 @@ def main():
         md = f.read().decode('utf-8')
     m = re.search(r'^#\s+(.*)$', md, re.M)
     title = m.group(1).strip() if m else os.path.basename(src)
+
+    # @@SVG:파일@@  -> 해당 파일의 <svg>...</svg> 를 인라인 삽입
+    slots = []
+
+    def _slot(mm):
+        slots.append(mm.group(1).strip())
+        return '@@SVGSLOT%d@@' % (len(slots) - 1)
+    md = re.sub(r'^@@SVG:(.+?)@@\s*$', _slot, md, flags=re.M)
+
     body = convert(md)
+    for idx, fn in enumerate(slots):
+        block = ''
+        try:
+            with open(os.path.join(os.path.dirname(src) or '.', fn), 'rb') as f:
+                svg = re.search(r'<svg.*?</svg>', f.read().decode('utf-8'),
+                                re.S)
+            if svg:
+                block = '<div class="svgbox">' + svg.group(0) + '</div>'
+        except Exception:
+            block = ''
+        body = body.replace('<p>@@SVGSLOT%d@@</p>' % idx, block)
+        body = body.replace('@@SVGSLOT%d@@' % idx, block)
     out = sys.argv[2] if len(sys.argv) > 2 else os.path.splitext(src)[0] + '.html'
     doc = ('<!doctype html>\n<html lang="ko"><head><meta charset="utf-8">'
            '<meta name="viewport" content="width=device-width,initial-scale=1">'
