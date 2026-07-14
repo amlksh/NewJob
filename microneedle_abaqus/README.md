@@ -21,6 +21,8 @@ VUMAT 안에 구현하여, 니들이 조직을 절개하며 전진하는 과정�
 | `02_hgo_pretension.inp` | **(b)** 3D HGO 이방성 + 사전인장 관통 모델 (생성물) |
 | `gen_hgo_model.py` | (b) 3D 입력파일 생성기 |
 | `03_needle_buckling.inp` | **(c)** 니들 좌굴 파괴력 검증(`*BUCKLE`) 모델 |
+| `04_refined_path.inp` | **경로 세밀화** 3층 관통 모델 (생성물) |
+| `gen_refined_axi.py` | 경로 바이어스 세밀화 입력파일 생성기 |
 | `postprocess.py` | `.odb`에서 관통력–침투깊이 곡선 추출 |
 | `ANALYSIS_PLAN.md` | 문헌 기반 해석 방안 |
 | `BUILD_AND_RUN.md` | **서브루틴 컴파일·실행 가이드** (Windows 로컬 / Linux 클러스터) |
@@ -222,6 +224,28 @@ abaqus job=buck03 input=03_needle_buckling.inp
 > `P_cr ≈ π²EI/(4L²)`. 대표반경 r≈0.085 mm, L=0.8 mm, E=3000 MPa 로
 > 대입하면 `P_cr` 은 대략 0.5 N 수준(테이퍼·고차모드는 FE 고유값이 정확).
 > 니들이 매우 가늘거나 길면 `P_cr` 이 급감하여 좌굴이 관통을 제약합니다.
+
+### 니들 경로 메쉬 세밀화 — `04_refined_path.inp` (+`gen_refined_axi.py`)
+요소 삭제 방식의 **메쉬 의존성·지그재그 경로**를 줄이는 실효적 개선책은
+리메쉬가 아니라 **경로 부근 메쉬 세밀화**입니다(질문 답변 참조). 본 모델은
+(a) 3층 피부에 바이어스 격자를 적용합니다.
+
+- **반경방향**: 축(r=0) 근처 세밀(Δr≈0.03) → 외곽으로 기하급수 성김(≈0.35).
+  니들 관통이 일어나는 r<0.3 mm 영역을 집중 세밀화.
+- **깊이방향**: 상면(각질층) 세밀(Δz≈0.005) → 진피 하부로 성김(≈0.29).
+  얇은 각질층과 관통 개시부를 정밀 포착.
+- 격자·절점집합은 생성기가 좌표배열 텐서곱으로 정확히 생성(418 요소).
+
+```bash
+python gen_refined_axi.py                  # -> 04_refined_path.inp
+abaqus job=ref04 input=04_refined_path.inp user=vumat_skin.f double=both cpus=4
+abaqus python postprocess.py ref04.odb
+```
+
+> 세밀화 정도(`DR_FINE`, `DZ_SC`, 성장비 `R_GROW`/`Z_GROW`)는 생성기 상단
+> 상수로 조절합니다. 세밀할수록 경로가 매끄럽고 peak force가 수렴하지만
+> 안정증분이 작아지니 질량 스케일링과 `ALLKE≪ALLIE` 를 함께 확인하세요.
+> (메쉬 의존성을 더 줄이려면 `charLength` 기반 파단에너지 정규화를 병행.)
 
 ### 확장 모델 실행 시 주의
 - (a),(b) 는 Explicit + VUMAT → `user=...f double=both` 필요.
