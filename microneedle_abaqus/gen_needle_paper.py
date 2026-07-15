@@ -126,8 +126,14 @@ def main():
         wl(lay, elems[lay], "ELSET")
     w("*ELSET, ELSET=SKIN_ALL")
     w("EPIDERMIS, DERMIS")
+    # 내부 요소면까지 접촉 대상에 강제 포함: 요소 4면(S1~S4) 모두 명시.
+    #  (element set 만 주면 자유면=외곽만 생성 -> 삭제 노출 내부면 누락.)
+    #  4면 전부 포함 -> 삭제 순간 내부면이 이미 접촉 도메인에 있어 연속 접촉.
     w("*SURFACE, TYPE=ELEMENT, NAME=SKIN_SURF")
-    w("SKIN_ALL,")
+    w("SKIN_ALL, S1")
+    w("SKIN_ALL, S2")
+    w("SKIN_ALL, S3")
+    w("SKIN_ALL, S4")
     wl("NBOT", [nid(i, 0) for i in range(nx)], "NSET")
     wl("NAXIS", [nid(0, j) for j in range(nz)], "NSET")
     wl("NRIGHT", [nid(nx - 1, j) for j in range(nz)], "NSET")
@@ -228,8 +234,8 @@ def main():
     w("*BOUNDARY, AMPLITUDE=PUSH")
     w("NREF, 2, 2, %.4f" % (-PUSH))
     w("*CONTACT")
-    # ALL EXTERIOR: 요소 삭제로 노출된 내부 면 자동 포함(Interior Surfaces).
-    # 명시 니들-피부 쌍 추가(요소기반 양쪽) -> 침식 접촉 검출 강건화.
+    # SKIN_SURF(내부면 포함) 를 니들과 명시 접촉 -> 삭제 노출 내부면 접촉.
+    # ALL EXTERIOR 는 니들 외곽 등 나머지 자기접촉 보강.
     w("*CONTACT INCLUSIONS, ALL EXTERIOR")
     w("*CONTACT INCLUSIONS")
     w("NEEDLE, SKIN_SURF")
