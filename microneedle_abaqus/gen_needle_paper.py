@@ -132,20 +132,60 @@ def main():
     wl("NAXIS", [nid(0, j) for j in range(nz)], "NSET")
     wl("NRIGHT", [nid(nx - 1, j) for j in range(nz)], "NSET")
 
-    # ---- 원뿔 강체 니들 (해석적 강체, 둥근 팁) ----
+    # ---- 원뿔 니들 : 이산 강체(CAX4R rigid) - 요소기반 표면 ----
+    #  해석적 강체는 침식 노출면 접촉이 불안정 -> 양쪽 요소기반으로 통일.
+    #  blunt 둥근 팁(반경 R_TIPN, 축 중심), 원뿔 -> 기저 R_BASE.
     zt = Z_TOP + GAP
+    H_NDL = 1.5
+    NW_N = 5
+    smax = nid(nx - 1, nz - 1)                  # 피부 최대 절점번호
+    nbase = ((smax // 1000000) + 2) * 1000000   # 피부 범위 위로 이격(충돌 방지)
+    zstr = 1000
+
+    def Nid(i, j):
+        return nbase + i + zstr * j
+
+    znn, z, dz = [zt], zt, 0.008
+    while z < zt + H_NDL - EPS:
+        z = min(z + dz, zt + H_NDL)
+        znn.append(round(z, 6))
+        dz = min(dz * 1.2, 0.1)
+
+    def rout_n(z):
+        t = (z - zt) / H_CONE
+        if t > 1.0:
+            t = 1.0
+        return R_TIPN + (R_BASE - R_TIPN) * t
+
     w("*NODE")
-    w("9999, 0.0, %.6f" % zt)
+    for j, z in enumerate(znn):
+        ro = rout_n(z)
+        for i in range(NW_N + 1):
+            w("%d, %.6f, %.6f" % (Nid(i, j), ro * i / NW_N, z))
+    w("9999, 0.0, %.6f" % (zt + H_NDL))
     w("*NSET, NSET=NREF")
     w("9999,")
-    w("*SURFACE, TYPE=SEGMENTS, NAME=NEEDLE, FILLET RADIUS=0.01")
-    w("START, %.5f, %.5f" % (R_BASE, zt + H_CONE + 1.0))
-    w("LINE,  %.5f, %.5f" % (R_BASE, zt + H_CONE))          # 기저
-    w("LINE,  %.5f, %.5f" % (R_TIPN, zt + R_TIPN))          # 원뿔 플랭크
-    w("CIRCL, 0.0, %.5f, 0.0, %.5f" % (zt, zt + R_TIPN))    # 둥근 팁->축
-    w("*RIGID BODY, ANALYTICAL SURFACE=NEEDLE, REF NODE=NREF")
+    w("*ELEMENT, TYPE=CAX4R")
+    ndl = []
+    for j in range(len(znn) - 1):
+        for i in range(NW_N):
+            e += 1
+            w("%d, %d, %d, %d, %d" % (e, Nid(i, j), Nid(i + 1, j),
+                                      Nid(i + 1, j + 1), Nid(i, j + 1)))
+            ndl.append(e)
+    w("*ELSET, ELSET=NEEDLE_EL, GENERATE")
+    w("%d, %d, 1" % (ndl[0], ndl[-1]))
+    w("*SURFACE, TYPE=ELEMENT, NAME=NEEDLE")
+    w("NEEDLE_EL,")
+    w("*RIGID BODY, ELSET=NEEDLE_EL, REF NODE=NREF")
 
     # ---- 재료 (Ogden VUMAT + 요소삭제) ----
+    w("*MATERIAL, NAME=NEEDLE_MAT")
+    w("*DENSITY")
+    w("7.9e-9,")
+    w("*ELASTIC")
+    w("200000.0, 0.3")
+    w("*SOLID SECTION, ELSET=NEEDLE_EL, MATERIAL=NEEDLE_MAT")
     for lay in ("EPIDERMIS", "DERMIS"):
         rho, cst = MAT[lay]
         w("*MATERIAL, NAME=MAT_%s" % lay)
@@ -188,8 +228,11 @@ def main():
     w("*BOUNDARY, AMPLITUDE=PUSH")
     w("NREF, 2, 2, %.4f" % (-PUSH))
     w("*CONTACT")
-    # ALL EXTERIOR: 요소 삭제로 노출된 내부 면 자동 포함(Interior Surfaces)
+    # ALL EXTERIOR: 요소 삭제로 노출된 내부 면 자동 포함(Interior Surfaces).
+    # 명시 니들-피부 쌍 추가(요소기반 양쪽) -> 침식 접촉 검출 강건화.
     w("*CONTACT INCLUSIONS, ALL EXTERIOR")
+    w("*CONTACT INCLUSIONS")
+    w("NEEDLE, SKIN_SURF")
     w("*CONTACT PROPERTY ASSIGNMENT")
     w(" ,  , IPROP")
     w("*OUTPUT, FIELD, NUMBER INTERVAL=30")
