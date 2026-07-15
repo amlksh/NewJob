@@ -39,8 +39,13 @@ def main():
     base = os.path.splitext(os.path.basename(odb_path))[0]
     odb = session.openOdb(odb_path, readOnly=True)
 
-    # 뷰포트 (고정 크기 -> 일관된 이미지)
-    vp = session.Viewport(name='snap', origin=(0, 0), width=240, height=180)
+    # noGUI viewer 호환: 새 뷰포트를 만들면 'expecting StubType' 오류가 나므로
+    # 기본 뷰포트('Viewport: 1')를 사용한다.
+    if 'Viewport: 1' in session.viewports.keys():
+        vp = session.viewports['Viewport: 1']
+    else:
+        vp = session.Viewport(name='Viewport: 1', origin=(0, 0),
+                              width=240, height=180)
     vp.makeCurrent()
     vp.setValues(displayedObject=odb)
 

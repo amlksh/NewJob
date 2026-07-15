@@ -141,10 +141,12 @@ def generate(outfile="04_refined_path.inp", dr_fine=0.03, dz_sc=0.005,
     w("9999, 0.0, %.5f" % (Z_TOP + 0.02))
     w("*NSET, NSET=NREF")
     w("9999,")
+    # 세그먼트를 샤프트->첨두 순으로 정의: 진행방향 왼쪽(=피부 향하는 아래)이
+    # 접촉면(외향 법선)이 되도록. (역순이면 니들 고체측이 피부를 향해 접촉 안 됨)
     w("*SURFACE, TYPE=SEGMENTS, NAME=NEEDLE, FILLET RADIUS=0.01")
-    w("START, 0.02, %.5f" % (Z_TOP + 0.02))
+    w("START, 0.15, %.5f" % (Z_TOP + 2.00))
     w("LINE,  0.15, %.5f" % (Z_TOP + 0.40))
-    w("LINE,  0.15, %.5f" % (Z_TOP + 2.00))
+    w("LINE,  0.02, %.5f" % (Z_TOP + 0.02))
     w("*RIGID BODY, ANALYTICAL SURFACE=NEEDLE, REF NODE=NREF")
 
     for lay in ("STRATUM", "EPIDERMIS", "DERMIS"):
