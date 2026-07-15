@@ -190,8 +190,13 @@ def main():
     w("CORE, OUTER")
     w("*ELSET, ELSET=COH, GENERATE")
     w("%d, %d, 1" % (coh[0], coh[-1]))
+    # 내부 요소면까지 접촉 대상에 포함(요소 4면 S1~S4) -> 삭제 노출 내부면
+    # 연속 접촉(모델 17 검증 기법). element set 만 주면 자유면=외곽만 생성.
     w("*SURFACE, TYPE=ELEMENT, NAME=SKIN_SURF")
-    w("BULK,")
+    w("BULK, S1")
+    w("BULK, S2")
+    w("BULK, S3")
+    w("BULK, S4")
 
     # ---- 경계 절점집합 ----
     bot = ([Cid(i, 0) for i in range(nco)] + [Oid(i, 0) for i in range(no)])
@@ -317,9 +322,10 @@ def main():
     w("*BOUNDARY, AMPLITUDE=PUSH")
     w("NREF, 2, 2, %.1f" % (-PUSH))
     w("*CONTACT")
-    # ALL EXTERIOR: 요소 삭제로 드러난 내부 면을 자동 포함(=Interior Surfaces)
-    # -> 삭제 후 노출된 진피 내측면에 접촉 활성. 정적 pair 의존 제거.
+    # SKIN_SURF(내부면 포함)를 니들과 명시 접촉 -> 삭제 노출 내부면 연속 접촉.
     w("*CONTACT INCLUSIONS, ALL EXTERIOR")
+    w("*CONTACT INCLUSIONS")
+    w("NEEDLE, SKIN_SURF")
     w("*CONTACT PROPERTY ASSIGNMENT")
     w(" ,  , IPROP")
     w("*OUTPUT, FIELD, NUMBER INTERVAL=30")
