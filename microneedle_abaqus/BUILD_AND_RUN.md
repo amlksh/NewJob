@@ -221,3 +221,23 @@ abaqus python postprocess.py coh13.odb
 
 > A/B/C 는 코드 레벨(린터·기하·고정형식) 정합성까지 확인했으나 원격
 > 컨테이너에서 Abaqus 실행은 불가하여 **사용자 환경 실행검증이 필요**합니다.
+
+### (결합) 두께 니들 + cohesive 절개 — 요소삭제 없는 splitting
+모델 14(두께 변형 니들)와 12(cohesive 절개)를 합친 최종 모델. 니들 팁
+외경 r=50µm 원통면에 COHAX4 삽입 -> **요소 삭제 없이** 코어(r<50)가
+외피와 분리되고 중공 보어(r<30)로 빠져나가며 매끈하게 coring.
+피부 3층은 **내장 Neo-Hookean(비삭제)**, cohesive 도 내장 CZM 이라
+**서브루틴 불필요(단독 실행)**.
+```bat
+python gen_microneedle_cohesive.py
+abaqus job=mn15 input=15_microneedle_cohesive.inp double=both cpus=4 interactive
+abaqus python postprocess.py mn15.odb
+```
+- 확인 포인트: cohesive `SDEG`(절개 진행)·`STATUS`, 코어 분리, `ALLDMD`,
+  조각(debris)·질량손실 **없음**(vs 모델 14 요소삭제와 대비).
+- 왜 14는 삭제만, 15는 splitting? 14=bulk 삭제 VUMAT(요소 제거),
+  15=사전삽입 cohesive(면 분리). 재료 VUMAT은 절점분리 불가 -> cohesive 필요.
+- 주의: 삭제가 없으므로 코어가 크게 압축될 수 있음 -> 과도 왜곡 시
+  `gen_microneedle_cohesive.py` 의 `PUSH` 축소 또는 코어에 ALE 추가.
+- cohesive 를 사용자 CZM 으로: COHMAT 재료를 vumat_cohesive.f(작업 C)로
+  교체하면 `user=vumat_cohesive.f` 필요.
