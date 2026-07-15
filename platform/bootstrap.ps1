@@ -113,6 +113,7 @@ if (-not $SkipTools) {
   Ensure-Tool "Microsoft.PowerShell" "pwsh" "PowerShell 7"
   Ensure-Tool "Microsoft.WindowsTerminal" "wt" "Windows Terminal"
   Ensure-Tool "Python.Python.3.12" "python" "Python"
+  Ensure-Tool "GitHub.cli" "gh" "GitHub CLI"
   # Claude Code: winget 우선, 실패 시 공식 설치 스크립트
   if ((Have claude) -and (-not $Update)) {
     Rec "Claude Code" "OK" "이미 설치됨"

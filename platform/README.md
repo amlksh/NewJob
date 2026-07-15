@@ -190,5 +190,7 @@ UMAT/VUMAT(구조) + 이동열원 DFLUX 구조의 시작 템플릿(fire-sim 계�
   `doe`(gen/agg), `report`(렌더링), `gen_subroutine`, `run_job`(dry-run),
   `regression`(save/check), `optimize`(mock 수렴), `md2docx`(유효 .docx),
   `tests/selftest.py`(**14/14 PASS**), 전체 .inp 린트 게이트 통과.
-- `bootstrap.ps1`·`setup.bat` 는 **Windows에서 실행 검증 필요**(작성 환경에
-  PowerShell/winget 부재). 첫 실행은 `-DryRun` 으로 미리보기 권장.
+- `bootstrap.ps1`·`setup.bat` **-DryRun 실환경 검증 완료**
+  (Windows PowerShell 5.1, 2026-07-15: 전 단계 정상 출력, exit 0, FAIL=0).
+  실제 설치·스캐폴딩(비-DryRun)은 첫 실행 시 셀프체크 리포트로 확인 권장.
+  ※ `.ps1` 은 UTF-8 **BOM** 유지 필수(5.1 한글 파싱).
