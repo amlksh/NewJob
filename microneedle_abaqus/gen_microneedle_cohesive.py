@@ -37,7 +37,7 @@ R_TIP = 50.0
 R_OUT = 150.0
 NW = 4
 GAP = 50.0
-PUSH = 500.0            # 하강량(코어 과압축 억제 위해 모델14보다 작게)
+PUSH = 300.0            # 하강량(코어 과압축·왜곡 억제 -> 절개 시연에 충분)
 H_NDL = 2000.0
 TAPER_H = 300.0
 DZ_TIP = 5.0
@@ -53,8 +53,8 @@ BULK = {
     "EPIDERMIS": ("1.1e-15", "0.1, 0.1"),
     "DERMIS":    ("1.1e-15", "0.02, 1.0"),
 }
-# CZM (논문값 -> um): 초기강성 4 MPa/um, 강도 2 MPa, Gc 10 uN/um
-CZM_E, CZM_STR, CZM_GC, CZM_T0 = 4.0, 2.0, 10.0, 1.0
+# CZM (논문값 -> um): 초기강성 4 MPa/um, 강도 2 MPa, Gc 완화(절개 용이)
+CZM_E, CZM_STR, CZM_GC, CZM_T0 = 4.0, 2.0, 5.0, 1.0
 
 STRI = 10000            # 피부 z-행 절점 증분
 OFF = 5000000           # 외부 블록 절점 오프셋
@@ -140,6 +140,7 @@ def main():
     w("*ELEMENT, TYPE=CAX4R")
     e = 0
     elems = {"STRATUM": [], "EPIDERMIS": [], "DERMIS": []}
+    core_ids = []                        # 코어(r<R_CUT) -> ALE 대상
     for j in range(nz):
         lay = layer(0.5 * (zs[j] + zs[j + 1]))
         for i in range(nco - 1):
@@ -147,6 +148,7 @@ def main():
             w("%d, %d, %d, %d, %d" % (e, Cid(i, j), Cid(i + 1, j),
                                       Cid(i + 1, j + 1), Cid(i, j + 1)))
             elems[lay].append(e)
+            core_ids.append(e)
         for i in range(no - 1):
             e += 1
             w("%d, %d, %d, %d, %d" % (e, Oid(i, j), Oid(i + 1, j),
@@ -176,6 +178,7 @@ def main():
         wl(lay, elems[lay], "ELSET")
     w("*ELSET, ELSET=BULK")
     w("STRATUM, EPIDERMIS, DERMIS")
+    wl("CORE", core_ids, "ELSET")
     w("*ELSET, ELSET=COH, GENERATE")
     w("%d, %d, 1" % (coh[0], coh[-1]))
     w("*SURFACE, TYPE=ELEMENT, NAME=SKIN_SURF")
@@ -241,8 +244,12 @@ def main():
         w("%s," % rho)
         w("*HYPERELASTIC, NEO HOOKE")
         w(cst)
+    # 왜곡 제어(요소 뒤집힘 방지, 삭제 없음) + Enhanced hourglass
+    w("*SECTION CONTROLS, NAME=SKINCTRL, DISTORTION CONTROL=YES,"
+      " HOURGLASS=ENHANCED")
     for lay in ("STRATUM", "EPIDERMIS", "DERMIS"):
-        w("*SOLID SECTION, ELSET=%s, MATERIAL=MAT_%s" % (lay, lay))
+        w("*SOLID SECTION, ELSET=%s, MATERIAL=MAT_%s, CONTROLS=SKINCTRL"
+          % (lay, lay))
 
     w("*MATERIAL, NAME=COHMAT")
     w("*DENSITY")
@@ -276,11 +283,14 @@ def main():
     w("NREF, 1, 1")
     w("NREF, 6, 6")
     w("*AMPLITUDE, NAME=PUSH, DEFINITION=SMOOTH STEP")
-    w("0.0, 0.0, 0.02, 1.0")
+    w("0.0, 0.0, 0.03, 1.0")
     w("*STEP, NAME=PENETRATION")
     w("*DYNAMIC, EXPLICIT")
-    w(", 0.02")
+    w(", 0.03")
     w("*FIXED MASS SCALING, DT=2.0e-7, TYPE=BELOW MIN")
+    # 코어 ALE 적응메쉬: 짓눌리는 코어를 재분할해 왜곡 완화(위상 불변,
+    # cohesive 경계는 Lagrangian 유지). 절개는 cohesive 가 담당.
+    w("*ADAPTIVE MESH, ELSET=CORE, FREQUENCY=5, MESH SWEEPS=3")
     w("*BOUNDARY, AMPLITUDE=PUSH")
     w("NREF, 2, 2, %.1f" % (-PUSH))
     w("*CONTACT")
