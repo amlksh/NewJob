@@ -196,51 +196,27 @@ def main():
     w("*NSET, NSET=NRIGHT, GENERATE")
     w("%d, %d, %d" % (Oid(no - 1, 0), Oid(no - 1, nz), STRI))
 
-    # ---- 변형 니들 : CAX4R 가변벽 ----
-    zn, zt = needle_z()
-    nrows = len(zn)
-    nbase = 6000000
-    zstr = 1000
-
-    def Nid(i, j):
-        return nbase + i + zstr * j
-
+    # ---- 솔리드 니들(해석적 강체) : 축(r=0) 중심 + 둥근 팁 ----
+    #  (1) 축 중심: 첨두가 r=0(피부 축)에 위치.  (3) 팁 라운드로 엣지접촉 개선.
+    #  니들 최대반경 = R_CUT -> 코어(r<R_CUT)를 삭제하며 관통, r=R_CUT
+    #  cohesive 가 debonding.
+    zt = Z_TOP + GAP
+    nose = 15.0                          # 팁 라운드(nose) 반경 [um]
     w("**")
-    w("** --- Deformable needle wall (CAX4R): bore %.0f, tip %.0f, shaft %.0f"
-      % (R_IN, R_TIP, R_OUT))
+    w("** --- Solid rigid needle (axis-centered, rounded conical tip) ---")
     w("*NODE")
-    for j, z in enumerate(zn):
-        ro = r_out_at(z, zt)
-        for i in range(NW + 1):
-            r = R_IN + (ro - R_IN) * i / NW
-            w("%d, %.4f, %.4f" % (Nid(i, j), r, z))
-    w("9999, 0.0, %.4f" % (zt + H_NDL))
+    w("9999, 0.0, %.4f" % zt)            # 참조점 = 첨두(축 위)
     w("*NSET, NSET=NREF")
     w("9999,")
-    w("*ELEMENT, TYPE=CAX4R")
-    ndl_el = []
-    for j in range(nrows - 1):
-        for i in range(NW):
-            e += 1
-            w("%d, %d, %d, %d, %d" % (e, Nid(i, j), Nid(i + 1, j),
-                                      Nid(i + 1, j + 1), Nid(i, j + 1)))
-            ndl_el.append(e)
-    w("*ELSET, ELSET=NEEDLE_EL, GENERATE")
-    w("%d, %d, 1" % (ndl_el[0], ndl_el[-1]))
-    w("*SURFACE, TYPE=ELEMENT, NAME=NEEDLE")
-    w("NEEDLE_EL,")
-    wl("NDLTOP", [Nid(i, nrows - 1) for i in range(NW + 1)], "NSET")
-    w("*SURFACE, TYPE=NODE, NAME=NDLTOP_S")
-    w("NDLTOP,")
+    # 세그먼트 순서 샤프트->첨두(외향 법선이 피부/아래를 향함).
+    w("*SURFACE, TYPE=SEGMENTS, NAME=NEEDLE, FILLET RADIUS=5.0")
+    w("START, %.4f, %.4f" % (R_CUT, zt + 2000.0))     # 샤프트 상단
+    w("LINE,  %.4f, %.4f" % (R_CUT, zt + 150.0))      # 샤프트(r=R_CUT)
+    w("LINE,  %.4f, %.4f" % (nose, zt + nose))        # 원뿔 테이퍼
+    w("CIRCL, 0.0, %.4f, 0.0, %.4f" % (zt, zt + nose))  # 둥근 첨두->축
+    w("*RIGID BODY, ANALYTICAL SURFACE=NEEDLE, REF NODE=NREF")
 
     # ---- 재료 ----
-    w("*MATERIAL, NAME=NEEDLE_MAT")
-    w("*DENSITY")
-    w("%s," % NDL_RHO)
-    w("*ELASTIC")
-    w("%.4g, %.4g" % (NDL_E, NDL_NU))
-    w("*SOLID SECTION, ELSET=NEEDLE_EL, MATERIAL=NEEDLE_MAT")
-
     # 코어 재료: VUMAT hyperelastic + damage(요소삭제)  [vumat_skin.f]
     for lay in ("STRATUM", "EPIDERMIS", "DERMIS"):
         rho, cst = BULK[lay]
@@ -286,11 +262,6 @@ def main():
       " RESPONSE=TRACTION SEPARATION, THICKNESS=SPECIFIED")
     w("%.4g," % CZM_T0)
 
-    # ---- 결합(상단 모서리 -> 참조점) : Explicit *COUPLING+*KINEMATIC ----
-    w("*COUPLING, CONSTRAINT NAME=NDL_GRIP, REF NODE=9999, SURFACE=NDLTOP_S")
-    w("*KINEMATIC")
-    w("1, 2")
-
     # ---- 접촉 상호작용(모델 데이터) ----
     w("*SURFACE INTERACTION, NAME=IPROP")
     w("*FRICTION")
@@ -326,8 +297,6 @@ def main():
     w("SDV, STATUS")
     w("*ELEMENT OUTPUT, ELSET=COH")
     w("SDEG, STATUS")
-    w("*ELEMENT OUTPUT, ELSET=NEEDLE_EL")
-    w("S, LE")
     w("*NODE OUTPUT")
     w("U, V")
     w("*OUTPUT, HISTORY, TIME INTERVAL=1.0e-4")
@@ -342,8 +311,8 @@ def main():
     ncore = sum(len(v) for v in core_el.values())
     nout = sum(len(v) for v in out_el.values())
     print("wrote 15_microneedle_cohesive.inp")
-    print("  core(삭제)=%d, outer(비삭제)=%d, cohesive=%d, needle=%d"
-          % (ncore, nout, len(coh), len(ndl_el)))
+    print("  core(삭제)=%d, outer(비삭제)=%d, cohesive=%d (needle=rigid)"
+          % (ncore, nout, len(coh)))
     print("  r-core=%d, r-out=%d, z-rows=%d ; R_CUT=%.0f, PUSH=%.0f um"
           % (nco, no, nz, R_CUT, PUSH))
     print("  이원화: 코어 VUMAT damage+삭제 / 외부 내장 hyper(비삭제) ; "

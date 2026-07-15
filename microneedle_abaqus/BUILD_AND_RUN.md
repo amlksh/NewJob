@@ -227,8 +227,8 @@ abaqus python postprocess.py coh13.odb
 - **코어 (r<50, 빨강)**: VUMAT **hyperelastic + damage(요소삭제)** -> 니들
   경로의 요소를 제거(깨끗한 관통, 간섭 없음).
 - **외부 (r>50, 노랑)**: **삭제 없는** 내장 Neo-Hookean(순수 변형).
-- **경계 r=50**: COHAX4 **cohesive**(견인-분리 절개 경계).
-두께 변형 니들(중공 CAX4R)은 유지.
+- **경계 r=50**: COHAX4 **cohesive**(니들 삽입 시 debonding).
+니들: **축(r=0) 중심 솔리드 강체 + 둥근 원뿔 팁**(FILLET) -> 엣지접촉 안정.
 ```bat
 python gen_microneedle_cohesive.py
 abaqus job=mn15 input=15_microneedle_cohesive.inp user=vumat_skin.f double=both cpus=4 interactive
