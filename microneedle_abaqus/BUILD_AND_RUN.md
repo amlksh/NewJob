@@ -154,3 +154,51 @@ abaqus python postprocess.py hgo02.odb
 > 검토했으나, **실제 Abaqus 실행 검증은 사용자 환경에서 수행**해야 합니다.
 > 첫 실행에서 나오는 `.log`/`.dat`/`.sta` 메시지를 공유해 주시면 함께
 > 디버깅하겠습니다.
+
+---
+
+## 5. 전문가 피드백 반영 모델 — A · B · C (신규, 실행검증 필요)
+
+세 모델 모두 마이크로 단위계(µm, µN, MPa, s, 밀도 kg/µm³)입니다.
+먼저 생성기를 돌려 `.inp` 를 만든 뒤 실행하세요.
+
+```bat
+python gen_microneedle_discrete.py   REM -> 11_microneedle_discrete.inp
+python gen_cohesive_axi.py           REM -> 12_ , 13_ 동시 생성
+```
+
+### (A) 이산 강체(Discrete Rigid) 중공 니들 + 접촉 필렛
+니들 벽을 **RAX2**(축대칭 강체요소)로 이산화 → 요소기반 강체표면은
+일반접촉에서 **자동 양면(two-sided)** 처리(외벽·보어 동시 접촉). 팁 코너를
+원호 노드열로 물리적으로 둥글려 접촉 응력집중/튐을 억제.
+```bat
+abaqus job=mn11 input=11_microneedle_discrete.inp user=vumat_skin.f double=both cpus=4 interactive
+abaqus python postprocess.py mn11.odb
+```
+- 확인 포인트: 접촉력–깊이 곡선이 매끈한지(팁 필렛 효과), 관통 시작 깊이.
+- 참고: 요소삭제 VUMAT 유지(니들/접촉 안정성 검증이 목적).
+
+### (B) 축대칭 Cohesive 절개 ⭐ (요소 삭제 없음)
+반경 `R_CUT=50µm` 원통면에 두께 0 **COHAX4** cohesive 삽입 → 강체
+니들이 코어를 밀며 견인-분리로 매끈한 원통형 절개. **서브루틴 불필요**.
+```bat
+abaqus job=coh12 input=12_cohesive_axi.inp double=both cpus=4 interactive
+abaqus python postprocess.py coh12.odb
+```
+- CZM: 초기강성 4000 MPa/mm(=4 MPa/µm), 강도 2 MPa, Gc 10 µN/µm.
+- 확인 포인트: cohesive `SDEG`(손상)·`STATUS`, 코어 분리, `ALLDMD`(손상소산).
+
+### (C) 사용자 정의 이중선형 CZM VUMAT
+(B)의 내장 cohesive 를 사용자 `vumat_cohesive.f`(혼합모드 I/II, 손상이력)
+로 교체. PROPS = K, t0, Gc, T0, β. **cohesive 요소에 `user=` 필수**.
+```bat
+abaqus job=coh13 input=13_cohesive_axi_vumat.inp user=vumat_cohesive.f double=both cpus=4 interactive
+abaqus python postprocess.py coh13.odb
+```
+- 확인 포인트: `SDV5`(손상 d)·`SDV7`(유효분리)·`STATUS`. (B)와 힘–깊이
+  곡선이 일치하면 VUMAT 검증 완료.
+- 성분규약: 인덱스1=법선, 2..=전단(COHAX4=2성분). 힘–깊이가 (B)와
+  어긋나면 `vumat_cohesive.f` 헤더의 성분규약 주석을 확인하세요.
+
+> A/B/C 는 코드 레벨(린터·기하·고정형식) 정합성까지 확인했으나 원격
+> 컨테이너에서 Abaqus 실행은 불가하여 **사용자 환경 실행검증이 필요**합니다.
