@@ -222,25 +222,20 @@ abaqus python postprocess.py coh13.odb
 > A/B/C 는 코드 레벨(린터·기하·고정형식) 정합성까지 확인했으나 원격
 > 컨테이너에서 Abaqus 실행은 불가하여 **사용자 환경 실행검증이 필요**합니다.
 
-### (결합) 두께 니들 + cohesive 절개 — 요소삭제 없는 splitting
-모델 14(두께 변형 니들)와 12(cohesive 절개)를 합친 최종 모델. 니들 팁
-외경 r=50µm 원통면에 COHAX4 삽입 -> **요소 삭제 없이** 코어(r<50)가
-외피와 분리되고 중공 보어(r<30)로 빠져나가며 매끈하게 coring.
-피부 3층은 **내장 Neo-Hookean(비삭제)**, cohesive 도 내장 CZM 이라
-**서브루틴 불필요(단독 실행)**.
+### (결합) 두께 니들 + cohesive + damage(요소삭제) 병용 ⭐ 최종
+두께 변형 니들(중공 CAX4R) + 피부 3층 **hyperelastic + 요소삭제(VUMAT)**
++ 니들 팁 외경 r=50µm 원통면 **COHAX4 cohesive**. 두 메커니즘 병용:
+- **damage(요소삭제)**: 첨두 아래 코어를 제거 -> 과도변형 중단 방지(15의
+  이전 중단 원인 해소). ALE 불필요.
+- **cohesive**: r=50 견인-분리로 코어/외피 절개 경계(splitting) 형성.
 ```bat
 python gen_microneedle_cohesive.py
-abaqus job=mn15 input=15_microneedle_cohesive.inp double=both cpus=4 interactive
+abaqus job=mn15 input=15_microneedle_cohesive.inp user=vumat_skin.f double=both cpus=4 interactive
 abaqus python postprocess.py mn15.odb
 ```
-- 확인 포인트: cohesive `SDEG`(절개 진행)·`STATUS`, 코어 분리, `ALLDMD`,
-  조각(debris)·질량손실 **없음**(vs 모델 14 요소삭제와 대비).
-- 왜 14는 삭제만, 15는 splitting? 14=bulk 삭제 VUMAT(요소 제거),
-  15=사전삽입 cohesive(면 분리). 재료 VUMAT은 절점분리 불가 -> cohesive 필요.
-- 주의: 삭제가 없으므로 코어가 크게 압축될 수 있음 -> 과도 왜곡 시
-  `gen_microneedle_cohesive.py` 의 `PUSH` 축소 또는 코어에 ALE 추가.
-- cohesive 를 사용자 CZM 으로: COHMAT 재료를 vumat_cohesive.f(작업 C)로
-  교체하면 `user=vumat_cohesive.f` 필요.
+- 확인 포인트: 코어 `STATUS`(삭제 관통) + cohesive `SDEG`(절개), 힘-깊이(RF2).
+- 여전히 왜곡 시 `PUSH`(현재 300µm) 축소, 또는 층 `lam_f`(파단 stretch) 하향.
+- cohesive 를 사용자 CZM 으로: COHMAT 을 vumat_cohesive.f(작업 C)로 교체.
 
 ### (16) 니들 관통 - 솔리드 원뿔 3층 (CAE Assistant 방식, 삭제+cohesive 병용)
 "Needle Puncture of Skin by Injection" 레퍼런스 구성: 솔리드 원뿔 니들

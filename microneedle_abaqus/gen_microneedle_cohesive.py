@@ -2,20 +2,20 @@
 # ======================================================================
 #  gen_microneedle_cohesive.py  ->  15_microneedle_cohesive.inp
 #
-#  [결합 모델] 두께 있는 변형 니들(모델 14) + cohesive 절개 피부(모델 12).
-#  -> 요소 삭제(erosion) 없이 "splitting(절개)" 로 니들이 조직을 가름.
+#  [결합 모델] 두께 있는 변형 니들 + cohesive 절개 + 층 damage(요소삭제).
+#  -> "cohesive(절개) + damage(삭제)" 병용으로 splitting.
 #
 #   * 니들: 변형 가능한 축대칭 2D solid(CAX4R) 가변벽(내경30/팁50/샤프트150).
-#   * 피부: 3층 내장 Neo-Hookean(비삭제) + 니들 팁 외경 r=R_CUT=50um 원통면에
-#     두께 0 COHAX4 cohesive 삽입(단일 외측 절개).
-#   * 니들 하강 -> r=50 cohesive 견인-분리 -> 코어(r<50)가 외피와 분리,
-#     중공 보어(r<30)로 코어가 위로 빠져나가며 매끈하게 coring.
-#   * 전 구성요소 내장 -> 서브루틴 불필요(단독 실행). (원하면 cohesive 를
-#     작업 C 의 vumat_cohesive.f 로 교체 가능.)
+#   * 피부: 3층 hyperelastic + 최대주신축비 damage(요소삭제, vumat_skin.f)
+#     + 니들 팁 외경 r=R_CUT=50um 원통면에 두께 0 COHAX4 cohesive.
+#   * 니들 하강 -> (a) 첨두 아래 코어 요소삭제로 과도변형 중단 방지,
+#     (b) r=50 cohesive 견인-분리로 코어/외피 절개 경계 형성.
+#   * 삭제가 코어 압축을 해소하므로 ALE 불필요(제거 -> hourglass 충돌 없음).
 #
 #  단위: 길이 um, 응력 MPa, 힘 uN, 질량 kg, 시간 s
 #  실행:  python gen_microneedle_cohesive.py
-#     abaqus job=mn15 input=15_microneedle_cohesive.inp double=both cpus=4 interactive
+#     abaqus job=mn15 input=15_microneedle_cohesive.inp user=vumat_skin.f \
+#            double=both cpus=4 interactive
 # ======================================================================
 EPS = 1.0e-9
 
@@ -47,11 +47,11 @@ NDL_E = 200000.0
 NDL_NU = 0.3
 NDL_RHO = "7.9e-15"
 
-# 층별 내장 Neo-Hookean: C10[MPa], D1[1/MPa] ; 밀도[kg/um^3]
+# 층별 VUMAT(요소삭제): C10[MPa], D1[1/MPa], lam_d, lam_f ; 밀도[kg/um^3]
 BULK = {
-    "STRATUM":   ("1.2e-15", "1.0, 0.02"),
-    "EPIDERMIS": ("1.1e-15", "0.1, 0.1"),
-    "DERMIS":    ("1.1e-15", "0.02, 1.0"),
+    "STRATUM":   ("1.2e-15", "1.0, 0.02, 1.2, 1.5"),
+    "EPIDERMIS": ("1.1e-15", "0.1, 0.1, 1.4, 1.9"),
+    "DERMIS":    ("1.1e-15", "0.02, 1.0, 1.6, 2.5"),
 }
 # CZM (논문값 -> um): 초기강성 4 MPa/um, 강도 2 MPa, Gc 완화(절개 용이)
 CZM_E, CZM_STR, CZM_GC, CZM_T0 = 4.0, 2.0, 5.0, 1.0
@@ -123,8 +123,8 @@ def main():
     L = []
     w = L.append
     w("*HEADING")
-    w("[15] Deformable thick needle + cohesive coring incision (no deletion)")
-    w("Skin: 3-layer built-in Neo-Hookean; r=%.0f um: COHAX4 ; Units um,uN,MPa,s"
+    w("[15] Deformable thick needle + cohesive + layer damage(deletion)")
+    w("Skin: 3-layer VUMAT hyperelastic+damage; r=%.0f um: COHAX4 ; um,uN,MPa,s"
       % R_CUT)
 
     # ---- 피부 절점 (코어 + 외부) ----
@@ -242,12 +242,17 @@ def main():
         w("*MATERIAL, NAME=MAT_%s" % lay)
         w("*DENSITY")
         w("%s," % rho)
-        w("*HYPERELASTIC, NEO HOOKE")
+        w("*USER MATERIAL, CONSTANTS=4")
         w(cst)
-    # 왜곡 제어(요소 뒤집힘 방지, 삭제 없음).
-    #  주의: ALE(코어) + 내장 hyperelastic 에서는 Enhanced hourglass 불허
-    #  -> 기본 hourglass 사용(HOURGLASS 키워드 생략). 분포제어만 적용.
-    w("*SECTION CONTROLS, NAME=SKINCTRL, DISTORTION CONTROL=YES")
+        w("*DEPVAR, DELETE=1")
+        w("4")
+        w("1, DELFLAG, deletion flag")
+        w("2, LAMMAX, max principal stretch")
+        w("3, DAMAGE, damage variable")
+        w("4, JVOL, relative volume")
+    # 왜곡 제어 + Enhanced hourglass (ALE 없음 -> 충돌 없음).
+    w("*SECTION CONTROLS, NAME=SKINCTRL, DISTORTION CONTROL=YES,"
+      " HOURGLASS=ENHANCED")
     for lay in ("STRATUM", "EPIDERMIS", "DERMIS"):
         w("*SOLID SECTION, ELSET=%s, MATERIAL=MAT_%s, CONTROLS=SKINCTRL"
           % (lay, lay))
@@ -289,9 +294,7 @@ def main():
     w("*DYNAMIC, EXPLICIT")
     w(", 0.03")
     w("*FIXED MASS SCALING, DT=2.0e-7, TYPE=BELOW MIN")
-    # 코어 ALE 적응메쉬: 짓눌리는 코어를 재분할해 왜곡 완화(위상 불변,
-    # cohesive 경계는 Lagrangian 유지). 절개는 cohesive 가 담당.
-    w("*ADAPTIVE MESH, ELSET=CORE, FREQUENCY=5, MESH SWEEPS=3")
+    # 코어 과압축은 요소삭제(damage)로 해소 -> ALE 불필요(제거).
     w("*BOUNDARY, AMPLITUDE=PUSH")
     w("NREF, 2, 2, %.1f" % (-PUSH))
     w("*CONTACT")
@@ -302,7 +305,7 @@ def main():
     w(" ,  , IPROP")
     w("*OUTPUT, FIELD, NUMBER INTERVAL=30")
     w("*ELEMENT OUTPUT, ELSET=BULK")
-    w("S, LE")
+    w("S, LE, SDV, STATUS")
     w("*ELEMENT OUTPUT, ELSET=COH")
     w("SDEG, STATUS")
     w("*ELEMENT OUTPUT, ELSET=NEEDLE_EL")
@@ -324,7 +327,7 @@ def main():
           % (nb, len(coh), len(ndl_el)))
     print("  r-core=%d, r-out=%d, z-rows=%d ; R_CUT=%.0f, PUSH=%.0f um"
           % (nco, no, nz, R_CUT, PUSH))
-    print("  no user subroutine (all built-in) -> standalone runnable")
+    print("  cohesive + layer damage(deletion) ; needs user=vumat_skin.f")
 
 
 if __name__ == "__main__":
