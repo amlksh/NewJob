@@ -229,6 +229,9 @@ abaqus python postprocess.py coh13.odb
 - **외부 (r>50, 노랑)**: **삭제 없는** 내장 Neo-Hookean(순수 변형).
 - **경계 r=50**: COHAX4 **cohesive**(니들 삽입 시 debonding).
 니들: **축(r=0) 중심 솔리드 강체 + 둥근 원뿔 팁**(FILLET) -> 엣지접촉 안정.
+삭제 후 탄성복원(snap-back) 투과 대책(생성기 상단 상수로 튜닝):
+`DAMP_ALPHA`(재료 damping)·`CONT_DAMP`(*CONTACT DAMPING)·`MS_DT`(증분 축소).
+여전히 투과 시 `CONT_DAMP`↑(0.5->0.9)·`MS_DT`↓(1e-7->5e-8).
 ```bat
 python gen_microneedle_cohesive.py
 abaqus job=mn15 input=15_microneedle_cohesive.inp user=vumat_skin.f double=both cpus=4 interactive

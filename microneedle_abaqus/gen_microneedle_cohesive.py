@@ -56,6 +56,11 @@ BULK = {
 # CZM (논문값 -> um): 초기강성 4 MPa/um, 강도 2 MPa, Gc 완화(절개 용이)
 CZM_E, CZM_STR, CZM_GC, CZM_T0 = 4.0, 2.0, 5.0, 1.0
 
+# 삭제 후 탄성 복원(snap-back)-투과 대책 (모두 튜닝 가능)
+DAMP_ALPHA = 5.0e4      # 재료 질량비례 damping [1/s] (*DAMPING, ALPHA)
+CONT_DAMP = 0.5         # 접촉 임계감쇠 분율 (*CONTACT DAMPING)
+MS_DT = 1.0e-7          # 질량스케일링 목표 증분 [s] (작을수록 시간분해능↑)
+
 STRI = 10000            # 피부 z-행 절점 증분
 OFF = 5000000           # 외부 블록 절점 오프셋
 
@@ -223,6 +228,7 @@ def main():
         w("*MATERIAL, NAME=MATC_%s" % lay)
         w("*DENSITY")
         w("%s," % rho)
+        w("*DAMPING, ALPHA=%.4g" % DAMP_ALPHA)
         w("*USER MATERIAL, CONSTANTS=4")
         w(cst)
         w("*DEPVAR, DELETE=1")
@@ -238,6 +244,7 @@ def main():
         w("*MATERIAL, NAME=MATO_%s" % lay)
         w("*DENSITY")
         w("%s," % rho)
+        w("*DAMPING, ALPHA=%.4g" % DAMP_ALPHA)
         w("*HYPERELASTIC, NEO HOOKE")
         w("%s, %s" % (c10, d1))
     # 코어(삭제)만 Enhanced hourglass+왜곡제어. 외부는 기본(내장 hyper).
@@ -267,6 +274,9 @@ def main():
     w("*FRICTION")
     w("0.1,")
     w("*SURFACE BEHAVIOR, PRESSURE-OVERCLOSURE=HARD")
+    # 삭제-복원 재접촉 시 급속 접근 감쇠 -> 투과 억제
+    w("*CONTACT DAMPING, DEFINITION=CRITICAL DAMPING FRACTION")
+    w("%.4g," % CONT_DAMP)
 
     # ---- 경계/스텝 ----
     w("*BOUNDARY")
@@ -280,7 +290,7 @@ def main():
     w("*STEP, NAME=PENETRATION")
     w("*DYNAMIC, EXPLICIT")
     w(", 0.03")
-    w("*FIXED MASS SCALING, DT=2.0e-7, TYPE=BELOW MIN")
+    w("*FIXED MASS SCALING, DT=%.2g, TYPE=BELOW MIN" % MS_DT)
     # 코어 과압축은 요소삭제(damage)로 해소 -> ALE 불필요(제거).
     w("*BOUNDARY, AMPLITUDE=PUSH")
     w("NREF, 2, 2, %.1f" % (-PUSH))
