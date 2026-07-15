@@ -79,8 +79,8 @@ def _layer(zmid):
     return "DERMIS"
 
 
-def generate(outfile="04_refined_path.inp", dr_fine=0.03, dz_sc=0.005,
-             r_fine_zone=0.30, r_max=2.0, r_grow=1.25, z_grow=1.30,
+def generate(outfile="04_refined_path.inp", dr_fine=0.01, dz_sc=0.005,
+             r_fine_zone=0.25, r_max=2.0, r_grow=1.22, z_grow=1.30,
              reg=False, verbose=True):
     xs = _build_x(dr_fine, r_fine_zone, r_max, r_grow)
     zs = _build_z(dz_sc, z_grow)
@@ -138,15 +138,17 @@ def generate(outfile="04_refined_path.inp", dr_fine=0.03, dz_sc=0.005,
     wlist("NRIGHT", [nid(nx - 1, j) for j in range(nz)], kw="NSET")
 
     w("*NODE")
-    w("9999, 0.0, %.5f" % (Z_TOP + 0.02))
+    w("9999, 0.0, %.5f" % (Z_TOP + 0.05))     # 참조점 = apex (피부 위 0.05 gap)
     w("*NSET, NSET=NREF")
     w("9999,")
-    # 세그먼트를 샤프트->첨두 순으로 정의: 진행방향 왼쪽(=피부 향하는 아래)이
-    # 접촉면(외향 법선)이 되도록. (역순이면 니들 고체측이 피부를 향해 접촉 안 됨)
-    w("*SURFACE, TYPE=SEGMENTS, NAME=NEEDLE, FILLET RADIUS=0.01")
+    # 니들: 샤프트->원뿔->둥근 첨두(CIRCL 원호). 세그먼트 순서 샤프트->첨두라
+    # 외향 법선이 피부(아래)를 향함. 둥근 첨두로 sharp-vertex 엣지접촉 방지.
+    # apex(0, Z_TOP+0.05)는 피부 상면보다 0.05 위 -> 0sec 초기 접촉/overclosure 없음.
+    w("*SURFACE, TYPE=SEGMENTS, NAME=NEEDLE, FILLET RADIUS=0.02")
     w("START, 0.15, %.5f" % (Z_TOP + 2.00))
-    w("LINE,  0.15, %.5f" % (Z_TOP + 0.40))
-    w("LINE,  0.02, %.5f" % (Z_TOP + 0.02))
+    w("LINE,  0.15, %.5f" % (Z_TOP + 0.48))
+    w("LINE,  0.05, %.5f" % (Z_TOP + 0.10))
+    w("CIRCL, 0.00, %.5f, 0.00, %.5f" % (Z_TOP + 0.05, Z_TOP + 0.10))
     w("*RIGID BODY, ANALYTICAL SURFACE=NEEDLE, REF NODE=NREF")
 
     for lay in ("STRATUM", "EPIDERMIS", "DERMIS"):
@@ -168,6 +170,7 @@ def generate(outfile="04_refined_path.inp", dr_fine=0.03, dz_sc=0.005,
     w("*SURFACE INTERACTION, NAME=IPROP")
     w("*FRICTION")
     w("0.1,")
+    w("*SURFACE BEHAVIOR, PRESSURE-OVERCLOSURE=HARD")
     w("*BOUNDARY")
     w("NBOT, 2, 2")
     w("NAXIS, 1, 1")

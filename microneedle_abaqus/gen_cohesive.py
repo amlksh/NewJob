@@ -171,6 +171,7 @@ def main():
     w("*SURFACE INTERACTION, NAME=IPROP")
     w("*FRICTION")
     w("0.1,")
+    w("*SURFACE BEHAVIOR, PRESSURE-OVERCLOSURE=HARD")
     # ---- 경계 / 스텝 ----
     w("*BOUNDARY")
     w("NBOT, 1, 2")

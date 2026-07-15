@@ -125,6 +125,7 @@ def main():
     w("*SURFACE INTERACTION, NAME=IPROP")
     w("*FRICTION")
     w("0.1,")
+    w("*SURFACE BEHAVIOR, PRESSURE-OVERCLOSURE=HARD")
 
     dx = LX * PRE
     dy = LY * PRE
