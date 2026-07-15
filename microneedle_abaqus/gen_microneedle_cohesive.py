@@ -19,31 +19,30 @@
 # ======================================================================
 EPS = 1.0e-9
 
-# --- 피부 (um) : 3층 ---
+# --- 피부 (um) : 3층 ---  (접촉부·코어 요소 -30%, 코어반경 -30%)
 Z_TOP, Z_SC, Z_EPI = 1500.0, 1480.0, 1400.0
 R_MAX = 2000.0
-R_CUT = 50.0            # 절개(원통) 반경 = 니들 팁 외경
-NC = 10                 # 코어(r<R_CUT) 반경 요소수 (dr=5um)
-DR_OUT0 = 5.0           # 절개면 바깥 첫 요소크기
+R_CUT = 35.0            # 절개(원통) 반경 = 니들 반경 (50 -> 35, -30%)
+NC = 10                 # 코어(r<R_CUT) 반경 요소수 (dr=3.5um, -30%)
+DR_OUT0 = 3.5           # 절개면 바깥 첫 요소크기 (5 -> 3.5, -30%)
 XG = 1.20               # 외부 반경 성장비
-DZ_SC = 2.5
-DZ_EPI = 10.0
+DZ_SC = 1.75           # 각질층 요소(접촉부) (2.5 -> 1.75, -30%)
+DZ_EPI = 7.0           # 표피 요소 (10 -> 7, -30%)
 DZ_DTOP = 10.0
 Z_GROW = 1.30
 
-# --- 변형 니들 (um) : 모델 14 와 동일 가변벽 ---
-R_IN = 30.0
-R_TIP = 50.0
-R_OUT = 150.0
-NW = 4
+# --- 니들 (um) : 2D CAX4R 솔리드 메쉬 + 강체(Rigid Body) ---
+#  축(r=0) 중심 솔리드 원뿔, 둥근 blunt 팁. 요소기반 접촉(침식 접촉 강건).
 GAP = 50.0
-PUSH = 300.0            # 하강량(코어 과압축·왜곡 억제 -> 절개 시연에 충분)
-H_NDL = 2000.0
-TAPER_H = 300.0
-DZ_TIP = 5.0
-DZ_MAX = 40.0
-DZ_GROW = 1.15
-NDL_E = 200000.0
+PUSH = 300.0            # 하강량
+NDL_RTIP = 5.0         # blunt 팁 반경(축 중심, 둥근 팁)
+NDL_CONE_H = 120.0     # 원뿔 높이(팁 -> 샤프트)
+NDL_H = 1000.0         # 니들 총 높이
+NW_N = 10              # 니들 반경방향 요소열
+NDL_DZ0 = 3.5          # 팁 근처 축방향 요소크기(접촉부)
+NDL_DZMAX = 20.0
+NDL_DZG = 1.2
+NDL_E = 200000.0       # 강체이지만 mass 위한 명목 물성
 NDL_NU = 0.3
 NDL_RHO = "7.9e-15"
 
@@ -91,20 +90,21 @@ def layer(zmid):
     return "DERMIS"
 
 
-def needle_z():
-    zt = Z_TOP + GAP
-    zn, z, dz = [zt], zt, DZ_TIP
-    while z < zt + H_NDL - EPS:
-        z = min(z + dz, zt + H_NDL)
+def needle_z(zt):
+    """니들 z-레벨(팁 zt 에서 위로, 팁 근처 세밀)."""
+    zn, z, dz = [zt], zt, NDL_DZ0
+    while z < zt + NDL_H - EPS:
+        z = min(z + dz, zt + NDL_H)
         zn.append(round(z, 4))
-        dz = min(dz * DZ_GROW, DZ_MAX)
-    return zn, zt
+        dz = min(dz * NDL_DZG, NDL_DZMAX)
+    return zn
 
 
-def r_out_at(z, zt):
-    if z >= zt + TAPER_H:
-        return R_OUT
-    return R_TIP + (R_OUT - R_TIP) * (z - zt) / TAPER_H
+def needle_rout(z, zt):
+    """니들 외곽반경: 팁(zt) blunt R -> 원뿔 -> 샤프트 R_CUT."""
+    if z >= zt + NDL_CONE_H:
+        return R_CUT
+    return NDL_RTIP + (R_CUT - NDL_RTIP) * (z - zt) / NDL_CONE_H
 
 
 def main():
@@ -201,27 +201,50 @@ def main():
     w("*NSET, NSET=NRIGHT, GENERATE")
     w("%d, %d, %d" % (Oid(no - 1, 0), Oid(no - 1, nz), STRI))
 
-    # ---- 솔리드 니들(해석적 강체) : 축(r=0) 중심 + 둥근 팁 ----
-    #  (1) 축 중심: 첨두가 r=0(피부 축)에 위치.  (3) 팁 라운드로 엣지접촉 개선.
-    #  니들 최대반경 = R_CUT -> 코어(r<R_CUT)를 삭제하며 관통, r=R_CUT
-    #  cohesive 가 debonding.
+    # ---- 니들: CAX4R 2D 솔리드 메쉬 + 강체(Rigid Body) ----
+    #  축(r=0) 중심 솔리드 원뿔(blunt 둥근 팁). 요소기반 표면 -> 침식 접촉
+    #  강건. 최대반경 = R_CUT -> 코어(r<R_CUT) 삭제하며 관통, r=R_CUT debond.
     zt = Z_TOP + GAP
-    nose = 15.0                          # 팁 라운드(nose) 반경 [um]
+    znn = needle_z(zt)
+    nrow_n = len(znn)
+    nbase = 6000000
+    zstr = 1000
+
+    def Nid(i, j):
+        return nbase + i + zstr * j
+
     w("**")
-    w("** --- Solid rigid needle (axis-centered, rounded conical tip) ---")
+    w("** --- Needle: CAX4R solid, rigid body (axis-centered, blunt tip) ---")
     w("*NODE")
-    w("9999, 0.0, %.4f" % zt)            # 참조점 = 첨두(축 위)
+    for j, z in enumerate(znn):
+        ro = needle_rout(z, zt)
+        for i in range(NW_N + 1):
+            w("%d, %.4f, %.4f" % (Nid(i, j), ro * i / NW_N, z))
+    w("9999, 0.0, %.4f" % (zt + NDL_H))       # 참조점(강체 제어)
     w("*NSET, NSET=NREF")
     w("9999,")
-    # 세그먼트 순서 샤프트->첨두(외향 법선이 피부/아래를 향함).
-    w("*SURFACE, TYPE=SEGMENTS, NAME=NEEDLE, FILLET RADIUS=5.0")
-    w("START, %.4f, %.4f" % (R_CUT, zt + 2000.0))     # 샤프트 상단
-    w("LINE,  %.4f, %.4f" % (R_CUT, zt + 150.0))      # 샤프트(r=R_CUT)
-    w("LINE,  %.4f, %.4f" % (nose, zt + nose))        # 원뿔 테이퍼
-    w("CIRCL, 0.0, %.4f, 0.0, %.4f" % (zt, zt + nose))  # 둥근 첨두->축
-    w("*RIGID BODY, ANALYTICAL SURFACE=NEEDLE, REF NODE=NREF")
+    w("*ELEMENT, TYPE=CAX4R")
+    ndl_el = []
+    for j in range(nrow_n - 1):
+        for i in range(NW_N):
+            e += 1
+            w("%d, %d, %d, %d, %d" % (e, Nid(i, j), Nid(i + 1, j),
+                                      Nid(i + 1, j + 1), Nid(i, j + 1)))
+            ndl_el.append(e)
+    w("*ELSET, ELSET=NEEDLE_EL, GENERATE")
+    w("%d, %d, 1" % (ndl_el[0], ndl_el[-1]))
+    w("*SURFACE, TYPE=ELEMENT, NAME=NEEDLE")
+    w("NEEDLE_EL,")
+    # 연속체 요소를 강체로: 물성/단면은 mass 용, 변형은 무시됨.
+    w("*RIGID BODY, ELSET=NEEDLE_EL, REF NODE=NREF")
 
     # ---- 재료 ----
+    w("*MATERIAL, NAME=NEEDLE_MAT")
+    w("*DENSITY")
+    w("%s," % NDL_RHO)
+    w("*ELASTIC")
+    w("%.4g, %.4g" % (NDL_E, NDL_NU))
+    w("*SOLID SECTION, ELSET=NEEDLE_EL, MATERIAL=NEEDLE_MAT")
     # 코어 재료: VUMAT hyperelastic + damage(요소삭제)  [vumat_skin.f]
     for lay in ("STRATUM", "EPIDERMIS", "DERMIS"):
         rho, cst = BULK[lay]
@@ -321,8 +344,8 @@ def main():
     ncore = sum(len(v) for v in core_el.values())
     nout = sum(len(v) for v in out_el.values())
     print("wrote 15_microneedle_cohesive.inp")
-    print("  core(삭제)=%d, outer(비삭제)=%d, cohesive=%d (needle=rigid)"
-          % (ncore, nout, len(coh)))
+    print("  core(삭제)=%d, outer(비삭제)=%d, cohesive=%d, needle CAX4R(rigid)=%d"
+          % (ncore, nout, len(coh), len(ndl_el)))
     print("  r-core=%d, r-out=%d, z-rows=%d ; R_CUT=%.0f, PUSH=%.0f um"
           % (nco, no, nz, R_CUT, PUSH))
     print("  이원화: 코어 VUMAT damage+삭제 / 외부 내장 hyper(비삭제) ; "

@@ -227,8 +227,10 @@ abaqus python postprocess.py coh13.odb
 - **코어 (r<50, 빨강)**: VUMAT **hyperelastic + damage(요소삭제)** -> 니들
   경로의 요소를 제거(깨끗한 관통, 간섭 없음).
 - **외부 (r>50, 노랑)**: **삭제 없는** 내장 Neo-Hookean(순수 변형).
-- **경계 r=50**: COHAX4 **cohesive**(니들 삽입 시 debonding).
-니들: **축(r=0) 중심 솔리드 강체 + 둥근 원뿔 팁**(FILLET) -> 엣지접촉 안정.
+- **경계 r=R_CUT**: COHAX4 **cohesive**(니들 삽입 시 debonding).
+니들: **CAX4R 2D 솔리드 메쉬 + 강체(Rigid Body)**, 축(r=0) 중심 blunt 둥근
+팁. 요소기반 표면이라 침식(erosion) 접촉이 해석적 강체보다 강건.
+접촉부·코어 요소 -30%, 코어반경 R_CUT=35um(-30%)로 세밀화.
 삭제 후 탄성복원(snap-back) 투과 대책(생성기 상단 상수로 튜닝):
 `DAMP_ALPHA`(재료 damping)·`CONT_DAMP`(*CONTACT DAMPING)·`MS_DT`(증분 축소).
 여전히 투과 시 `CONT_DAMP`↑(0.5->0.9)·`MS_DT`↓(1e-7->5e-8).
