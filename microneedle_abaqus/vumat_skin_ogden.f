@@ -142,10 +142,14 @@ C     등가 로그변형(편차)
          eeq = sqrt( two*third * ( (e1-em)**2 + (e2-em)**2
      1                           + (e3-em)**2 ) )
 C
-C     파단/삭제 판정 (von Mises OR 등가변형)
+C     파단/삭제 판정 : 응력 기준(국소화) -> 밀링식 연속 접촉 유지.
+C       변형률 기준(eeq>=epsf)만으로는 넓은 영역이 이르게 삭제되어(광역
+C       크레이터) 니들-피부 갭 발생 -> 접촉 소실. 따라서 응력 파단(svm>=sigf)
+C       으로 국소 삭제. epsf 는 안전용 상한(과도 신장 시에만)으로 병용.
          delflag = stateOld(k,1)
          if ( totalTime .le. dt ) delflag = one
-         if ( svm .ge. sigf .or. eeq .ge. epsf ) delflag = zero
+         if ( svm .ge. sigf ) delflag = zero
+         if ( eeq .ge. two*epsf ) delflag = zero
 C
 C     응력 대입
          stressNew(k,1) = s11
