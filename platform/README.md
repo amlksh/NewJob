@@ -27,8 +27,11 @@ Abaqus 서브루틴 해석의 **린트 → 실행 → 보고서**를 자동화�
 
 ## 1) 원클릭 셋업
 
+> **실행 위치**: `cmd`에서는 `setup.bat ...`, **PowerShell에서는 `.\setup.bat ...`**
+> (PowerShell은 보안상 현재 폴더 명령에 `.\` 접두사 필요).
+
 ```bat
-REM 대화형 (프로젝트명·모드 물어봄)
+REM 대화형 (프로젝트명·모드 물어봄)  (PowerShell이면 .\setup.bat)
 setup.bat
 
 REM 인자 지정 (모드: code | collab | chatbot)

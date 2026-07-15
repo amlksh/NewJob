@@ -3,7 +3,9 @@ chcp 65001 >nul
 REM ======================================================================
 REM  setup.bat  -  Abaqus x Claude one-click setup entry (Windows)
 REM
-REM  Usage:
+REM  Usage (cmd):        setup.bat MyProject code
+REM  Usage (PowerShell): .\setup.bat MyProject code   (needs .\ prefix)
+REM
 REM    setup.bat                          (interactive: ask project / mode)
 REM    setup.bat MyProject code           (project name, mode)
 REM    setup.bat MyProject code -DryRun   (preview, no changes)
