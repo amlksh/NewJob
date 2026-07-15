@@ -22,9 +22,9 @@ EPS = 1.0e-9
 # --- 피부 (um) : 3층 ---  (접촉부·코어 요소 -30%, 코어반경 -30%)
 Z_TOP, Z_SC, Z_EPI = 1500.0, 1480.0, 1400.0
 R_MAX = 2000.0
-R_CUT = 35.0            # 절개(원통) 반경 = 니들 반경 (50 -> 35, -30%)
-NC = 10                 # 코어(r<R_CUT) 반경 요소수 (dr=3.5um, -30%)
-DR_OUT0 = 3.5           # 절개면 바깥 첫 요소크기 (5 -> 3.5, -30%)
+R_CUT = 25.0            # 절개(원통) 반경 = 니들 반경 (실선->점선 내측 축소)
+NC = 10                 # 코어(r<R_CUT) 반경 요소수 (dr=2.5um)
+DR_OUT0 = 3.5           # 절개면 바깥 첫 요소크기
 XG = 1.20               # 외부 반경 성장비
 DZ_SC = 1.75           # 각질층 요소(접촉부) (2.5 -> 1.75, -30%)
 DZ_EPI = 7.0           # 표피 요소 (10 -> 7, -30%)
@@ -297,9 +297,8 @@ def main():
     w("*FRICTION")
     w("0.1,")
     w("*SURFACE BEHAVIOR, PRESSURE-OVERCLOSURE=HARD")
-    # 삭제-복원 재접촉 시 급속 접근 감쇠 -> 투과 억제
-    w("*CONTACT DAMPING, DEFINITION=CRITICAL DAMPING FRACTION")
-    w("%.4g," % CONT_DAMP)
+    # 주의: *CONTACT DAMPING(stabilization)은 투과 상태를 "안정"으로 오인해
+    # 고착시킬 수 있어 제거함(사용자 지적). 접촉은 hard + ALL EXTERIOR 로만.
 
     # ---- 경계/스텝 ----
     w("*BOUNDARY")
@@ -318,9 +317,9 @@ def main():
     w("*BOUNDARY, AMPLITUDE=PUSH")
     w("NREF, 2, 2, %.1f" % (-PUSH))
     w("*CONTACT")
+    # ALL EXTERIOR: 요소 삭제로 드러난 내부 면을 자동 포함(=Interior Surfaces)
+    # -> 삭제 후 노출된 진피 내측면에 접촉 활성. 정적 pair 의존 제거.
     w("*CONTACT INCLUSIONS, ALL EXTERIOR")
-    w("*CONTACT INCLUSIONS")
-    w("NEEDLE, SKIN_SURF")
     w("*CONTACT PROPERTY ASSIGNMENT")
     w(" ,  , IPROP")
     w("*OUTPUT, FIELD, NUMBER INTERVAL=30")

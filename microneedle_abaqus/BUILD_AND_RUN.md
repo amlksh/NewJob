@@ -231,9 +231,10 @@ abaqus python postprocess.py coh13.odb
 니들: **CAX4R 2D 솔리드 메쉬 + 강체(Rigid Body)**, 축(r=0) 중심 blunt 둥근
 팁. 요소기반 표면이라 침식(erosion) 접촉이 해석적 강체보다 강건.
 접촉부·코어 요소 -30%, 코어반경 R_CUT=35um(-30%)로 세밀화.
-삭제 후 탄성복원(snap-back) 투과 대책(생성기 상단 상수로 튜닝):
-`DAMP_ALPHA`(재료 damping)·`CONT_DAMP`(*CONTACT DAMPING)·`MS_DT`(증분 축소).
-여전히 투과 시 `CONT_DAMP`↑(0.5->0.9)·`MS_DT`↓(1e-7->5e-8).
+삭제-투과 대책: 접촉 stabilization(*CONTACT DAMPING)은 투과를 "안정"으로
+오인·고착시켜 **제거**함. 접촉은 hard + `ALL EXTERIOR`(삭제로 노출된 내부
+면 자동 포함=Interior Surfaces)로 일원화. 잔여 대책: `DAMP_ALPHA`(재료
+damping)·`MS_DT`(증분). 여전히 투과 시 `MS_DT`↓(1e-7->5e-8)·요소 추가 세밀화.
 ```bat
 python gen_microneedle_cohesive.py
 abaqus job=mn15 input=15_microneedle_cohesive.inp user=vumat_skin.f double=both cpus=4 interactive
