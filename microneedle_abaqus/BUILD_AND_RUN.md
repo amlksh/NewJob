@@ -222,12 +222,13 @@ abaqus python postprocess.py coh13.odb
 > A/B/C 는 코드 레벨(린터·기하·고정형식) 정합성까지 확인했으나 원격
 > 컨테이너에서 Abaqus 실행은 불가하여 **사용자 환경 실행검증이 필요**합니다.
 
-### (결합) 두께 니들 + cohesive + damage(요소삭제) 병용 ⭐ 최종
-두께 변형 니들(중공 CAX4R) + 피부 3층 **hyperelastic + 요소삭제(VUMAT)**
-+ 니들 팁 외경 r=50µm 원통면 **COHAX4 cohesive**. 두 메커니즘 병용:
-- **damage(요소삭제)**: 첨두 아래 코어를 제거 -> 과도변형 중단 방지(15의
-  이전 중단 원인 해소). ALE 불필요.
-- **cohesive**: r=50 견인-분리로 코어/외피 절개 경계(splitting) 형성.
+### (결합) 이원화 피부: 코어(삭제) / 외부(비삭제) + cohesive ⭐ 최종
+피부를 **니들 반경(r=50µm) 기준으로 이원화**해 니들 투과 간섭을 제거:
+- **코어 (r<50, 빨강)**: VUMAT **hyperelastic + damage(요소삭제)** -> 니들
+  경로의 요소를 제거(깨끗한 관통, 간섭 없음).
+- **외부 (r>50, 노랑)**: **삭제 없는** 내장 Neo-Hookean(순수 변형).
+- **경계 r=50**: COHAX4 **cohesive**(견인-분리 절개 경계).
+두께 변형 니들(중공 CAX4R)은 유지.
 ```bat
 python gen_microneedle_cohesive.py
 abaqus job=mn15 input=15_microneedle_cohesive.inp user=vumat_skin.f double=both cpus=4 interactive

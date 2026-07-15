@@ -123,8 +123,8 @@ def main():
     L = []
     w = L.append
     w("*HEADING")
-    w("[15] Deformable thick needle + cohesive + layer damage(deletion)")
-    w("Skin: 3-layer VUMAT hyperelastic+damage; r=%.0f um: COHAX4 ; um,uN,MPa,s"
+    w("[15] Bifurcated skin: core(damage+deletion) / outer(no deletion)")
+    w("needle deformable ; r=%.0f um cohesive COHAX4 ; um,uN,MPa,s ; user=vumat"
       % R_CUT)
 
     # ---- 피부 절점 (코어 + 외부) ----
@@ -136,24 +136,24 @@ def main():
         for i, r in enumerate(r_out):
             w("%d, %.4f, %.4f" % (Oid(i, j), r, z))
 
-    # ---- 피부 벌크 요소 (CAX4R) : 층별 버킷 ----
+    # ---- 피부 벌크 요소 (CAX4R) : 코어/외부 x 층별 버킷 ----
+    #  코어(r<R_CUT): VUMAT damage+삭제.  외부(r>R_CUT): 삭제 없는 hyperelastic.
     w("*ELEMENT, TYPE=CAX4R")
     e = 0
-    elems = {"STRATUM": [], "EPIDERMIS": [], "DERMIS": []}
-    core_ids = []                        # 코어(r<R_CUT) -> ALE 대상
+    core_el = {"STRATUM": [], "EPIDERMIS": [], "DERMIS": []}
+    out_el = {"STRATUM": [], "EPIDERMIS": [], "DERMIS": []}
     for j in range(nz):
         lay = layer(0.5 * (zs[j] + zs[j + 1]))
         for i in range(nco - 1):
             e += 1
             w("%d, %d, %d, %d, %d" % (e, Cid(i, j), Cid(i + 1, j),
                                       Cid(i + 1, j + 1), Cid(i, j + 1)))
-            elems[lay].append(e)
-            core_ids.append(e)
+            core_el[lay].append(e)
         for i in range(no - 1):
             e += 1
             w("%d, %d, %d, %d, %d" % (e, Oid(i, j), Oid(i + 1, j),
                                       Oid(i + 1, j + 1), Oid(i, j + 1)))
-            elems[lay].append(e)
+            out_el[lay].append(e)
 
     # ---- Cohesive (COHAX4) : 원통면 r=R_CUT (코어우변 <-> 외부좌변) ----
     w("*ELEMENT, TYPE=COHAX4")
@@ -175,10 +175,14 @@ def main():
             w(", ".join(ln))
 
     for lay in ("STRATUM", "EPIDERMIS", "DERMIS"):
-        wl(lay, elems[lay], "ELSET")
+        wl("C_" + lay, core_el[lay], "ELSET")     # 코어 층별
+        wl("O_" + lay, out_el[lay], "ELSET")      # 외부 층별
+    w("*ELSET, ELSET=CORE")
+    w("C_STRATUM, C_EPIDERMIS, C_DERMIS")
+    w("*ELSET, ELSET=OUTER")
+    w("O_STRATUM, O_EPIDERMIS, O_DERMIS")
     w("*ELSET, ELSET=BULK")
-    w("STRATUM, EPIDERMIS, DERMIS")
-    wl("CORE", core_ids, "ELSET")
+    w("CORE, OUTER")
     w("*ELSET, ELSET=COH, GENERATE")
     w("%d, %d, 1" % (coh[0], coh[-1]))
     w("*SURFACE, TYPE=ELEMENT, NAME=SKIN_SURF")
@@ -237,9 +241,10 @@ def main():
     w("%.4g, %.4g" % (NDL_E, NDL_NU))
     w("*SOLID SECTION, ELSET=NEEDLE_EL, MATERIAL=NEEDLE_MAT")
 
+    # 코어 재료: VUMAT hyperelastic + damage(요소삭제)  [vumat_skin.f]
     for lay in ("STRATUM", "EPIDERMIS", "DERMIS"):
         rho, cst = BULK[lay]
-        w("*MATERIAL, NAME=MAT_%s" % lay)
+        w("*MATERIAL, NAME=MATC_%s" % lay)
         w("*DENSITY")
         w("%s," % rho)
         w("*USER MATERIAL, CONSTANTS=4")
@@ -250,12 +255,23 @@ def main():
         w("2, LAMMAX, max principal stretch")
         w("3, DAMAGE, damage variable")
         w("4, JVOL, relative volume")
-    # 왜곡 제어 + Enhanced hourglass (ALE 없음 -> 충돌 없음).
-    w("*SECTION CONTROLS, NAME=SKINCTRL, DISTORTION CONTROL=YES,"
+    # 외부 재료: 삭제 없는 순수 내장 Neo-Hookean (C10,D1 = props 앞 2개)
+    for lay in ("STRATUM", "EPIDERMIS", "DERMIS"):
+        rho, cst = BULK[lay]
+        c10, d1 = [t.strip() for t in cst.split(",")][:2]
+        w("*MATERIAL, NAME=MATO_%s" % lay)
+        w("*DENSITY")
+        w("%s," % rho)
+        w("*HYPERELASTIC, NEO HOOKE")
+        w("%s, %s" % (c10, d1))
+    # 코어(삭제)만 Enhanced hourglass+왜곡제어. 외부는 기본(내장 hyper).
+    w("*SECTION CONTROLS, NAME=CORECTRL, DISTORTION CONTROL=YES,"
       " HOURGLASS=ENHANCED")
     for lay in ("STRATUM", "EPIDERMIS", "DERMIS"):
-        w("*SOLID SECTION, ELSET=%s, MATERIAL=MAT_%s, CONTROLS=SKINCTRL"
+        w("*SOLID SECTION, ELSET=C_%s, MATERIAL=MATC_%s, CONTROLS=CORECTRL"
           % (lay, lay))
+    for lay in ("STRATUM", "EPIDERMIS", "DERMIS"):
+        w("*SOLID SECTION, ELSET=O_%s, MATERIAL=MATO_%s" % (lay, lay))
 
     w("*MATERIAL, NAME=COHMAT")
     w("*DENSITY")
@@ -305,7 +321,9 @@ def main():
     w(" ,  , IPROP")
     w("*OUTPUT, FIELD, NUMBER INTERVAL=30")
     w("*ELEMENT OUTPUT, ELSET=BULK")
-    w("S, LE, SDV, STATUS")
+    w("S, LE")
+    w("*ELEMENT OUTPUT, ELSET=CORE")
+    w("SDV, STATUS")
     w("*ELEMENT OUTPUT, ELSET=COH")
     w("SDEG, STATUS")
     w("*ELEMENT OUTPUT, ELSET=NEEDLE_EL")
@@ -321,13 +339,15 @@ def main():
 
     with open("15_microneedle_cohesive.inp", "w") as f:
         f.write("\n".join(L) + "\n")
-    nb = sum(len(v) for v in elems.values())
+    ncore = sum(len(v) for v in core_el.values())
+    nout = sum(len(v) for v in out_el.values())
     print("wrote 15_microneedle_cohesive.inp")
-    print("  skin bulk=%d, cohesive(COHAX4)=%d, needle CAX4R=%d"
-          % (nb, len(coh), len(ndl_el)))
+    print("  core(삭제)=%d, outer(비삭제)=%d, cohesive=%d, needle=%d"
+          % (ncore, nout, len(coh), len(ndl_el)))
     print("  r-core=%d, r-out=%d, z-rows=%d ; R_CUT=%.0f, PUSH=%.0f um"
           % (nco, no, nz, R_CUT, PUSH))
-    print("  cohesive + layer damage(deletion) ; needs user=vumat_skin.f")
+    print("  이원화: 코어 VUMAT damage+삭제 / 외부 내장 hyper(비삭제) ; "
+          "needs user=vumat_skin.f")
 
 
 if __name__ == "__main__":
