@@ -1,4 +1,4 @@
-# ======================================================================
+﻿# ======================================================================
 #  bootstrap.ps1 — Abaqus x Claude 환경 셋업 오케스트레이터
 #
 #  setup.bat 이 호출. 멱등(여러 번 실행해도 안전) · 전 단계 로그 ·
@@ -21,6 +21,8 @@ param(
 )
 
 $ErrorActionPreference = "Continue"
+# 한글 출력 깨짐 방지(콘솔 UTF-8). 파일은 UTF-8 BOM 로 저장되어야 5.1이 정상 파싱
+try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
 $script:Results = @()
 $stamp = Get-Date -Format "yyyyMMdd_HHmmss"
 $LogFile = Join-Path $PSScriptRoot "setup_$stamp.log"

@@ -1,24 +1,23 @@
 @echo off
+chcp 65001 >nul
 REM ======================================================================
-REM  setup.bat  —  Abaqus x Claude 작업환경 원클릭 셋업 진입점 (Windows)
+REM  setup.bat  -  Abaqus x Claude one-click setup entry (Windows)
 REM
-REM  사용:
-REM    setup.bat                         (대화형: 프로젝트명/모드 물어봄)
-REM    setup.bat MyProject code          (프로젝트명, 모드 지정)
-REM    setup.bat MyProject code -DryRun  (미리보기, 실제 변경 없음)
-REM    setup.bat -Update                 (설치된 툴 최신화)
-REM    setup.bat MyProject code -GitHub owner/name   (repo 자동생성·push)
-REM    setup.bat MyProject -Rollback     (스캐폴딩한 폴더 되돌리기)
-REM  특징: 네트워크 작업 재시도(2/4/8/16s), 스캐폴딩 실패 시 자동 롤백
+REM  Usage:
+REM    setup.bat                          (interactive: ask project / mode)
+REM    setup.bat MyProject code           (project name, mode)
+REM    setup.bat MyProject code -DryRun   (preview, no changes)
+REM    setup.bat -Update                  (upgrade installed tools)
+REM    setup.bat MyProject code -GitHub owner/name   (auto-create repo + push)
+REM    setup.bat MyProject -Rollback      (undo scaffolded folder)
 REM
-REM  하는 일: 툴 설치(Git/PowerShell7/Claude/Python/Terminal) → PATH →
-REM           Git/GitHub → Abaqus 연동검증 → 프로젝트 스캐폴딩 →
-REM           Claude 프로파일 → 셀프체크 리포트
+REM  Features: retry (2/4/8/16s) on network ops, auto-rollback on scaffold fail.
+REM  Note: bootstrap.ps1 must stay UTF-8 with BOM (Windows PowerShell 5.1).
 REM ======================================================================
 setlocal
 set "HERE=%~dp0"
 
-REM PowerShell 7(pwsh)이 있으면 우선, 없으면 Windows PowerShell로
+REM Prefer PowerShell 7 (pwsh) if present, else Windows PowerShell 5.1
 where pwsh >nul 2>nul
 if %errorlevel%==0 (
   set "PS=pwsh"
@@ -27,11 +26,11 @@ if %errorlevel%==0 (
 )
 
 echo.
-echo === Abaqus x Claude 셋업 시작 (%PS%) ===
+echo === Abaqus x Claude setup ^(%PS%^) ===
 echo.
 
 %PS% -NoProfile -ExecutionPolicy Bypass -File "%HERE%bootstrap.ps1" %*
 
 echo.
-echo === 종료코드 %errorlevel% ===
+echo === exit code %errorlevel% ===
 endlocal
