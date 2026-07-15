@@ -1,2 +1,27 @@
 __pycache__/
 *.pyc
+# Abaqus 산출물 / 결과 (버전관리 제외)
+*.odb
+*.dat
+*.msg
+*.sta
+*.log
+*.com
+*.prt
+*.sim
+*.lck
+*.rpy
+*.rpy.*
+*.rec
+*.SMABulk
+*.exp
+*.lib
+*.obj
+explicitU-D.*
+standardU.*
+*_fd.csv
+*_fd.png
+ref04*.png
+*_report.html
+abaqus.rpy*
+fort.*
