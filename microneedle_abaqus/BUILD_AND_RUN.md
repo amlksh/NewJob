@@ -241,3 +241,17 @@ abaqus python postprocess.py mn15.odb
   `gen_microneedle_cohesive.py` 의 `PUSH` 축소 또는 코어에 ALE 추가.
 - cohesive 를 사용자 CZM 으로: COHMAT 재료를 vumat_cohesive.f(작업 C)로
   교체하면 `user=vumat_cohesive.f` 필요.
+
+### (16) 니들 관통 - 솔리드 원뿔 3층 (CAE Assistant 방식, 삭제+cohesive 병용)
+"Needle Puncture of Skin by Injection" 레퍼런스 구성: 솔리드 원뿔 니들
++ 3층(표피/진피/피하) **hyperelastic + cohesive + 층 damage(요소삭제)**.
+삭제가 첨두 아래 코어를 제거해 과도변형 중단을 막고, r=R_CONE cohesive 가
+깨끗한 절개 경계를 만듦(두 메커니즘 병용).
+```bat
+python gen_needle_puncture.py
+abaqus job=np16 input=16_needle_puncture.inp user=vumat_skin.f double=both cpus=4 interactive
+abaqus python postprocess.py np16.odb
+```
+- 층: 표피(stiff)/진피/피하(soft fat), VUMAT deletion(C10,D1,lam_d,lam_f).
+- 확인: 코어 `STATUS`(삭제 관통) + cohesive `SDEG`(절개), 힘-깊이(RF2).
+- 삭제+cohesive 병용이라 15의 코어 과압축 중단 위험이 낮음(가장 강건).
