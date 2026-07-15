@@ -214,8 +214,10 @@ def main():
     w("%d, %d, 1" % (ndl_el[0], ndl_el[-1]))
     w("*SURFACE, TYPE=ELEMENT, NAME=NEEDLE")
     w("NEEDLE_EL,")
-    # 상단 모서리 -> 참조점 운동학적 결합(강체 그립)
+    # 상단 모서리 노드집합/노드기반 표면 -> 참조점 결합(강체 그립)
     wl("NDLTOP", [Nid(i, nrows - 1) for i in range(NW + 1)], "NSET")
+    w("*SURFACE, TYPE=NODE, NAME=NDLTOP_S")
+    w("NDLTOP,")
 
     # ---- 재료 ----
     w("*MATERIAL, NAME=NEEDLE_MAT")
@@ -241,9 +243,11 @@ def main():
     for lay in ("STRATUM", "EPIDERMIS", "DERMIS"):
         w("*SOLID SECTION, ELSET=%s, MATERIAL=MAT_%s" % (lay, lay))
 
-    # ---- 운동학적 결합(상단 모서리 -> 참조점 9999) ----
-    w("*KINEMATIC COUPLING, REF NODE=9999")
-    w("NDLTOP, 1, 2")
+    # ---- 결합(상단 모서리 -> 참조점 9999) : Explicit 은 *COUPLING+*KINEMATIC
+    #  (*KINEMATIC COUPLING 단독 키워드는 Standard 전용) ----
+    w("*COUPLING, CONSTRAINT NAME=NDL_GRIP, REF NODE=9999, SURFACE=NDLTOP_S")
+    w("*KINEMATIC")
+    w("1, 2")
 
     # ---- 접촉 상호작용(모델 데이터: 첫 *STEP 앞) ----
     w("*SURFACE INTERACTION, NAME=IPROP")

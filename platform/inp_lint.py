@@ -47,6 +47,7 @@ def lint(path):
     cpa_refs = []             # (lineno, name) CONTACT PROPERTY ASSIGNMENT 참조
     has_user_mat = False
     has_explicit = False
+    kin_coupling_lines = []   # *KINEMATIC COUPLING (Standard 전용)
     depvar_ctx = None         # (lineno, delete_k) 대기: 다음 데이터=개수
     mat_count = 0
     elem_types = set()
@@ -90,6 +91,8 @@ def lint(path):
         elif name == 'DYNAMIC':
             if params and 'EXPLICIT' in params:
                 has_explicit = True
+        elif name == 'KINEMATIC COUPLING':
+            kin_coupling_lines.append(ln)
         elif name == 'ELEMENT':
             if 'TYPE' in params:
                 elem_types.add(params['TYPE'].upper())
@@ -139,6 +142,13 @@ def lint(path):
     if n_step != n_endstep:
         add(ERROR, 0, "*STEP(%d) 와 *END STEP(%d) 개수 불일치."
             % (n_step, n_endstep))
+
+    # R5: *KINEMATIC COUPLING 은 Standard 전용 -> Explicit 에서 사용 불가
+    if has_explicit:
+        for kln in kin_coupling_lines:
+            add(ERROR, kln, "*KINEMATIC COUPLING 은 Abaqus/Standard 전용 "
+                "키워드. Explicit 에서는 *COUPLING + *KINEMATIC (노드기반 "
+                "표면 + 참조점) 조합을 사용해야 함.")
 
     # R4: 런타임 플래그 리마인더
     if has_user_mat:
