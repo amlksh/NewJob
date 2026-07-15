@@ -257,3 +257,22 @@ abaqus python postprocess.py np16.odb
 - 층: 표피(stiff)/진피/피하(soft fat), VUMAT deletion(C10,D1,lam_d,lam_f).
 - 확인: 코어 `STATUS`(삭제 관통) + cohesive `SDEG`(절개), 힘-깊이(RF2).
 - 삭제+cohesive 병용이라 15의 코어 과압축 중단 위험이 낮음(가장 강건).
+
+### (17) 논문 정렬 모델 — Ogden 2층 + 순수 요소삭제 ⭐ 접촉투과 해결
+Yolai et al. (Mater. & Design 259, 2025) 방법. **cohesive 를 버리고 순수
+요소삭제**로 회귀 -> debond-vs-delete 충돌·stabilization 고착 문제 원천 제거.
+- 피부 2층(표피 0.1 / 진피 2.4mm), **1차 Ogden 초탄성**(논문 Table 2 값).
+- 파단: **von Mises 응력 OR 등가변형** 요소삭제 (`vumat_skin_ogden.f`).
+  표피 σf=5.8/εf=0.084, 진피 σf=15/εf=0.45.
+- 접촉: General Contact `ALL EXTERIOR`(삭제 노출면 자동 포함) + **마찰 0.42**.
+  stabilization/contact damping **미사용**.
+- 접촉부 메쉬 **8µm**(논문 mesh sensitivity) -> 삭제 진동↓.
+```bat
+python gen_needle_paper.py
+abaqus job=np17 input=17_needle_paper.inp user=vumat_skin_ogden.f double=both cpus=4 interactive
+abaqus python postprocess.py np17.odb
+```
+- 단위 **mm, N, MPa, tonne, s**(논문 동일). 니들 원뿔(팁경0.04/기저0.3/H1.2).
+- 논문 핵심: 삭제 후 니들이 순간적으로 구속해제→다음 층 접촉까지 힘-변위
+  **작은 진동**(투과 아님, 메쉬 세밀화로 완화). cohesive 불필요.
+- 진피 α=57.89 는 강한 변형경화 -> 질량스케일링·증분 주의(ALLKE/ALLIE 확인).
