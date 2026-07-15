@@ -244,9 +244,10 @@ def main():
         w("%s," % rho)
         w("*HYPERELASTIC, NEO HOOKE")
         w(cst)
-    # 왜곡 제어(요소 뒤집힘 방지, 삭제 없음) + Enhanced hourglass
-    w("*SECTION CONTROLS, NAME=SKINCTRL, DISTORTION CONTROL=YES,"
-      " HOURGLASS=ENHANCED")
+    # 왜곡 제어(요소 뒤집힘 방지, 삭제 없음).
+    #  주의: ALE(코어) + 내장 hyperelastic 에서는 Enhanced hourglass 불허
+    #  -> 기본 hourglass 사용(HOURGLASS 키워드 생략). 분포제어만 적용.
+    w("*SECTION CONTROLS, NAME=SKINCTRL, DISTORTION CONTROL=YES")
     for lay in ("STRATUM", "EPIDERMIS", "DERMIS"):
         w("*SOLID SECTION, ELSET=%s, MATERIAL=MAT_%s, CONTROLS=SKINCTRL"
           % (lay, lay))
