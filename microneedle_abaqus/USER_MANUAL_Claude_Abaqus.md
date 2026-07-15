@@ -203,12 +203,16 @@ cd microneedle_abaqus
 | 파일 | 내용 |
 |------|------|
 | `vumat_skin.f` | 피부 VUMAT (Neo-Hookean + 주신축비 손상/삭제) |
-| `vumat_skin_reg.f` | 파단에너지(charLength) 정규화 VUMAT |
-| `vumat_skin_hgo.f` | 이방성 HGO VUMAT (3D) |
-| `04_refined_path.inp` | 경로 세밀화 3층 피부 관통 (권장 첫 실행) |
+| `vumat_skin_ogden.f` | **1차 Ogden + von Mises/변형 요소삭제** (논문 정렬, 모델 17) |
+| `vumat_cohesive.f` | 사용자 이중선형 CZM (cohesive 요소용, 모델 15 옵션) |
+| `vumat_skin_reg.f` / `vumat_skin_hgo.f` | 에너지정규화 / 이방성 HGO VUMAT |
 | `03_needle_buckling.inp` | 니들 좌굴 임계하중(`*BUCKLE`) — 서브루틴 불필요 |
+| `04_refined_path.inp` | 경로 세밀화 3층 관통 (기본 예제) |
+| `17_needle_paper.inp` | **논문 정렬 Ogden 2층 순수삭제** (권장, 6.8) |
+| `15_microneedle_cohesive.inp` | **cohesive 절개 + damage 이원화** (6.8) |
+| `gen_needle_paper.py` / `gen_microneedle_cohesive.py` | 위 두 모델 생성기(수정은 여기서) |
 | `postprocess.py` | 관통력-깊이 + 준정적성 + 삭제요소 종합 리포트 |
-| `README.md` / `BUILD_AND_RUN.md` | 모델 설명 / 빌드·실행 가이드 |
+| `README.md` / `BUILD_AND_RUN.md` | 모델 설명 / 빌드·실행 가이드(전 모델) |
 
 ### 6.3 STEP 1 — 서브루틴 없이 sanity 체크 (좌굴)
 먼저 서브루틴이 필요 없는 좌굴 해석으로 **모델·환경**을 확인합니다.
@@ -260,6 +264,48 @@ microneedle_abaqus 폴더에서:
 ```
 Claude가 각 명령을 (승인받아) 실행하고 로그를 읽어 단계별로 리포트합니다.
 
+### 6.8 심화 — 실제 "관통(splitting)"이 되는 모델 (검증 완료)
+
+기본 예제(6.3~6.6)는 요소 삭제로 관통을 보이지만, 실제 조직 절개·니들
+접촉을 사실적으로 잡으려면 다음 두 모델을 권장합니다. **여러 차례 실패를
+거쳐 확립한 레시피**이며, 특히 "요소 삭제 후 니들이 피부를 통과하는" 침식
+접촉 문제를 해결했습니다.
+
+| 모델 | 생성기 → 입력 | 특징 |
+|------|------|------|
+| **17** (권장) | `gen_needle_paper.py` → `17_needle_paper.inp` | 논문(Yolai 2025) 정렬: **1차 Ogden 2층 + 순수 요소삭제**(`vumat_skin_ogden.f`), 마찰 0.42 |
+| **15** | `gen_microneedle_cohesive.py` → `15_microneedle_cohesive.inp` | **cohesive 절개 + damage 이원화**(코어 삭제/외부 비삭제/경계 cohesive) |
+
+**핵심 성공 요인 5가지** (하나라도 빠지면 실패):
+
+1. **물성 단위** — Ogden `D1`은 논문 SI값(1/Pa)을 MPa계로 환산(×1e6).
+   틀리면 K가 1000배 → 관성 폭주(ALLKE≫ALLIE)·삽입력 0.
+2. **침식 접촉(가장 중요)** — 피부 표면을 요소 **4면(S1~S4)** 으로 정의해
+   내부 면까지 접촉 도메인에 넣어야, 삭제로 드러난 속살에 니들이 연속
+   접촉(밀링식). elset만 주면 외곽만 잡혀 니들이 통과함.
+   ```
+   *SURFACE, TYPE=ELEMENT, NAME=SKIN_SURF
+   SKIN_ALL, S1
+   SKIN_ALL, S2
+   SKIN_ALL, S3
+   SKIN_ALL, S4
+   ```
+3. **삭제 국소화** — 삭제를 **응력 파단(σf)** 기준으로(끝단에만) → 광역
+   크레이터·갭 방지.
+4. **stabilization 금지** — `*CONTACT DAMPING`은 투과를 은폐하므로 제거.
+5. **요소기반 강체 니들** — 해석적 강체보다 **discrete rigid(CAX4R+
+   `*RIGID BODY`)** 가 침식 접촉에 강건.
+
+실행(모델 17):
+```bat
+python gen_needle_paper.py
+abaqus job=np17 input=17_needle_paper.inp user=vumat_skin_ogden.f double=both cpus=4 interactive
+abaqus python postprocess.py np17.odb
+```
+- **성공 지표**: 진피에서 von Mises가 **파단응력(15 MPa) 근처**까지 상승
+  (= 접촉 유지), `ALLKE/ALLIE<10%`, 삽입력(RF2) 비영.
+- 자세한 모델 목록·튜닝은 `BUILD_AND_RUN.md` §5 참조.
+
 ---
 
 ## 7. 자주 겪는 문제 & 해결 (실전 트러블슈팅)
@@ -280,6 +326,11 @@ Claude가 각 명령을 (승인받아) 실행하고 로그를 읽어 단계별�
 | Explicit 잡이 라이선스로 막힘 | Foundation/Standard만 보유 | **Abaqus/Explicit** 토큰 확보 (`abaqus licensing ru`) |
 | `PERCENT CHNG MASS`가 큼(수백%) | 얇은 요소로 질량 스케일링 큼 | `ALLKE/ALLIE<5~10%` 확인, 안되면 목표 dt·메쉬 조정 |
 | 컴파일은 되는데 결과 이상/발산 | `double=both` 누락 | 반드시 `double=both` 지정 |
+| **삽입력 ≈ 0, `ALLKE/ALLIE` 수천%** | **물성 단위 오류**(특히 Ogden `D1`을 SI `1/Pa`로 MPa계에 입력 → K가 1000배) | 단위계로 환산: `D1[1/MPa]=D1[1/Pa]×1e6`. 예 1.03e-7→**0.103** |
+| **요소 삭제 후 니들이 피부 속으로 통과**(접촉 소실) | `*SURFACE, TYPE=ELEMENT`에 elset만 주면 **자유(외곽)면만** 생성 → 삭제로 드러날 **내부 면이 접촉 표면에 없음** | 요소 **4면 전부 명시**: `elset, S1`/`S2`/`S3`/`S4` → 내부면 접촉 도메인 사전 등록(밀링식 침식 접촉) |
+| 삭제가 니들보다 **넓게** 일어나 갭 발생 | 변형률 기준이 너무 낮아 광역 조기 삭제 | 삭제를 **응력 파단(σf) 기준으로 국소화**(끝단에만) |
+| `*CONTACT DAMPING`을 켰더니 투과가 그대로 굳음 | stabilization이 **투과 상태를 "안정"으로 오인** | 투과 디버깅 중에는 **contact damping 제거**(원인 은폐 방지) |
+| `KINEMATICCOUPLING ... NOT AVAILABLE IN Abaqus/Explicit` | `*KINEMATIC COUPLING`은 **Standard 전용** | Explicit은 `*COUPLING`(노드기반 표면)+`*KINEMATIC` |
 
 > **오류 진단의 왕도**: 실행이 막히면 **`job.dat`의 `***ERROR` 줄**을
 > 먼저 보세요. 정확한 원인과 줄이 거기 있습니다. (위 표의 SURFACE

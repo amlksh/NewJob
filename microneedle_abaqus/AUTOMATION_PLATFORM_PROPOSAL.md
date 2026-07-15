@@ -148,8 +148,11 @@ setup.bat                     ← 진입점(관리자 권한 요청, PS7 없으�
 | `gen_mindmap.py`·`md2html.py` | E5 다이어그램·HTML 리포트 |
 | `convergence_study.py` | D4 파라메트릭 스터디 |
 | `BUILD_AND_RUN.md`·`USER_MANUAL` | C3 챗봇 지식베이스 |
-| VUMAT `.f`들 | D6 서브루틴 템플릿 |
-| (경험) *SURFACE INTERACTION 오류 | F1 린터 규칙 1호 |
+| VUMAT `.f`들(Neo-Hooke/HGO/**Ogden**/**cohesive**) | D6 서브루틴 템플릿 라이브러리 |
+| **모델 17**(Ogden 순수삭제)·**15**(cohesive+damage) | D 검증된 관통 해석 레퍼런스 |
+| (경험) *SURFACE INTERACTION 오류 | F1 린터 규칙 R1 |
+| (경험) *KINEMATIC COUPLING@Explicit | F1 린터 규칙 R5 |
+| **(경험) 침식접촉 실패 5종**(단위·내부면·삭제국소화·stabilization·해석적강체) | **F1 린터/체크리스트 규칙**(관통 해석 성공요인) |
 
 ---
 

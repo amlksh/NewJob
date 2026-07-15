@@ -33,15 +33,16 @@ BR = [
     ("④ 증분 루프 (Δt·블록)", "#ea580c", [
         "입력: stretchNew/defgrad/strainInc",
         "응력계산(동회전): B=U·U, J=det",
-        "구성식: Neo-Hookean / HGO",
+        "구성식: Neo-Hooke / HGO / Ogden",
+        "단위 주의: D1[1/MPa]=D1[1/Pa]×1e6",
         "반환: stressNew, stateNew",
-        "에너지 갱신: enerInternNew",
     ]),
-    ("⑤ 손상·요소삭제 (Erosion)", "#dc2626", [
-        "최대주신축비 λ → 손상 D",
-        "D ≥ 1 → STATEV(1)=0",
-        "*DEPVAR DELETE → 요소 제거",
-        "새 접촉면 노출 → 관통 진행",
+    ("⑤ 손상·삭제·접촉 (Erosion)", "#dc2626", [
+        "파단: von Mises σf / 등가변형 εf",
+        "임계도달 → STATEV(1)=0 → 요소삭제",
+        "표면 4면(S1~S4)=내부면 접촉 포함",
+        "삭제 속살에 니들 연속접촉(밀링식)",
+        "stabilization 금지(투과 은폐)",
     ]),
     ("⑥ 안정성·시간", "#7c3aed", [
         "안정증분 (얇은 각질층→작음)",
@@ -241,9 +242,12 @@ def main():
             '<code>stressNew</code>·<code>stateNew</code>로 돌려줍니다. '
             '손상변수가 임계에 도달하면 <code>STATEV(1)=0</code> → '
             '<code>*DEPVAR,DELETE=1</code>이 요소를 삭제해 관통(절개)이 '
-            '진행되고, 전역접촉이 새 표면을 인식합니다. 서브루틴은 실행 시 '
-            '<code>ifort/ifx</code>로 컴파일되므로 <code>double=both</code>가 '
-            '필요합니다.</div></body></html>')
+            '진행됩니다. <b>침식 접촉의 핵심</b>: 피부 표면을 요소 4면'
+            '(<code>elset, S1..S4</code>)으로 정의해 <b>내부 면까지 접촉 '
+            '도메인에 포함</b>해야 삭제로 드러난 속살에 니들이 연속 접촉'
+            '(밀링식)합니다. 서브루틴은 실행 시 <code>ifort/ifx</code>로 '
+            '컴파일되므로 <code>double=both</code>가 필요합니다.'
+            '</div></body></html>')
 
     with open("mindmap_vumat.html", "w") as f:
         f.write(html)
