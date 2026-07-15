@@ -1,0 +1,25 @@
+Analysis initiated from SIMULIA established products
+Abaqus JOB ref04
+Abaqus 2025.HF4
+USING MEMORY DOUG-LEA ALLOCATOR
+Abaqus License Manager checked out the following licenses:
+Abaqus/Explicit checked out 8 tokens from Flexnet server localhost.
+<5 out of 13 licenses remain available>.
+Begin Compiling Double Precision Abaqus/Explicit User Subroutines
+7/14/2026 2:54:41 PM
+Intel(R) Fortran Intel(R) 64 Compiler Classic for applications running on Intel(R) 64, Version 2021.11.1 Build 20231117_000000
+Copyright (C) 1985-2023 Intel Corporation.  All rights reserved.
+
+ifort: remark #10448: Intel(R) Fortran Compiler Classic (ifort) is now deprecated and will be discontinued late 2024. Intel recommends that customers transition now to using the LLVM-based Intel(R) Fortran Compiler (ifx) for continued Windows* and Linux* support, new language support, new language features, and optimizations. Use '/Qdiag-disable:10448' to disable this message.
+End Compiling Double Precision Abaqus/Explicit User Subroutines
+Begin Linking Double Precision Abaqus/Explicit User Subroutines
+   explicitU-D.lib 라이브러리 및 explicitU-D.exp 개체를 생성하고 있습니다.
+End Linking Double Precision Abaqus/Explicit User Subroutines
+7/14/2026 2:54:42 PM
+Begin Analysis Input File Processor
+7/14/2026 2:54:42 PM
+Run pre.exe
+7/14/2026 2:54:48 PM
+Abaqus Error: Analysis Input File Processor exited with an error - Please see the 
+ref04.dat file for possible error messages if the file exists.
+Abaqus/Analysis exited with errors
