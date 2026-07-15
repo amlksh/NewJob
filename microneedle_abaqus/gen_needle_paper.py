@@ -28,10 +28,12 @@ DR_FINE = 0.008       # 접촉부 반경 요소크기 [mm] (=8um, 논문)
 R_FINE = 0.25         # 세밀영역 반경
 R_GROW = 1.20
 DZ_FINE = 0.008       # 상면(표피) 요소크기 [mm]
+DZ_INS = 0.020        # 삽입 경로 요소크기 [mm] (전체 깊이 세밀 유지)
 Z_GROW = 1.18
 
 GAP = 0.05            # 피부 상면 위 초기간격 [mm]
 PUSH = 1.0            # 니들 하강량 [mm]
+Z_FINE_BOT = 2.5 - 1.0 - 0.15   # 삽입 깊이(=Z_TOP-PUSH-여유)까지 세밀 유지
 
 # 니들(원뿔 강체) [mm]
 R_TIPN = 0.02         # 팁 반경(팁경 0.04)
@@ -59,13 +61,17 @@ def build_x():
 
 
 def build_z():
-    # 상면(z=Z_TOP)에서 세밀 -> 하부로 성김. 표피 경계는 정확히 포함.
-    zs = {round(Z_TOP, 6), round(Z_ED, 6), 0.0}
+    # 상면(z=Z_TOP)에서 세밀 -> 삽입 경로 전체 깊이(Z_FINE_BOT) 세밀 유지
+    # -> 하부로 성김. 표피/삽입 경계는 정확히 포함.
+    zs = {round(Z_TOP, 6), round(Z_ED, 6), round(Z_FINE_BOT, 6), 0.0}
     z, dz = Z_TOP, DZ_FINE
     while z > EPS:
         z -= dz
         zs.add(round(max(z, 0.0), 6))
-        dz = min(dz * Z_GROW, 0.15)
+        if z > Z_FINE_BOT:
+            dz = min(dz * 1.10, DZ_INS)     # 삽입 경로: 세밀 유지(<=20um)
+        else:
+            dz = min(dz * Z_GROW, 0.15)     # 하부: 성김
     return sorted(zs)
 
 
