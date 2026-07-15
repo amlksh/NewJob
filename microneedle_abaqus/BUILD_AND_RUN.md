@@ -178,6 +178,25 @@ abaqus python postprocess.py mn11.odb
 - 확인 포인트: 접촉력–깊이 곡선이 매끈한지(팁 필렛 효과), 관통 시작 깊이.
 - 참고: 요소삭제 VUMAT 유지(니들/접촉 안정성 검증이 목적).
 
+### (A-2) 변형 가능한 "두께 있는" 니들 (2D CAX4R, 강체선 대체)
+니들을 1D 강체선(RAX2)이 아니라 **변형 가능한 축대칭 2D 요소(CAX4R)**
+로 모사 — CAE에서 "축대칭 shell 파트(2D 면) + Solid section" 방식.
+면의 기하 폭이 곧 벽 두께라 화면에서 실제로 두껍게 보임(두께 property
+불필요). 실제 형상(내경 30 / 팁 20µm → 샤프트 120µm 가변 벽) 사용.
+상단을 참조점 9999에 운동학적 결합해 하강 구동(RF2 = 삽입력).
+```bat
+python gen_microneedle_shell.py
+abaqus job=mn14 input=14_microneedle_shell.inp user=vumat_skin.f double=both cpus=4 interactive
+abaqus python postprocess.py mn14.odb
+```
+- 니들 물성: 스테인리스강 예시(E=200 GPa, ν=0.3, ρ=7.9e-15). 필요 시
+  `gen_microneedle_shell.py` 상단 `NDL_*` 로 실리콘/폴리머 교체.
+- 뷰어에서 두께 확인: 니들 요소가 r-z 평면에서 폭을 가진 2D 밴드로 표시.
+- **주의(축대칭 한계):** 좌굴/굽힘(비축대칭) 불가 → 축방향 압축·반경변형
+  만. 측면 좌굴은 `03_needle_buckling` 이 담당.
+- 강성 니들 + 미세요소라 안정증분이 작음 → 질량스케일링 필수(적용됨).
+  실행 후 `ALLKE/ALLIE` 준정적성 확인 권장.
+
 ### (B) 축대칭 Cohesive 절개 ⭐ (요소 삭제 없음)
 반경 `R_CUT=50µm` 원통면에 두께 0 **COHAX4** cohesive 삽입 → 강체
 니들이 코어를 밀며 견인-분리로 매끈한 원통형 절개. **서브루틴 불필요**.
