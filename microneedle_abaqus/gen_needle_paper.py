@@ -41,9 +41,11 @@ R_BASE = 0.15         # 기저 반경(기저경 0.3)
 H_CONE = 1.2          # 원뿔 높이
 
 # 층 재료 (Ogden VUMAT): mu[MPa], alpha, D1[1/MPa], sigf[MPa], epsf ; 밀도
+#  주의: 논문 D1=1.03e-7 은 SI(1/Pa). MPa 단위 변환 -> D1=0.103 /MPa
+#  (K=2/D1=19.4 MPa, Poisson~0.48). 1e-7 그대로 쓰면 K=19.4 GPa -> 관성폭주.
 MAT = {
-    "EPIDERMIS": ("1.3e-9", "0.752, 8.68, 1.03e-7, 5.8, 0.084"),
-    "DERMIS":    ("1.2e-9", "7.33, 57.89, 1.03e-7, 15.0, 0.45"),
+    "EPIDERMIS": ("1.3e-9", "0.752, 8.68, 0.103, 5.8, 0.084"),
+    "DERMIS":    ("1.2e-9", "7.33, 57.89, 0.103, 15.0, 0.45"),
 }
 JSTR = 100000
 
@@ -177,11 +179,12 @@ def main():
     w("NREF, 1, 1")
     w("NREF, 6, 6")
     w("*AMPLITUDE, NAME=PUSH, DEFINITION=SMOOTH STEP")
-    w("0.0, 0.0, 0.02, 1.0")
+    w("0.0, 0.0, 0.04, 1.0")
     w("*STEP, NAME=INSERTION")
     w("*DYNAMIC, EXPLICIT")
-    w(", 0.02")
-    w("*FIXED MASS SCALING, DT=5.0e-7, TYPE=BELOW MIN")
+    w(", 0.04")
+    # 준정적: D1 정상화로 안정증분↑ -> 질량스케일링 축소(관성↓). 하중도 느리게.
+    w("*FIXED MASS SCALING, DT=2.0e-7, TYPE=BELOW MIN")
     w("*BOUNDARY, AMPLITUDE=PUSH")
     w("NREF, 2, 2, %.4f" % (-PUSH))
     w("*CONTACT")
