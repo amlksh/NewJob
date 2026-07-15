@@ -123,6 +123,12 @@ if (-not $SkipTools) {
   }
 } else { Log "툴 설치 건너뜀(-SkipTools)" "WARN" }
 
+# 방금 설치한 툴(gh 등)이 현재 세션 PATH에 즉시 보이도록 갱신
+try {
+  $env:Path = [Environment]::GetEnvironmentVariable("Path", "Machine") + ";" +
+  [Environment]::GetEnvironmentVariable("Path", "User")
+} catch {}
+
 # ================= PATH 등록 =================
 $localbin = Join-Path $env:USERPROFILE ".local\bin"
 if (Test-Path $localbin) {
@@ -162,8 +168,13 @@ if (Have abaqus) {
   if (-not $DryRun) {
     try {
       $vs = (abaqus verify -user_explicit 2>&1 | Out-String)
-      $pass = $vs -match "PASS"
-      Rec "verify -user_explicit" $(if ($pass) { "OK" } else { "WARN" }) $(if ($pass) { "PASS" } else { "출력 확인 필요" })
+      if ($vs -match "PASS") {
+        Rec "verify -user_explicit" "OK" "PASS"
+      } elseif ($vs -match "FAIL|ERROR") {
+        Rec "verify -user_explicit" "WARN" "FAIL 감지 - 컴파일러/VS 환경 점검"
+      } else {
+        Rec "verify -user_explicit" "WARN" "결과가 verify 로그에 별도 기록됨(수동 확인). 서브루틴 잡이 실제 컴파일되면 정상"
+      }
     } catch { Rec "verify -user_explicit" "WARN" "실행 실패" }
     try {
       $lic = (abaqus licensing ru 2>&1 | Out-String)
