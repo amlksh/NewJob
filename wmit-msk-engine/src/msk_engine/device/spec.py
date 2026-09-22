@@ -30,6 +30,22 @@ from msk_engine.errors import ConfigurationError
 
 Vec3 = tuple[float, float, float]
 
+# 스키마가 받는 항목. A-1 요청 템플릿이 이 목록과 어긋나지 않는지
+# tests/test_request_package.py 가 확인한다 — 템플릿이 낡으면 기기 측이
+# 엉뚱한 항목을 채워 보내고, 그 회신은 로더에서 거절된다.
+SOURCE_KEYS = ("cad_file", "revision", "exported_by", "exported_at", "notes")
+ATTACHMENT_KEYS = ("host_body", "location", "orientation_deg")
+SEGMENT_KEYS = ("name", "mass_kg", "attachment", "center_of_mass", "inertia")
+HINGE_KEYS = ("axis", "expressed_in", "location", "alignment_tolerance_deg")
+ROM_KEYS = (
+    "coordinate", "min_deg", "max_deg", "stiffness_nm_per_deg",
+    "damping_nm_s_per_deg", "transition_deg",
+)
+ACTUATION_KEYS = (
+    "mode", "coordinate", "max_torque_nm", "torque_file",
+    "stiffness_nm_per_rad", "damping_nm_s_per_rad", "rest_angle_deg",
+)
+
 #: 장치 구동 방식. P1 에서 구현된 것과 아닌 것을 여기서 구분한다 (ADR-0004).
 ACTUATION_MODES = ("none", "assistive", "prescribed_torque", "passive")
 #: 스키마에는 있으나 P1 에서 구현하지 않는 방식. 조용히 무시하지 않고 거절한다.
@@ -65,7 +81,9 @@ def _check_keys(data: dict[str, Any], allowed: tuple[str, ...], where: str) -> N
 
 
 #: 미정을 나타내는 표기. 값으로 인정하지 않는다.
-_PLACEHOLDERS = {"", "tbd", "todo", "미정", "none", "n/a"}
+#: `_` 는 A-1 회신 템플릿이 쓰는 채움 표시다 — 지우지 않고 회신한 칸이
+#: 값으로 오인되면 출처 없는 기기가 추적 가능한 것으로 판정된다.
+_PLACEHOLDERS = {"", "_", "-", "tbd", "todo", "미정", "none", "n/a"}
 
 
 def _is_filled(value: str) -> bool:
@@ -98,7 +116,7 @@ class CadSource:
     def parse(cls, data: Any) -> CadSource:
         where = "source"
         data = _as_mapping(data, where)
-        _check_keys(data, ("cad_file", "revision", "exported_by", "exported_at", "notes"), where)
+        _check_keys(data, SOURCE_KEYS, where)
         return cls(
             cad_file=str(data.get("cad_file", "")),
             revision=str(data.get("revision", "")),
@@ -134,7 +152,7 @@ class Attachment:
     @classmethod
     def parse(cls, data: Any, where: str) -> Attachment:
         data = _as_mapping(data, where)
-        _check_keys(data, ("host_body", "location", "orientation_deg"), where)
+        _check_keys(data, ATTACHMENT_KEYS, where)
         return cls(
             host_body=str(_require(data, "host_body", where)),
             location=_as_vec3(data.get("location", [0.0, 0.0, 0.0]), f"{where}.location"),
@@ -167,9 +185,7 @@ class DeviceSegment:
     def parse(cls, data: Any, index: int) -> DeviceSegment:
         where = f"segments[{index}]"
         data = _as_mapping(data, where)
-        _check_keys(
-            data, ("name", "mass_kg", "attachment", "center_of_mass", "inertia"), where
-        )
+        _check_keys(data, SEGMENT_KEYS, where)
         name = str(_require(data, "name", where)).strip()
         if not name:
             raise ConfigurationError(f"{where}.name: 비어 있음")
@@ -229,9 +245,7 @@ class Hinge:
     def parse(cls, data: Any) -> Hinge:
         where = "hinge"
         data = _as_mapping(data, where)
-        _check_keys(
-            data, ("axis", "expressed_in", "location", "alignment_tolerance_deg"), where
-        )
+        _check_keys(data, HINGE_KEYS, where)
         axis = _as_vec3(_require(data, "axis", where), f"{where}.axis")
         if math.isclose(math.sqrt(sum(a * a for a in axis)), 0.0, abs_tol=1e-12):
             raise ConfigurationError(f"{where}.axis: 영벡터일 수 없음")
@@ -273,14 +287,7 @@ class RangeOfMotion:
     def parse(cls, data: Any) -> RangeOfMotion:
         where = "rom"
         data = _as_mapping(data, where)
-        _check_keys(
-            data,
-            (
-                "coordinate", "min_deg", "max_deg", "stiffness_nm_per_deg",
-                "damping_nm_s_per_deg", "transition_deg",
-            ),
-            where,
-        )
+        _check_keys(data, ROM_KEYS, where)
         min_deg = _as_float(_require(data, "min_deg", where), f"{where}.min_deg")
         max_deg = _as_float(_require(data, "max_deg", where), f"{where}.max_deg")
         if max_deg <= min_deg:
@@ -339,14 +346,7 @@ class Actuation:
     def parse(cls, data: Any, base_dir: Path) -> Actuation:
         where = "actuation"
         data = _as_mapping(data, where)
-        _check_keys(
-            data,
-            (
-                "mode", "coordinate", "max_torque_nm", "torque_file",
-                "stiffness_nm_per_rad", "damping_nm_s_per_rad", "rest_angle_deg",
-            ),
-            where,
-        )
+        _check_keys(data, ACTUATION_KEYS, where)
         mode = str(data.get("mode", "none")).strip()
         if mode in DEFERRED_ACTUATION_MODES:
             raise ConfigurationError(

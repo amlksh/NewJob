@@ -68,6 +68,9 @@ python scripts/run_poc.py --case configs/cases/knee_rehab_device_example.yaml
 `docs/interfaces/cad_device_parameters.md`, 결합 방식과 **적용 한계**는
 `docs/decisions/ADR-0004-device-coupling.md` 에 있다.
 
+기기 측에 자료를 요청할 때 보내는 문서와 템플릿은
+`docs/interfaces/device_parameter_request/` 에 있다.
+
 받는 값: 힌지 축, 가동범위(ROM), 질량, 관성, 부착점, 구동 조건
 (보조 토크 / 지정 토크 / 수동 강성).
 

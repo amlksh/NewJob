@@ -8,6 +8,8 @@ CAD 쪽에서 이 문서의 스키마에 맞춘 YAML 을 내보내면, 해석 �
 YAML 로 두면 CAD 쪽 변경이 해석 코드에 번지지 않고, 어느 리비전의 기기로
 돌린 결과인지 `source` 에 남아 V&V 추적이 된다.
 
+- **기기 측에 보낼 요청 패키지: `device_parameter_request/`** (WO-G1 / A-1)
+  — 요청서와 값만 채우는 템플릿. 이 문서는 스키마 설명이고, 그쪽이 발송본이다.
 - 스키마 구현: `src/msk_engine/device/spec.py`
 - 모델 조립: `src/msk_engine/device/builder.py`
 - 결합 방식과 적용 한계: `docs/decisions/ADR-0004-device-coupling.md`
