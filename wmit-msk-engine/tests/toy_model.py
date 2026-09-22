@@ -257,6 +257,7 @@ def write_device_yaml(
     actuation_mode: str = "assistive",
     max_torque_nm: float = 20.0,
     host_body: str = THIGH_BODY,
+    cad_revision: str = "r0",
 ) -> Path:
     """토이 모델에 맞는 무릎 보조기 정의.
 
@@ -273,7 +274,7 @@ def write_device_yaml(
 
     path.write_text(
         f"""name: {DEVICE_NAME}
-source: {{cad_file: toy_brace.step, revision: r0}}
+source: {{cad_file: toy_brace.step, revision: {cad_revision}}}
 segments:
   - name: thigh_cuff
     mass_kg: 0.45
@@ -301,3 +302,59 @@ rom:
         encoding="utf-8",
     )
     return path
+
+
+# ---------------------------------------------------------------------------
+# 회귀 기준선용 기준 케이스
+#
+# 기준선을 만드는 스크립트(scripts/refresh_toy_baseline.py)와 그것을 검증하는
+# 테스트가 **같은 정의**를 써야 한다. 정의가 둘로 갈라지면 기준선이 검증하는
+# 대상과 달라져 회귀를 잡지 못한다.
+# ---------------------------------------------------------------------------
+
+REFERENCE_CASES: dict[str, tuple[str, bool]] = {
+    "toy_human": ("인체만 — Scale → IK → ID → SO → JR", False),
+    "toy_device": ("무릎 보조기 착용 — Scale → Device → IK → ID → SO → JR", True),
+}
+
+
+def build_reference_inputs(workdir: Path, repo_root: Path) -> dict:
+    """기준 케이스가 쓰는 입력 일체."""
+    templates = repo_root / "configs" / "templates"
+    model_path = workdir / "toy.osim"
+    model, state = build_model(model_path)
+
+    gait = workdir / "gait.trc"
+    static = workdir / "static.trc"
+    write_markers(gait, model, state)
+    write_static_markers(static, model, state)
+
+    return {
+        "templates": templates,
+        "model": model_path,
+        "gait": gait,
+        "static": static,
+        "scale_template": write_scale_template(
+            workdir / "scale_toy.xml", templates / "scale_setup.xml"
+        ),
+        "device": write_device_yaml(workdir / "device.yaml"),
+    }
+
+
+def run_reference_case(name: str, with_device: bool, inputs: dict, workdir: Path):
+    """기준 케이스 하나를 끝까지 실행한다."""
+    from msk_engine.pipeline import CaseSpec, run_case
+
+    case_file = write_case_yaml(
+        workdir / f"{name}.yaml",
+        inputs["model"],
+        inputs["gait"],
+        inputs["templates"],
+        scale_template=inputs["scale_template"],
+        static_trial=inputs["static"],
+        device_spec=inputs["device"] if with_device else None,
+    )
+    result = run_case(CaseSpec.from_yaml(case_file), runs_root=workdir / f"runs_{name}")
+    if result.status != "ok":
+        raise RuntimeError(f"{name}: 해석이 '{result.status}' 로 끝났다")
+    return result

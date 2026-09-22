@@ -1,0 +1,28 @@
+{
+  "description": "인체만 — Scale → IK → ID → SO → JR",
+  "environment": {
+    "opensim": "4.6",
+    "platform": "x86_64",
+    "python": "3.11.15"
+  },
+  "name": "toy_human",
+  "schema": 1,
+  "values": {
+    "actuator.reserve_hip_flex.peak": 75.58655571,
+    "actuator.reserve_knee_flex.peak": 16.66142413,
+    "moment.hip_flex_moment.peak": 75.56824966,
+    "moment.knee_flex_moment.peak": 28.96489291,
+    "muscle.knee_musc.peak": 375.90017247,
+    "quality.marker_max_m": 4.78e-06,
+    "quality.marker_rms_m": 1.020749024701259e-06,
+    "reaction.knee_on_shank_in_shank.force": 311.47405959227706,
+    "reaction.knee_on_shank_in_shank.moment": 16.66142413,
+    "rom.hip_flex.max": 10.89836675,
+    "rom.hip_flex.min": -0.00036798,
+    "rom.knee_flex.max": 17.18848842,
+    "rom.knee_flex.min": 8.24159901,
+    "scale.count": 7.0,
+    "scale.max": 1.0,
+    "scale.min": 1.0
+  }
+}

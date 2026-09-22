@@ -102,6 +102,14 @@ class Provenance:
     # 실제로 해석한 구간 [start, end] (초). 결과를 인용할 때 함께 제시한다.
     analysis_time_range: list[float] | None = None
 
+    # 이 결과를 대외 인용·납품에 쓸 수 있는지. None 은 '아직 판정하지 않음'.
+    # citation_blockers 가 비어 있지 않으면 citable 은 False 다.
+    #
+    # 주의: 여기 오르는 항목은 **지금까지 구현된 검사**뿐이다.
+    # citable=True 가 '모든 조건을 만족했다' 는 뜻은 아니다.
+    citable: bool | None = None
+    citation_blockers: list[str] = field(default_factory=list)
+
     @classmethod
     def start(
         cls,
@@ -140,6 +148,15 @@ class Provenance:
                 "metrics": metrics or {},
             }
         )
+
+    def record_citation_blockers(self, blockers: list[str]) -> None:
+        """이 결과를 인용할 수 없게 만드는 사유를 기록한다.
+
+        근거가 확정되지 않은 입력으로 낸 수치가 보고서에 인용되는 것을 막는
+        것이 목적이다. 사유를 지우려면 입력을 고쳐야 하며, 기록만 지울 수는 없다.
+        """
+        self.citation_blockers = list(blockers)
+        self.citable = not self.citation_blockers
 
     def finish(self, status: str) -> None:
         self.status = status

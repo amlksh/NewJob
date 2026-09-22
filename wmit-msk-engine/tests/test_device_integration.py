@@ -220,3 +220,35 @@ class TestJointReactionGuard:
         with pytest.raises(StepExecutionError) as exc:
             steps.run_joint_reaction(setup, result.run_dir, result.outputs["jr_reaction"])
         assert "joint_names" in str(exc.value)
+
+
+class TestCitationFlagEndToEnd:
+    """인용 가부가 실제 해석 결과 파일에 남는지."""
+
+    def _run_with_revision(self, toy_inputs, revision, name):
+        device_yaml = toy_model.write_device_yaml(
+            toy_inputs["tmp"] / f"device_{name}.yaml", cad_revision=revision
+        )
+        return _run(toy_inputs, device_spec=device_yaml, name=f"{name}.yaml")
+
+    def test_tbd_revision_marks_the_run_uncitable(self, toy_inputs):
+        import json
+
+        result = self._run_with_revision(toy_inputs, "TBD", "tbd")
+        assert result.status == "ok"  # 해석 자체는 정상으로 끝난다
+
+        provenance = json.loads(result.provenance_path.read_text(encoding="utf-8"))
+        assert provenance["citable"] is False
+        assert provenance["citation_blockers"]
+
+        summary = json.loads(result.summary_path.read_text(encoding="utf-8"))
+        assert summary["metadata"]["citable"] is False
+        assert summary["metadata"]["citation_blockers"]
+
+    def test_real_revision_is_citable(self, toy_inputs):
+        import json
+
+        result = self._run_with_revision(toy_inputs, "revB", "revb")
+        provenance = json.loads(result.provenance_path.read_text(encoding="utf-8"))
+        assert provenance["citable"] is True
+        assert provenance["citation_blockers"] == []

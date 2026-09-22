@@ -1,0 +1,30 @@
+{
+  "description": "무릎 보조기 착용 — Scale → Device → IK → ID → SO → JR",
+  "environment": {
+    "opensim": "4.6",
+    "platform": "x86_64",
+    "python": "3.11.15"
+  },
+  "name": "toy_device",
+  "schema": 1,
+  "values": {
+    "actuator.reserve_hip_flex.peak": 76.27950062,
+    "actuator.reserve_knee_flex.peak": 0.1653293,
+    "device.device_toy_brace_rom.peak": 0.0,
+    "device.device_toy_brace_torque.peak": 16.53258534,
+    "moment.hip_flex_moment.peak": 76.26098712,
+    "moment.knee_flex_moment.peak": 29.11518681,
+    "muscle.knee_musc.peak": 272.15343675,
+    "quality.marker_max_m": 4.78e-06,
+    "quality.marker_rms_m": 1.020749024701259e-06,
+    "reaction.knee_on_shank_in_shank.force": 327.1756060227211,
+    "reaction.knee_on_shank_in_shank.moment": 0.20494767797386437,
+    "rom.hip_flex.max": 10.89836675,
+    "rom.hip_flex.min": -0.00036798,
+    "rom.knee_flex.max": 17.18848842,
+    "rom.knee_flex.min": 8.24159901,
+    "scale.count": 7.0,
+    "scale.max": 1.0,
+    "scale.min": 1.0
+  }
+}

@@ -160,3 +160,39 @@ class TestSummarise:
         assert "range_of_motion" in payload
         # 반력이 비었으면 이유가 남아야 한다
         assert payload["notes"]
+
+
+class TestUnknownColumns:
+    """모델의 힘 집합에 없는 열은 액추에이터가 아니다.
+
+    CoordinateLimitForce 는 힘과 함께 PotentialEnergy(J) 를 기록한다.
+    이것을 액추에이터로 분류하면 단위가 다른 값이 근육력·기기 하중 표에
+    섞이고, 회귀 기준선에도 잘못된 항목으로 굳는다.
+    """
+
+    def test_column_absent_from_model_is_not_an_actuator(self, sto_factory):
+        path = sto_factory(
+            "so_force.sto",
+            ["time", "vasmed_r", "PotentialEnergy"],
+            [[0.0, 100.0, 7.5]],
+        )
+        grouped, notes = actuator_peaks(path, {"vasmed_r": "muscle"})
+        assert [p.name for p in grouped["muscle"]] == ["vasmed_r"]
+        assert [p.name for p in grouped["actuator"]] == []
+        assert [p.name for p in grouped["unknown"]] == ["PotentialEnergy"]
+        assert any("PotentialEnergy" in n for n in notes)
+
+    def test_without_a_model_the_limitation_is_declared(self, sto_factory):
+        """모델이 없으면 열을 귀속시킬 수 없다 — 그 사실이 결과에 남아야 한다.
+
+        실제 파이프라인은 항상 해석 모델을 넘기므로 이 경로는 퇴화 경로다.
+        조용히 근육으로 분류하는 대신 notes 로 한계를 밝힌다.
+        """
+        outputs = {
+            "ik_motion": sto_factory("ik.mot", ["time", "knee_angle_r"], [[0.0, 5.0]]),
+            "id_forces": sto_factory("id.sto", ["time", "knee_angle_r_moment"], [[0.0, 40.0]]),
+            "so_forces": sto_factory("so.sto", ["time", "PotentialEnergy"], [[0.0, 7.5]]),
+            "jr_reaction": sto_factory("jr.sto", ["time"], [[0.0]]),
+        }
+        summary = summarise(outputs)
+        assert any("예비 액추에이터" in n for n in summary.notes)

@@ -223,6 +223,11 @@ def run_case(
     prov.joint_reaction_frame = case.joint_reaction_frame
     prov.model_file = str(case.model_file)
 
+    blockers = citation_blockers(case)
+    prov.record_citation_blockers(blockers)
+    for blocker in blockers:
+        log.warning("인용 불가: %s", blocker)
+
     validation = validate_case(case)
     _write_validation(run_dir, validation)
 
@@ -322,6 +327,8 @@ def run_case(
             "analysis_time_range_s": [time_range[0], time_range[1]],
             "joint_reaction_frame": case.joint_reaction_frame,
             "joint_reaction_joints": list(case.joint_reaction_joints),
+            "citable": not blockers,
+            "citation_blockers": blockers,
             "model_file": str(case.model_file),
             "analysis_model": str(outputs["analysis_model"]),
             "device": (
@@ -610,6 +617,29 @@ def _collect_quality(outputs: dict[str, Path], thresholds: Thresholds) -> Qualit
     metrics.residual_force_n = force
     metrics.residual_moment_nm = moment
     return metrics.judge(thresholds)
+
+
+def citation_blockers(case: CaseSpec) -> list[str]:
+    """이 Case 로 낸 결과를 대외 인용·납품에 쓸 수 없게 만드는 사유.
+
+    현재 검사하는 것:
+      - 기기 CAD 출처(`source.cad_file`, `source.revision`)가 비었거나 TBD 인 경우.
+        어느 리비전의 기기로 낸 수치인지 말할 수 없으면 증거가 되지 않는다
+        (CLAUDE.md §4, docs/interfaces/cad_device_parameters.md).
+
+    목록이 비어 있다고 해서 모든 조건을 만족했다는 뜻은 아니다.
+    검사는 해당 WP 가 진행되면서 늘어난다 (예: 합격기준 확정 — ADR-0003).
+    """
+    blockers: list[str] = []
+    device = case.device
+    if device is not None and not device.source.is_traceable:
+        blockers.append(
+            f"기기 '{device.name}' 의 CAD 출처가 확정되지 않았다 "
+            f"(cad_file={device.source.cad_file or '비어 있음'}, "
+            f"revision={device.source.revision or '비어 있음'}). "
+            "예시값으로 낸 결과는 대외 인용·납품에 쓸 수 없다"
+        )
+    return blockers
 
 
 def _input_files(case: CaseSpec) -> dict[str, Path]:

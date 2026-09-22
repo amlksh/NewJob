@@ -81,7 +81,7 @@ class TestProvenance:
         assert payload["force_unit"] == "N"
 
 
-def _write_case(tmp_path, trc_factory, repo_root, *, with_grf: bool = False):
+def _write_case(tmp_path, trc_factory, repo_root, *, with_grf: bool = False, device=None):
     """실제 템플릿을 쓰는 Case YAML 을 만든다."""
     markers = trc_factory(name="gait.trc")
     static = trc_factory(name="static.trc")
@@ -108,6 +108,7 @@ def _write_case(tmp_path, trc_factory, repo_root, *, with_grf: bool = False):
 
     lines += [
         f"model_file: {model}",
+        *([f"device: {device}"] if device else []),
         "templates:",
         f"  scale: {templates / 'scale_setup.xml'}",
         f"  ik: {templates / 'ik_setup.xml'}",
@@ -259,3 +260,71 @@ class TestScalePreflight:
         from msk_engine.steps import check_marker_placer_tasks
 
         check_marker_placer_tasks(self._scale_xml(tmp_path, "", apply_value="false"))
+
+
+class TestCitationFlag:
+    """근거가 확정되지 않은 입력으로 낸 결과는 인용할 수 없다고 기록해야 한다.
+
+    CAD 리비전이 TBD 인 예시값으로 돌린 수치가 보고서에 인용되는 것을 막는 것이
+    목적이다 (CLAUDE.md §4). 경고만으로는 부족하다 — 결과 파일에 남아야
+    나중에 그 결과를 집어든 사람이 알 수 있다.
+    """
+
+    def _device(self, tmp_path, revision: str):
+        import toy_model
+
+        return toy_model.write_device_yaml(
+            tmp_path / f"device_{revision or 'empty'}.yaml", cad_revision=revision
+        )
+
+    def test_tbd_revision_blocks_citation(self, tmp_path, trc_factory, repo_root):
+        from msk_engine.pipeline import citation_blockers
+
+        case = CaseSpec.from_yaml(
+            _write_case(
+                tmp_path, trc_factory, repo_root, device=self._device(tmp_path, "TBD")
+            )
+        )
+        blockers = citation_blockers(case)
+        assert len(blockers) == 1
+        assert "CAD 출처" in blockers[0]
+        assert "TBD" in blockers[0]
+
+    def test_real_revision_does_not_block(self, tmp_path, trc_factory, repo_root):
+        from msk_engine.pipeline import citation_blockers
+
+        case = CaseSpec.from_yaml(
+            _write_case(
+                tmp_path, trc_factory, repo_root, device=self._device(tmp_path, "revB")
+            )
+        )
+        assert citation_blockers(case) == []
+
+    def test_case_without_device_is_not_blocked_by_this_check(
+        self, tmp_path, trc_factory, repo_root
+    ):
+        from msk_engine.pipeline import citation_blockers
+
+        case = CaseSpec.from_yaml(_write_case(tmp_path, trc_factory, repo_root))
+        assert citation_blockers(case) == []
+
+    def test_flag_is_written_to_provenance(self, tmp_path, trc_factory, repo_root):
+        case = CaseSpec.from_yaml(
+            _write_case(
+                tmp_path, trc_factory, repo_root, device=self._device(tmp_path, "TBD")
+            )
+        )
+        result = run_case(case, runs_root=tmp_path / "runs", dry_run=True)
+        payload = json.loads(result.provenance_path.read_text(encoding="utf-8"))
+        assert payload["citable"] is False
+        assert payload["citation_blockers"]
+        assert "TBD" in payload["citation_blockers"][0]
+
+    def test_shipped_device_example_is_flagged(self, repo_root):
+        """저장소의 예시 기기는 CAD 값이 TBD 다 — 인용 불가로 표시되어야 한다."""
+        from msk_engine.device import load_device_spec
+
+        spec = load_device_spec(
+            repo_root / "configs" / "devices" / "knee_rehab_brace_example.yaml"
+        )
+        assert not spec.source.is_traceable

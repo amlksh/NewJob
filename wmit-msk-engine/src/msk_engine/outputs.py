@@ -232,7 +232,9 @@ def actuator_peaks(
     구분할 수 없다는 사실을 notes 에 남긴다.
     """
     force_file = Path(force_file)
-    empty: dict[str, list[PeakSeries]] = {"muscle": [], "device": [], "actuator": []}
+    empty: dict[str, list[PeakSeries]] = {
+        "muscle": [], "device": [], "actuator": [], "unknown": []
+    }
     if not force_file.exists():
         return empty, [f"Static Optimization 결과 파일 없음: {force_file}"]
 
@@ -247,12 +249,21 @@ def actuator_peaks(
             "muscle 목록에 예비 액추에이터가 섞일 수 있다"
         )
 
-    grouped: dict[str, list[PeakSeries]] = {"muscle": [], "device": [], "actuator": []}
+    grouped: dict[str, list[PeakSeries]] = {
+        "muscle": [], "device": [], "actuator": [], "unknown": []
+    }
+    unknown: list[str] = []
     for index, name in enumerate(header):
         if name == "time":
             continue
         if kinds is not None:
-            kind = kinds.get(name, "actuator")
+            # 모델의 힘 집합에 없는 열은 액추에이터 힘이 아니다. 예: CoordinateLimitForce
+            # 가 함께 기록하는 PotentialEnergy(J). 이것을 액추에이터로 분류하면
+            # 단위가 다른 값이 근육력·기기 하중과 같은 표에 섞인다.
+            kind = kinds.get(name)
+            if kind is None:
+                kind = "unknown"
+                unknown.append(name)
         else:
             kind = "device" if name.startswith(f"{DEVICE_PREFIX}_") else "muscle"
 
@@ -262,7 +273,12 @@ def actuator_peaks(
             continue
         # SO 결과의 단위는 액추에이터 종류에 따라 다르다. 근육은 N,
         # 좌표 액추에이터는 그 좌표가 회전이면 N*m 다. 모델 없이 단정할 수 없다.
-        unit = "N" if kind == "muscle" else "N or N*m"
+        if kind == "muscle":
+            unit = "N"
+        elif kind == "unknown":
+            unit = "unknown"
+        else:
+            unit = "N or N*m"
         grouped.setdefault(kind, []).append(
             PeakSeries(
                 name=name,
@@ -272,6 +288,12 @@ def actuator_peaks(
                 unit=unit,
                 kind=kind,
             )
+        )
+    if unknown:
+        notes.append(
+            "모델의 힘 집합에 없어 액추에이터로 분류하지 않은 열: "
+            + ", ".join(sorted(unknown))
+            + " (단위를 알 수 없어 QoI 에서 제외한다)"
         )
     return grouped, notes
 

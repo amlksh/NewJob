@@ -34,7 +34,7 @@ docker run --rm -v "$PWD/data:/app/data" -v "$PWD/runs:/app/runs" wmit-msk \
 
 | 파일 | 내용 |
 | --- | --- |
-| `results/summary.json` | **QoI 4종** — 관절가동범위(ROM), 관절 모멘트, 근육력, 관절반력 |
+| `results/summary.json` | **QoI 4종** — 관절가동범위(ROM), 관절 모멘트, 근육력, 관절반력 + 인용 가부 |
 | `results/*.mot`, `*.sto` | 단계별 원본 결과 (IK 관절각, ID 모멘트, SO 근육력, JR 반력) |
 | `results/scaled_model.osim` | 개인화된 인체 모델 |
 | `results/device_model.osim` | 기기가 붙은 해석 모델 (기기가 있을 때) |
@@ -45,6 +45,10 @@ docker run --rm -v "$PWD/data:/app/data" -v "$PWD/runs:/app/runs" wmit-msk \
 
 `summary.json` 에는 단위와 좌표계가 함께 실린다. 관절반력은 표현 좌표계
 (기본 경골)를 모르면 숫자만으로 의미가 없기 때문이다.
+
+`provenance.json` 과 `summary.json` 은 그 결과를 대외 인용·납품에 쓸 수 있는지도
+기록한다. 기기 CAD 출처(`source.revision`)가 `TBD` 면 `citable: false` 와 사유가
+남는다. 자세한 규칙은 `docs/vv/traceability.md` §인용 가부.
 
 ## 의료기기 결합
 
@@ -77,7 +81,7 @@ Tier 2 로 간다 (ADR-0004).
 **Scale → Device → IK → ID → SO → JR 전체가 OpenSim 4.6 에서 도는 것을 확인했다**
 (`tests/test_device_integration.py`, 토이 모델 기준).
 
-확인한 내용:
+확인한 내용 (**코드 검증** — 파이프라인이 OpenSim 을 올바르게 부르는가):
 
 - 모델 자신에게서 만든 마커로 스케일링하면 **스케일 계수가 1** 로 나온다
 - IK 가 원래 관절각을 되찾는다 (마커 RMS 오차 ~1e-6 m)
@@ -86,9 +90,19 @@ Tier 2 로 간다 (ADR-0004).
 - 보조 토크가 근육 대신 하중을 받아 **근육력이 줄어든다**
 - 기기 토크가 `max_torque_nm` 을 넘지 않는다
 
-**확인하지 못한 것**: 실제 데이터 재현. 위는 전부 토이 모델 기준이며,
-Grand Challenge 데이터로 실제 보행을 재현하는 것은 G1 항목으로 남아 있다.
-실제 인체 모델(Rajagopal)은 라이선스 대장을 채우기 전까지 저장소에 두지 않는다.
+수치는 `tests/baselines/*.json` 에 **회귀 기준선**으로 고정되어 있다 (V-01).
+실데이터 결과가 나빠졌을 때 파이프라인이 바뀐 것인지 데이터가 나쁜 것인지
+가르는 기준이다. 갱신은 `scripts/refresh_toy_baseline.py` 로만 한다.
+
+**확인하지 못한 것:**
+
+- **기기 결합 검증은 미착수다** (V-10, V-11). 위 항목은 결합 *메커니즘*이
+  의도대로 동작하는지를 토이 모델로 본 코드 검증이며, 실제 기기로 결합
+  타당성을 확인한 것이 아니다.
+- **실제 데이터 재현도 미착수다** (V-12). 위는 전부 토이 모델 기준이다.
+- 실제 인체 모델(Rajagopal)은 라이선스 대장을 채우기 전까지 저장소에 두지 않는다.
+- `configs/devices/` 의 값은 예시값이며, 그것으로 낸 결과는 `citable: false` 로
+  표시되어 대외 인용·납품에 쓸 수 없다.
 
 `configs/templates/scale_setup.xml` 의 `MeasurementSet` 과 `MarkerPlacer` 의
 `IKTaskSet` 은 비어 있다 — 모델·마커셋마다 내용이 달라 채워 써야 하는 자리다.
