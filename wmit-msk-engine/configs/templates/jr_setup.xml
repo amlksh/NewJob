@@ -3,7 +3,10 @@
   AnalyzeTool + JointReaction 템플릿 — 관절반력 산출.
 
   핵심 설정 세 가지 (CLAUDE.md §4):
-    joint_names       : 대상 관절. 1차는 무릎.
+    joint_names       : 대상 관절. Case 의 joint_reaction_joints 로 치환된다.
+                        모델에 없는 이름을 쓰면 JointReaction 은 오류 없이
+                        time 열만 있는 빈 결과를 쓴다 — steps.run_joint_reaction()
+                        이 그 경우를 잡아 실패로 처리한다.
     apply_on_bodies   : 반력을 어느 물체에 작용시킨 것으로 볼지 (child = 경골 쪽)
     express_in_frame  : 어느 좌표계로 표현할지. @JR_FRAME@ 기본값은 tibia.
                         향후 FE 경계조건으로 넘길 때 이 좌표계가 기준이 된다.
@@ -20,7 +23,7 @@
 -->
 <OpenSimDocument Version="40600">
     <AnalyzeTool name="wmit_jr">
-        <model_file>@SCALED_MODEL@</model_file>
+        <model_file>@ANALYSIS_MODEL@</model_file>
         <results_directory>@RUN_DIR@/results</results_directory>
 
         <initial_time>@TIME_START@</initial_time>
@@ -35,7 +38,7 @@
                     <step_interval>1</step_interval>
                     <in_degrees>true</in_degrees>
                     <forces_file>@SO_FORCES@</forces_file>
-                    <joint_names> knee_r </joint_names>
+                    <joint_names> @JR_JOINTS@ </joint_names>
                     <apply_on_bodies> child </apply_on_bodies>
                     <express_in_frame> @JR_FRAME@ </express_in_frame>
                 </JointReaction>

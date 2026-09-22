@@ -5,8 +5,12 @@
 ## 1. 과제 맥락
 
 - 과제: WMIT 통합플랫폼용 OpenSim 기반 근골격(MSK) 시뮬레이션 엔진 구축 — VPK PLM기술팀
-- 1차 목표: WMIT 서버에서 **무릎 가상환자 해석(Scale → IK → ID → SO → JR)을 웹으로 실행하고 결과를 조회**하는 수준
-- 1차 범위 제외: Virtual Cohort 대량 생성, Abaqus 자동 연계(Interface 사양서까지만), 영상 기반 모션캡처, AI Agent
+- 1차 목표: WMIT 서버에서 **무릎 가상환자 해석(Scale → Device → IK → ID → SO → JR)을 웹으로 실행하고 결과를 조회**하는 수준
+- 1차 Reference 사용 사례: **무릎 재활 보조기 착용 해석**. 인체-기기 결합은 P1 범위 안이며 방식은 ADR-0004 (Tier 1: 용접 결합 + 좌표 구동)
+- 1차 산출 QoI: 관절가동범위(ROM), 관절 모멘트, 근육력, 관절반력 — `results/summary.json`
+- 1차 범위 제외: Virtual Cohort 대량 생성, **Abaqus 자동 연계**, 영상 기반 모션캡처, AI Agent
+  - Abaqus 연계는 별도 모듈로 분리한다. `src/msk_engine/` 에 FE 관련 코드를 넣지 않는다.
+    관절반력을 경골 좌표계로 남기는 것까지가 P1 의 준비 작업이다.
 - 설계 문서: 「OpenSim MSK 시뮬레이션 엔진 개발 프로세스 설계」(Claude Docs). 단계·게이트·V&V 기준은 그 문서가 원본이며, 이 파일과 충돌하면 그 문서를 따르고 이 파일을 고친다.
 
 **현재 단계: P1 기술검증 PoC.** G1 통과 기준:
@@ -29,17 +33,23 @@ src/msk_engine/      해석 엔진 패키지 (웹 계층 의존성 금지)
   pipeline.py        단계 실행 오케스트레이션
   steps.py           Scale/IK/ID/SO/JR 단계별 실행
   inputs.py          입력 검증 (마커명, 단위, 결측, GRF 동기화)
+  outputs.py         QoI 추출 (ROM, 관절 모멘트, 근육력, 관절반력) → summary.json
   provenance.py      재현성 기록 (버전, 입력 해시, 설정 XML)
-  quality.py         품질 지표 (마커 RMS, 잔차력)
+  quality.py         품질 지표 (마커 RMS, 잔차력), STO/MOT 읽기
   errors.py          예외 정의
+  device/            의료기기 결합
+    spec.py          CAD → 해석 파라미터 스키마 (질량, 관성, 부착점, 축, ROM, 구동)
+    builder.py       인체 모델에 기기를 붙여 해석 모델 생성
 configs/templates/   Setup XML 템플릿 (단계별)
 configs/cases/       Case 정의 YAML
+configs/devices/     기기 파라미터 YAML (CAD 에서 내보낸 값)
 models/              모델 파일 — 라이선스 대장에 등록된 것만
 data/                외부 데이터 — git 제외 (data/README.md 참조)
 runs/                해석 결과 — git 제외
 scripts/run_poc.py   PoC 실행 진입점
-tests/               pytest
+tests/               pytest (toy_model.py 는 통합 테스트용 최소 모델)
 docs/decisions/      ADR (기술 결정 기록)
+docs/interfaces/     외부 인터페이스 사양 (CAD → 기기 파라미터)
 docs/vv/             V&V 추적표, 검증 결과
 docs/license_register.md   모델·플러그인·데이터 라이선스 대장
 poc/jam/             OpenSim-JAM 호환성 시험 (격리)
@@ -54,6 +64,10 @@ poc/jam/             OpenSim-JAM 호환성 시험 (격리)
 - 기술 선택(버전, 모델, 알고리즘, 합격기준)은 `docs/decisions/ADR-NNNN-*.md`로 남긴다.
 - 좌표계와 단위를 결과 메타데이터에 명시한다. 관절반력은 **경골(tibia) 좌표계** 표현을 기본으로 한다 (향후 FE 경계조건 연계).
 - 결과 수치를 보고할 때 품질 지표(마커 RMS 오차, 잔차력·잔차모멘트)를 함께 보고한다.
+- 기기는 **스케일링 다음에** 붙인다. 기기 치수는 CAD 로 고정되어 있으므로 피험자에 맞춰 늘리지 않는다.
+- 기기 결과를 보고할 때 ADR-0004 의 적용 한계(강체 부착, 기기 내부 하중 없음,
+  축 어긋남 구속력 없음, assistive 토크는 최적화 결과)를 함께 말한다.
+- 기기 파라미터를 바꾸면 `source.revision` 을 갱신한다. `TBD` 인 기기로 낸 결과는 대외 인용·납품에 쓰지 않는다.
 
 ### 금지
 
@@ -74,6 +88,7 @@ poc/jam/             OpenSim-JAM 호환성 시험 (격리)
 pip install -e ".[dev]"                     # 로컬 설치
 pytest -q                                   # 테스트
 python scripts/run_poc.py --case configs/cases/kneeloads_example.yaml
+python scripts/run_poc.py --case configs/cases/knee_rehab_device_example.yaml   # 기기 착용
 docker build -t wmit-msk -f docker/Dockerfile .
 docker run --rm -v "$PWD/data:/app/data" -v "$PWD/runs:/app/runs" wmit-msk \
     python scripts/run_poc.py --case configs/cases/kneeloads_example.yaml
@@ -85,3 +100,5 @@ docker run --rm -v "$PWD/data:/app/data" -v "$PWD/runs:/app/runs" wmit-msk \
 - [ ] Grand Challenge 사용 trial (튜닝용 / 검증용 분리)
 - [ ] 검증 합격기준 (파형 상관, RMSE) — 문헌 근거로 ADR 작성
 - [ ] WMIT 서버 OS·사양, 외부망 정책
+- [ ] 기기 결합 Tier 2(기기 자체 자유도 + 구속조건)로 갈 조건 — ADR-0004
+- [ ] 실제 재활 보조기 CAD 파라미터 확보 (현재 `configs/devices/` 는 예시값)

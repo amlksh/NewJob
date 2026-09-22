@@ -31,6 +31,9 @@
             <time_range> @STATIC_TIME_START@ @STATIC_TIME_END@ </time_range>
             <preserve_mass_distribution>true</preserve_mass_distribution>
             <output_model_file>@SCALED_MODEL@</output_model_file>
+            <!-- 적용된 스케일 계수. 어떤 피험자에 얼마를 곱했는지 남아야
+                 결과를 재현하고 설명할 수 있다 (V&V 추적). -->
+            <output_scale_file>@SCALE_FACTORS@</output_scale_file>
         </ModelScaler>
 
         <MarkerPlacer name="placer">

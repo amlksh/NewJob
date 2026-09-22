@@ -1,0 +1,83 @@
+# 무릎 재활 보조기 — P1 기준 Reference 기기 (예시)
+#
+# ⚠ 이 파일의 수치는 **형식을 보이기 위한 예시**이며 실제 기기에서 온 값이 아니다.
+#    CAD 파라미터가 확정되면 전부 교체하고, source 에 리비전을 적는다.
+#    교체 전에 나온 결과는 대외 인용·납품에 쓰지 않는다 (CLAUDE.md §4).
+#
+# 스키마 설명: docs/interfaces/cad_device_parameters.md
+# 결합 방식과 적용 한계: docs/decisions/ADR-0004-device-coupling.md
+#
+# 단위: 길이 m, 질량 kg, 관성 kg·m^2, 토크 N·m, 각도 deg
+# body·coordinate 이름은 Rajagopal 계열 모델 기준이다. 모델을 바꾸면 같이 고친다.
+
+name: knee_rehab_brace_example
+description: >
+  대퇴·하퇴 커프와 힌지로 구성된 무릎 재활 보조기. 무릎 굴신을 보조하고
+  가동범위를 제한한다. P1 에서는 인체 분절에 용접된 강체로 모델링한다.
+
+source:
+  cad_file: TBD            # 예: brace_assembly_revB.step
+  revision: TBD
+  exported_by: TBD
+  exported_at: TBD
+  notes: >
+    TBD 가 남아 있는 동안은 예시값으로 돌아간다. 질량·관성·부착점을
+    CAD 에서 받아 채운 뒤 이 항목을 지울 것.
+
+# 장치 강체. 인체 body 에 용접되며 질량·관성이 해석에 반영된다.
+segments:
+  - name: thigh_cuff
+    mass_kg: 0.35                          # 예시값
+    center_of_mass: [0.0, -0.05, 0.02]     # 예시값
+    inertia: [0.0018, 0.0007, 0.0018, 0.0, 0.0, 0.0]   # 예시값
+    attachment:
+      host_body: femur_r
+      location: [0.0, -0.20, 0.04]         # femur_r 좌표계 기준, 예시값
+      orientation_deg: [0.0, 0.0, 0.0]
+
+  - name: shank_cuff
+    mass_kg: 0.30                          # 예시값
+    center_of_mass: [0.0, 0.05, 0.02]      # 예시값
+    inertia: [0.0014, 0.0005, 0.0014, 0.0, 0.0, 0.0]   # 예시값
+    attachment:
+      host_body: tibia_r
+      location: [0.0, -0.12, 0.04]         # tibia_r 좌표계 기준, 예시값
+      orientation_deg: [0.0, 0.0, 0.0]
+
+  - name: hinge_assembly
+    mass_kg: 0.20                          # 예시값
+    center_of_mass: [0.0, 0.0, 0.0]
+    inertia: [0.0005, 0.0005, 0.0005, 0.0, 0.0, 0.0]   # 예시값
+    attachment:
+      host_body: femur_r
+      location: [0.0, -0.40, 0.05]         # 무릎 축 근처, 예시값
+      orientation_deg: [0.0, 0.0, 0.0]
+
+# CAD 힌지 축. P1 에서는 새 자유도를 만들지 않고, 인체 무릎 축과의
+# 정합성을 점검하는 데 쓴다. 어긋나면 경고가 결과에 남는다.
+hinge:
+  axis: [0.0, 0.0, 1.0]        # femur_r 좌표계 기준 굴신 축, 예시값
+  expressed_in: femur_r
+  location: [0.0, -0.40, 0.05] # 예시값
+  alignment_tolerance_deg: 10.0
+
+# 기기 스토퍼가 허용하는 가동범위. 강성은 실제 스토퍼 특성에서 와야 한다.
+rom:
+  coordinate: knee_angle_r
+  min_deg: 0.0                 # 예시값 — 신전 스토퍼
+  max_deg: 120.0               # 예시값 — 굴곡 스토퍼
+  stiffness_nm_per_deg: 5.0    # 예시값
+  damping_nm_s_per_deg: 0.5    # 예시값
+  transition_deg: 2.0
+
+# 구동 조건.
+#   assistive          — Static Optimization 이 max_torque_nm 한도 안에서
+#                        장치 토크를 근육과 함께 분배한다.
+#                        "이 동작을 도우려면 몇 N·m 가 필요한가" 를 묻는다.
+#   prescribed_torque  — 토크 프로파일(time, torque)이 이미 정해진 경우.
+#   passive            — 스프링·댐퍼만 있는 수동 보조기.
+#   none               — 질량·관성·ROM 만 반영.
+actuation:
+  mode: assistive
+  coordinate: knee_angle_r
+  max_torque_nm: 20.0          # 예시값 — 기기 사양서에서 받아 교체할 것

@@ -79,6 +79,9 @@ def _report(result) -> None:
         for step in result.steps:
             print(f"  {step.name:6s} {step.status:4s} {step.duration_s:>8.2f}s")
 
+        _report_device(result)
+        _report_qoi(result)
+
         print("\n품질 지표:")
         print(json.dumps(result.quality.as_dict(), indent=2, ensure_ascii=False))
 
@@ -89,6 +92,66 @@ def _report(result) -> None:
             )
         elif result.quality.passed is False:
             print("\n주의: 품질 지표가 임계값을 벗어났다. 결과를 그대로 인용하지 말 것.")
+
+
+def _report_device(result) -> None:
+    """기기 결합 결과와 경고. 경고는 결과 해석에 영향을 주므로 함께 보여준다."""
+    build = result.device_build
+    if not build:
+        return
+
+    print("\n기기 결합:")
+    print(f"  모델      : {build['model_file']}")
+    print(f"  추가 강체 : {', '.join(build['added_bodies']) or '없음'}")
+    print(f"  추가 힘   : {', '.join(build['added_forces']) or '없음'}")
+    misalignment = build.get("hinge_misalignment_deg")
+    if misalignment is not None:
+        print(f"  힌지 정합 : 인체 관절 축과 {misalignment:.1f}° 차이")
+    for warning in build.get("warnings", []):
+        print(f"  ⚠ {warning}")
+
+
+def _report_qoi(result) -> None:
+    """QoI 4종 요약. 자세한 값은 results/summary.json 에 있다."""
+    summary = result.summary
+    if summary is None:
+        return
+
+    print("\n결과 요약 (QoI):")
+
+    print("  관절가동범위:")
+    for item in summary.range_of_motion:
+        print(
+            f"    {item.coordinate:24s} {item.minimum:8.2f} ~ {item.maximum:8.2f} "
+            f"({item.span:.2f} {item.unit})"
+        )
+
+    print("  관절 모멘트/힘 (최대 절댓값):")
+    for item in summary.joint_moments:
+        print(f"    {item.name:24s} {item.peak_absolute:10.3f} {item.unit}")
+
+    if summary.muscle_forces:
+        print("  근육력 (최대, 상위 5):")
+        top = sorted(summary.muscle_forces, key=lambda m: m.peak_absolute, reverse=True)
+        for item in top[:5]:
+            print(f"    {item.name:24s} {item.peak_absolute:10.3f} {item.unit}")
+
+    if summary.device_loads:
+        print("  기기 하중 (최대):")
+        for item in summary.device_loads:
+            print(f"    {item.name:24s} {item.peak_absolute:10.3f} {item.unit}")
+
+    print("  관절반력 (최대):")
+    for item in summary.joint_reactions:
+        force = "미산출" if item.peak_force_n is None else f"{item.peak_force_n:10.3f} N"
+        moment = "미산출" if item.peak_moment_nm is None else f"{item.peak_moment_nm:.3f} N*m"
+        print(f"    {item.label:36s} {force}  모멘트 {moment}  ({item.expressed_in} 좌표계)")
+
+    for note in summary.notes:
+        print(f"  주의: {note}")
+
+    if result.summary_path is not None:
+        print(f"\n  전체 요약: {result.summary_path}")
 
 
 if __name__ == "__main__":

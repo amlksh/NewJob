@@ -177,17 +177,30 @@ def _peak_magnitude(rows: list[list[float | None]], cols: list[int]) -> float | 
     return peak
 
 
-def _read_sto(path: Path) -> tuple[list[str], list[list[float | None]]]:
-    """OpenSim STO/MOT 파일을 읽는다. endheader 다음 줄이 열 이름."""
+def read_storage(
+    path: str | Path,
+) -> tuple[dict[str, str], list[str], list[list[float | None]]]:
+    """OpenSim STO/MOT 를 (헤더 메타데이터, 열 이름, 데이터) 로 읽는다.
+
+    endheader 앞의 `key=value` 줄이 메타데이터다. 그 중 `inDegrees` 는
+    회전값의 단위를 말하므로 결과를 보고할 때 반드시 함께 봐야 한다.
+    """
+    path = Path(path)
     lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
     try:
         start = next(i for i, ln in enumerate(lines) if ln.strip().lower() == "endheader")
     except StopIteration:
-        return [], []
+        return {}, [], []
+
+    metadata: dict[str, str] = {}
+    for line in lines[:start]:
+        if "=" in line:
+            key, _, value = line.partition("=")
+            metadata[key.strip()] = value.strip()
 
     header_line = start + 1
     if header_line >= len(lines):
-        return [], []
+        return metadata, [], []
     header = [h.strip() for h in lines[header_line].split("\t") if h.strip()]
 
     rows: list[list[float | None]] = []
@@ -202,6 +215,12 @@ def _read_sto(path: Path) -> tuple[list[str], list[list[float | None]]]:
             except ValueError:
                 row.append(None)
         rows.append(row)
+    return metadata, header, rows
+
+
+def _read_sto(path: Path) -> tuple[list[str], list[list[float | None]]]:
+    """열 이름과 데이터만 필요할 때."""
+    _, header, rows = read_storage(path)
     return header, rows
 
 

@@ -116,6 +116,7 @@ def _write_case(tmp_path, trc_factory, repo_root, *, with_grf: bool = False):
         f"  jr: {templates / 'jr_setup.xml'}",
         f"  external_loads: {templates / 'external_loads.xml'}",
         "joint_reaction_frame: tibia_r",
+        "joint_reaction_joints: [knee_r]",
         "thresholds:",
         "  marker_rms_m: TBD",
     ]

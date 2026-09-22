@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import logging
 import os
+import shutil
+import time
 import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -17,6 +19,8 @@ from typing import Any
 import yaml
 
 from msk_engine import __version__, steps
+from msk_engine import outputs as outputs_module
+from msk_engine.device import DeviceSpec, attach_device, load_device_spec
 from msk_engine.errors import ConfigurationError
 from msk_engine.inputs import (
     SubjectInput,
@@ -47,6 +51,10 @@ class CaseSpec:
     thresholds: Thresholds = field(default_factory=Thresholds.undecided)
     required_markers: list[str] = field(default_factory=list)
     joint_reaction_frame: str = "tibia"
+    # 관절반력을 계산할 관절 이름. 모델마다 다르므로 기본값을 두지 않는다.
+    joint_reaction_joints: tuple[str, ...] = ()
+    # 결합할 의료기기. 없으면 인체만 해석한다.
+    device: DeviceSpec | None = None
     # 해석 구간. 생략하면 마커 파일 전체 구간을 쓴다 (임의의 값을 넣지 않는다).
     time_range: tuple[float, float] | None = None
     static_time_range: tuple[float, float] | None = None
@@ -92,6 +100,12 @@ class CaseSpec:
             thresholds=thresholds,
             required_markers=list(raw.get("required_markers") or []),
             joint_reaction_frame=raw.get("joint_reaction_frame", "tibia"),
+            joint_reaction_joints=tuple(
+                str(j) for j in (raw.get("joint_reaction_joints") or [])
+            ),
+            device=(
+                load_device_spec(_resolve(base, raw["device"])) if raw.get("device") else None
+            ),
             time_range=_opt_range(raw.get("time_range"), "time_range", path.name),
             static_time_range=_opt_range(
                 raw.get("static_time_range"), "static_time_range", path.name
@@ -112,6 +126,10 @@ class PipelineResult:
     # 단계별 출력 경로. 분석 결과 이름은 OpenSim 이 정하므로 호출자가
     # 직접 조립하지 말고 이 값을 쓴다.
     outputs: dict[str, Path] = field(default_factory=dict)
+    # QoI 요약 (ROM, 관절 모멘트, 근육력, 관절반력). 웹 계층이 읽는 것도 이것이다.
+    summary: outputs_module.ResultSummary | None = None
+    summary_path: Path | None = None
+    device_build: dict | None = None
 
 
 def new_run_id(case_name: str) -> str:
@@ -156,6 +174,13 @@ def validate_case(case: CaseSpec) -> ValidationReport:
             report.errors.append(
                 f"Setup XML 템플릿 파일 없음: {case.templates[step_name]}"
             )
+
+    if not case.joint_reaction_joints:
+        report.errors.append(
+            "joint_reaction_joints 가 비어 있음 — 관절반력을 계산할 관절 이름을 "
+            "Case 에 적을 것. 모델마다 이름이 다르므로 기본값을 두지 않는다 "
+            "(틀린 이름은 오류 없이 빈 결과가 된다)"
+        )
 
     external = case.templates.get("external_loads")
     if case.subject.grf_file is not None:
@@ -219,7 +244,7 @@ def run_case(
 
     time_range = _resolve_time_range(case, validation)
     static_time_range = _resolve_static_time_range(case, time_range)
-    chosen = _chosen_output_paths(run_dir)
+    chosen = _chosen_output_paths(run_dir, case)
     setup_files = _render_all_setups(
         case, run_dir, chosen, time_range, static_time_range
     )
@@ -248,6 +273,7 @@ def run_case(
         "scale": lambda: steps.run_scale(
             setup_files["scale"], run_dir, outputs["scaled_model"]
         ),
+        "device": lambda: _run_device_step(case, chosen, run_dir),
         "ik": lambda: steps.run_ik(setup_files["ik"], run_dir, outputs["ik_motion"]),
         "id": lambda: steps.run_id(setup_files["id"], run_dir, outputs["id_forces"]),
         "so": lambda: steps.run_static_optimization(
@@ -258,8 +284,14 @@ def run_case(
         ),
     }
 
+    # 장치 결합은 Setup XML 로 도구를 부르는 단계가 아니라 모델을 바꾸는
+    # 단계다. 스케일링 다음, IK 앞에 끼워 넣는다.
+    execution_order = list(steps.STEP_ORDER)
+    if case.device is not None:
+        execution_order.insert(execution_order.index("ik"), "device")
+
     try:
-        for step_name in steps.STEP_ORDER:
+        for step_name in execution_order:
             log.info("[%s] 실행", step_name)
             result = runners[step_name]()
             results.append(result)
@@ -277,6 +309,36 @@ def run_case(
 
     quality = _collect_quality(outputs, case.thresholds)
     prov.record_step("quality", "ok", metrics=quality.as_dict())
+
+    device_build = next(
+        (r.metrics for r in results if r.name == "device"), None
+    )
+    summary = outputs_module.summarise(
+        outputs,
+        quality=quality.as_dict(),
+        metadata={
+            "case": case.name,
+            "run_id": run_id,
+            "analysis_time_range_s": [time_range[0], time_range[1]],
+            "joint_reaction_frame": case.joint_reaction_frame,
+            "joint_reaction_joints": list(case.joint_reaction_joints),
+            "model_file": str(case.model_file),
+            "analysis_model": str(outputs["analysis_model"]),
+            "device": (
+                {
+                    "name": case.device.name,
+                    "total_mass_kg": case.device.total_mass_kg,
+                    "actuation_mode": case.device.actuation.mode,
+                    "build": device_build,
+                }
+                if case.device is not None
+                else None
+            ),
+        },
+        analysis_model=outputs["analysis_model"],
+    )
+    summary_path = summary.write(run_dir)
+
     prov.finish("ok")
     provenance_path = prov.write(run_dir)
 
@@ -289,6 +351,9 @@ def run_case(
         provenance_path=provenance_path,
         steps=results,
         outputs=outputs,
+        summary=summary,
+        summary_path=summary_path,
+        device_build=device_build,
     )
 
 
@@ -340,7 +405,12 @@ def _render_all_setups(
         )
 
     for step_name in steps.STEP_ORDER:
-        subs = {**subs_common, **_step_substitutions(step_name, chosen, rendered, results_dir)}
+        subs = {
+            **subs_common,
+            **_step_substitutions(
+                step_name, chosen, rendered, results_dir, case.joint_reaction_joints
+            ),
+        }
         if step_name == "scale":
             subs = _relativise_for_scale(subs, setup_dir)
         rendered[step_name] = steps.render_setup_xml(
@@ -362,7 +432,7 @@ def _relativise_for_scale(subs: dict[str, object], setup_dir: Path) -> dict[str,
     Setup XML 위치를 기준으로 삼는다 (CLAUDE.md §2 코드 검증).
     """
     relativised = dict(subs)
-    for key in ("MODEL_FILE", "STATIC_TRIAL", "SCALED_MODEL", "RUN_DIR"):
+    for key in ("MODEL_FILE", "STATIC_TRIAL", "SCALED_MODEL", "SCALE_FACTORS", "RUN_DIR"):
         value = subs.get(key)
         if value in (None, "", "Unassigned"):
             continue
@@ -386,40 +456,91 @@ def _step_substitutions(
     chosen: dict[str, Path],
     rendered: dict[str, Path],
     results_dir: Path,
+    joint_reaction_joints: tuple[str, ...] = (),
 ) -> dict[str, object]:
     """단계별 추가 치환 값."""
     if step_name == "scale":
-        return {"SCALED_MODEL": chosen["scaled_model"]}
-    if step_name == "ik":
-        return {"SCALED_MODEL": chosen["scaled_model"], "IK_MOTION": chosen["ik_motion"]}
-    if step_name == "id":
         return {
             "SCALED_MODEL": chosen["scaled_model"],
+            "SCALE_FACTORS": chosen["scale_factors"],
+        }
+    if step_name == "ik":
+        return {"ANALYSIS_MODEL": chosen["analysis_model"], "IK_MOTION": chosen["ik_motion"]}
+    if step_name == "id":
+        return {
+            "ANALYSIS_MODEL": chosen["analysis_model"],
             "IK_MOTION": chosen["ik_motion"],
             "ID_FORCES": chosen["id_forces"],
         }
     if step_name == "so":
-        return {"SCALED_MODEL": chosen["scaled_model"], "IK_MOTION": chosen["ik_motion"]}
+        return {"ANALYSIS_MODEL": chosen["analysis_model"], "IK_MOTION": chosen["ik_motion"]}
     if step_name == "jr":
         # 근육력 파일 이름은 SO 의 Setup XML 이 정한다. 파이프라인이 임의로
         # 정할 수 없으므로 렌더된 so_setup.xml 에서 유도한다.
         return {
-            "SCALED_MODEL": chosen["scaled_model"],
+            "ANALYSIS_MODEL": chosen["analysis_model"],
             "IK_MOTION": chosen["ik_motion"],
             "SO_FORCES": steps.analysis_output_path(rendered["so"], results_dir, "force"),
+            "JR_JOINTS": " ".join(joint_reaction_joints),
         }
     raise ConfigurationError(f"알 수 없는 단계: {step_name}")
 
 
-def _chosen_output_paths(run_dir: Path) -> dict[str, Path]:
-    """파이프라인이 이름을 정하는 출력. Setup XML 에 그대로 써 넣는다."""
+def _run_device_step(case: CaseSpec, chosen: dict[str, Path], run_dir: Path) -> steps.StepResult:
+    """스케일된 인체 모델에 장치를 붙인다.
+
+    스케일링 다음, IK 앞에 온다. 장치 치수는 CAD 로 고정되어 있으므로
+    피험자에 맞춰 늘리면 안 되고, 이후 단계는 장치가 붙은 모델을 써야
+    장치 질량과 구동이 관절 모멘트·근육력·관절반력에 반영된다.
+    """
+    assert case.device is not None
+    started = time.perf_counter()
+    build = attach_device(
+        chosen["scaled_model"], case.device, chosen["device_model"]
+    )
+    duration = time.perf_counter() - started
+
+    for note in build.warnings:
+        log.warning("[device] %s", note)
+
+    # 장치 정의 YAML 을 run 디렉터리에 보관한다. 설정 XML 과 같은 이유다.
+    archived = None
+    if case.device.spec_file is not None and case.device.spec_file.is_file():
+        archive_dir = run_dir / "setup"
+        archive_dir.mkdir(parents=True, exist_ok=True)
+        archived = archive_dir / case.device.spec_file.name
+        shutil.copy2(case.device.spec_file, archived)
+
+    return steps.StepResult(
+        name="device",
+        status="ok",
+        duration_s=round(duration, 3),
+        setup_xml=archived or Path(str(case.device.spec_file or "")),
+        outputs=[chosen["device_model"]],
+        metrics=build.as_dict(),
+    )
+
+
+def _chosen_output_paths(run_dir: Path, case: CaseSpec) -> dict[str, Path]:
+    """파이프라인이 이름을 정하는 출력. Setup XML 에 그대로 써 넣는다.
+
+    analysis_model 은 IK 이후 단계가 쓰는 모델이다. 장치가 있으면 장치가
+    붙은 모델이고, 없으면 스케일된 인체 모델 그 자체다.
+    """
     out = run_dir / "results"
     out.mkdir(parents=True, exist_ok=True)
-    return {
+    chosen = {
         "scaled_model": out / "scaled_model.osim",
+        "scale_factors": out / "scale_factors.xml",
         "ik_motion": out / "ik.mot",
         "id_forces": out / "id_forces.sto",
     }
+    if case.device is not None:
+        chosen["device_model"] = out / "device_model.osim"
+        chosen["analysis_model"] = chosen["device_model"]
+    else:
+        chosen["analysis_model"] = chosen["scaled_model"]
+    return chosen
 
 
 def _all_output_paths(
@@ -497,6 +618,8 @@ def _input_files(case: CaseSpec) -> dict[str, Path]:
         files["grf"] = case.subject.grf_file
     if case.subject.static_trial is not None:
         files["static_trial"] = case.subject.static_trial
+    if case.device is not None and case.device.spec_file is not None:
+        files["device_spec"] = case.device.spec_file
     return {k: v for k, v in files.items() if v.exists()}
 
 

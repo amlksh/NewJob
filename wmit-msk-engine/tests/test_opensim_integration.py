@@ -18,136 +18,31 @@ Scaling 은 MeasurementSet 을 모델·마커셋에 맞춰 채워야 돌아가�
 
 from __future__ import annotations
 
-import math
 import shutil
 from pathlib import Path
 
 import pytest
 
+import toy_model
 from msk_engine import steps
 from msk_engine.pipeline import CaseSpec, run_case
 from msk_engine.quality import parse_ik_marker_errors
 
 pytestmark = pytest.mark.opensim
 
-FRAMES = 21
-RATE = 100.0
-MARKERS = ("M_THIGH_A", "M_THIGH_B", "M_SHANK_A", "M_SHANK_B")
-
-
-def _build_toy_model(path: Path):
-    """2 자유도 모델. 근육 1개와 좌표별 reserve 액추에이터를 둔다.
-
-    reserve 가 없으면 Static Optimization 이 요구 모멘트를 못 내고 실패한다.
-    """
-    import opensim as osim
-
-    model = osim.Model()
-    model.setName("toy")
-    model.setGravity(osim.Vec3(0, -9.80665, 0))
-
-    thigh = osim.Body("thigh", 5.0, osim.Vec3(0), osim.Inertia(0.1, 0.1, 0.1))
-    shank = osim.Body("shank", 3.0, osim.Vec3(0), osim.Inertia(0.05, 0.05, 0.05))
-    model.addBody(thigh)
-    model.addBody(shank)
-
-    hip = osim.PinJoint("hip", model.getGround(), osim.Vec3(0, 1, 0), osim.Vec3(0),
-                        thigh, osim.Vec3(0, 0.2, 0), osim.Vec3(0))
-    knee = osim.PinJoint("knee", thigh, osim.Vec3(0, -0.2, 0), osim.Vec3(0),
-                         shank, osim.Vec3(0, 0.2, 0), osim.Vec3(0))
-    hip.updCoordinate().setName("hip_flex")
-    knee.updCoordinate().setName("knee_flex")
-    model.addJoint(hip)
-    model.addJoint(knee)
-
-    placements = {
-        "M_THIGH_A": (thigh, osim.Vec3(0.05, 0.1, 0.0)),
-        "M_THIGH_B": (thigh, osim.Vec3(-0.05, -0.1, 0.02)),
-        "M_SHANK_A": (shank, osim.Vec3(0.05, 0.1, 0.0)),
-        "M_SHANK_B": (shank, osim.Vec3(-0.05, -0.1, 0.02)),
-    }
-    for name, (body, loc) in placements.items():
-        model.addMarker(osim.Marker(name, body, loc))
-
-    muscle = osim.Millard2012EquilibriumMuscle("knee_musc", 500.0, 0.1, 0.12, 0.0)
-    muscle.addNewPathPoint("p1", thigh, osim.Vec3(0.04, 0.05, 0.0))
-    muscle.addNewPathPoint("p2", shank, osim.Vec3(0.04, 0.05, 0.0))
-    model.addForce(muscle)
-
-    for coord in ("hip_flex", "knee_flex"):
-        actuator = osim.CoordinateActuator(coord)
-        actuator.setName(f"reserve_{coord}")
-        actuator.setOptimalForce(300.0)
-        model.addForce(actuator)
-
-    state = model.initSystem()
-    model.printToXML(str(path))
-    return model, state
-
-
-def _write_trc(path: Path, model, state) -> None:
-    """모델 자신의 순기구학으로 마커 궤적을 만든다.
-
-    측정 잡음이 없으므로 IK 마커 오차는 0 에 가까워야 한다.
-    오차가 크게 나오면 파이프라인 쪽이 잘못된 것이다.
-    """
-    rows = []
-    for index in range(FRAMES):
-        t = index / RATE
-        model.updCoordinateSet().get("hip_flex").setValue(state, 0.20 * math.sin(2 * math.pi * t))
-        model.updCoordinateSet().get("knee_flex").setValue(
-            state, 0.30 * math.sin(2 * math.pi * t + 0.5)
-        )
-        model.realizePosition(state)
-        coords: list[float] = []
-        for name in MARKERS:
-            point = model.getMarkerSet().get(name).getLocationInGround(state)
-            coords += [point.get(0), point.get(1), point.get(2)]
-        rows.append((index + 1, t, coords))
-
-    lines = [
-        f"PathFileType\t4\t(X/Y/Z)\t{path.name}",
-        "DataRate\tCameraRate\tNumFrames\tNumMarkers\tUnits\t"
-        "OrigDataRate\tOrigDataStartFrame\tOrigNumFrames",
-        f"{RATE}\t{RATE}\t{FRAMES}\t{len(MARKERS)}\tm\t{RATE}\t1\t{FRAMES}",
-        "Frame#\tTime\t" + "\t\t\t".join(MARKERS),
-        "\t\t" + "\t".join(f"X{i + 1}\tY{i + 1}\tZ{i + 1}" for i in range(len(MARKERS))),
-    ]
-    for index, t, coords in rows:
-        lines.append("\t".join([str(index), f"{t:.5f}"] + [f"{c:.6f}" for c in coords]))
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-
+FRAMES = toy_model.FRAMES
+RATE = toy_model.RATE
 
 @pytest.fixture
 def toy_case(tmp_path, repo_root):
     """토이 모델 + 마커 파일 + 저장소 템플릿을 쓰는 Case."""
     model_path = tmp_path / "toy.osim"
-    model, state = _build_toy_model(model_path)
+    model, state = toy_model.build_model(model_path)
     trc = tmp_path / "gait.trc"
-    _write_trc(trc, model, state)
+    toy_model.write_markers(trc, model, state)
 
-    templates = repo_root / "configs" / "templates"
-    case_file = tmp_path / "case.yaml"
-    case_file.write_text(
-        "\n".join(
-            [
-                "name: toy_case",
-                "subject:",
-                "  height_m: 1.75",
-                "  mass_kg: 70.0",
-                f"  marker_file: {trc}",
-                f"model_file: {model_path}",
-                "templates:",
-                f"  scale: {templates / 'scale_setup.xml'}",
-                f"  ik: {templates / 'ik_setup.xml'}",
-                f"  id: {templates / 'id_setup.xml'}",
-                f"  so: {templates / 'so_setup.xml'}",
-                f"  jr: {templates / 'jr_setup.xml'}",
-                "joint_reaction_frame: shank",
-            ]
-        )
-        + "\n",
-        encoding="utf-8",
+    case_file = toy_model.write_case_yaml(
+        tmp_path / "case.yaml", model_path, trc, repo_root / "configs" / "templates"
     )
     return CaseSpec.from_yaml(case_file), model_path
 

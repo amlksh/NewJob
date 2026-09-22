@@ -243,12 +243,38 @@ def run_joint_reaction(
     결과는 경골(tibia) 좌표계 표현을 기본으로 한다 (CLAUDE.md §4).
     표현 좌표계는 Setup XML 의 express_in_frame 으로 지정한다.
     """
-    return _run_tool(
+    result = _run_tool(
         step="jr",
         setup_xml=setup_xml,
         run_dir=run_dir,
         tool_factory=lambda osim: osim.AnalyzeTool(str(setup_xml)),
         expected_outputs=[reaction_out],
+    )
+    check_reaction_output(reaction_out, setup_xml)
+    return result
+
+
+def check_reaction_output(reaction_out: str | Path, setup_xml: str | Path) -> None:
+    """관절반력 결과에 실제로 반력 열이 있는지 본다.
+
+    JointReaction 은 joint_names 에 모델에 없는 이름이 들어와도 오류를 내지
+    않는다. 대신 time 열만 있는 파일을 쓰고 도구는 성공을 반환한다.
+    파일 존재만 확인하면 '관절반력 해석 완료' 로 보이면서 정작 값이 없다.
+    (OpenSim 4.6 실측 확인)
+    """
+    from msk_engine.quality import _read_sto  # noqa: PLC0415
+
+    reaction_out = Path(reaction_out)
+    header, rows = _read_sto(reaction_out)
+    data_columns = [c for c in header if c.strip().lower() != "time"]
+    if data_columns and rows:
+        return
+
+    raise StepExecutionError(
+        "jr",
+        f"{reaction_out.name} 에 반력 열이 없음 (열: {header or '없음'}). "
+        f"{Path(setup_xml).name} 의 joint_names 가 모델의 관절 이름과 맞는지 확인할 것 "
+        "— JointReaction 은 이름이 틀려도 오류 없이 빈 결과를 쓴다",
     )
 
 

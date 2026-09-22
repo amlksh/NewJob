@@ -36,6 +36,11 @@ templates:
 # 관절반력 표현 좌표계. FE 연계 기준이므로 바꾸려면 ADR 을 남길 것.
 joint_reaction_frame: tibia_r
 
+# 관절반력을 계산할 관절. 모델의 관절 이름과 정확히 같아야 한다.
+# 틀린 이름을 쓰면 OpenSim 은 오류 없이 빈 결과를 쓰므로, 엔진이 이를 잡아 멈춘다.
+joint_reaction_joints:
+  - knee_r
+
 # 모델이 요구하는 마커. 입력 TRC 에 없으면 해석을 시작하지 않는다.
 # TODO: 실제 모델 마커셋에 맞춰 채울 것.
 required_markers: []
