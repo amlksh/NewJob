@@ -99,6 +99,8 @@ class Provenance:
     joint_reaction_frame: str = "tibia"
     length_unit: str = "m"
     force_unit: str = "N"
+    # 실제로 해석한 구간 [start, end] (초). 결과를 인용할 때 함께 제시한다.
+    analysis_time_range: list[float] | None = None
 
     @classmethod
     def start(

@@ -218,3 +218,43 @@ class TestWithOpenSim:
         import opensim
 
         assert opensim is not None
+
+
+class TestScalePreflight:
+    """ScaleTool 호출 전 점검.
+
+    OpenSim 이 segmentation fault 로 죽으면 예외도 provenance 도 남지 않는다.
+    그 조건은 도구를 부르기 전에 잡아야 한다.
+    """
+
+    def _scale_xml(self, tmp_path, tasks: str, apply_value: str = "true"):
+        path = tmp_path / "scale_setup.xml"
+        path.write_text(
+            '<?xml version="1.0"?><OpenSimDocument Version="40600">'
+            '<ScaleTool name="t"><MarkerPlacer name="p">'
+            f"<apply>{apply_value}</apply>"
+            f"<IKTaskSet><objects>{tasks}</objects><groups /></IKTaskSet>"
+            "</MarkerPlacer></ScaleTool></OpenSimDocument>",
+            encoding="utf-8",
+        )
+        return path
+
+    def test_empty_task_set_is_rejected(self, tmp_path):
+        from msk_engine.errors import StepExecutionError
+        from msk_engine.steps import check_marker_placer_tasks
+
+        with pytest.raises(StepExecutionError) as exc:
+            check_marker_placer_tasks(self._scale_xml(tmp_path, ""))
+        assert "IKTaskSet" in str(exc.value)
+
+    def test_populated_task_set_passes(self, tmp_path):
+        from msk_engine.steps import check_marker_placer_tasks
+
+        tasks = '<IKMarkerTask name="RASI"><weight>1</weight></IKMarkerTask>'
+        check_marker_placer_tasks(self._scale_xml(tmp_path, tasks))
+
+    def test_disabled_marker_placer_passes(self, tmp_path):
+        """마커 배치를 끄면 빈 IKTaskSet 이어도 죽지 않는다."""
+        from msk_engine.steps import check_marker_placer_tasks
+
+        check_marker_placer_tasks(self._scale_xml(tmp_path, "", apply_value="false"))

@@ -12,6 +12,9 @@ WMIT 통합플랫폼용 OpenSim 기반 근골격 시뮬레이션 엔진. 현재 
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 pytest -q -m "not opensim"        # OpenSim 없이도 도는 테스트
+
+pip install -e ".[dev,opensim]"   # OpenSim 4.6 까지
+pytest -q                         # 통합 테스트 포함
 ```
 
 OpenSim까지 포함한 실행은 컨테이너를 권장한다.
@@ -24,9 +27,42 @@ docker run --rm -v "$PWD/data:/app/data" -v "$PWD/runs:/app/runs" wmit-msk \
 
 ## 현재 상태
 
-파이프라인 골격, 입력 검증, 재현성 기록, 품질 지표 계산은 구현되어 있다.
-`steps.py`의 각 OpenSim 도구 호출부는 **실제 데이터와 모델을 붙이면서 채워야 하는 자리**이며,
-`NotImplementedError` 대신 조용히 통과하는 일이 없도록 표시해 두었다.
+파이프라인 골격, 입력 검증, 재현성 기록, 품질 지표 계산이 구현되어 있고,
+IK → ID → SO → JR 네 단계는 OpenSim 4.6 으로 실제 실행을 확인했다
+(`tests/test_opensim_integration.py`, 토이 모델 기준).
+
+Scaling 은 템플릿을 채우기 전까지 돌지 않는다. `configs/templates/scale_setup.xml` 의
+`MeasurementSet` 과 `MarkerPlacer` 의 `IKTaskSet` 이 비어 있기 때문이다.
+
+특히 `MarkerPlacer` 의 `IKTaskSet` 이 비어 있으면 OpenSim 4.6 은 예외가 아니라
+**segmentation fault** 로 죽는다. 프로세스가 통째로 사라져 예외 처리도
+`provenance.json` 기록도 돌지 않으므로, `steps.check_marker_placer_tasks()` 가
+도구를 부르기 전에 이 조건을 잡아 `StepExecutionError` 로 멈춘다.
+
+실제 데이터를 붙일 때 맞춰야 하는 자리는 다음과 같다.
+
+| 자리 | 파일 | 내용 |
+| --- | --- | --- |
+| 측정 항목 | `configs/templates/scale_setup.xml` | `MeasurementSet` — 모델·마커셋에 맞는 스케일 측정 정의 |
+| 마커 가중치 | `scale_setup.xml`, `ik_setup.xml` | `IKTaskSet` — 근거를 ADR 로 남기고 정할 것 |
+| GRF 열 이름 | `configs/templates/external_loads.xml` | `force_identifier` 등, 데이터셋마다 다름 |
+| 모델 body 이름 | `external_loads.xml`, `jr_setup.xml` | `applied_to_body`, `joint_names`, `express_in_frame` |
+| 마커 이름 | `configs/cases/*.yaml` | `required_markers` |
+| 합격기준 | `configs/cases/*.yaml` | `thresholds` — ADR-0003 확정 전까지 `TBD` |
+
+### OpenSim 과의 계약 (실측으로 확인한 것)
+
+아래는 코드만 읽어서는 드러나지 않고, 틀리면 **도구가 성공을 반환하면서도
+결과가 비는** 항목이다. `tests/test_opensim_integration.py` 가 회귀를 막는다.
+
+- Setup XML 의 경로는 절대경로여야 한다. OpenSim 은 Setup XML 이 있는
+  디렉터리로 작업 디렉터리를 옮기므로, 상대경로 출력은 조용히 사라진다.
+- 해석 구간은 반드시 치환해야 한다. `0 0` 이면 한 프레임만 풀린다.
+- 분석 결과 파일 이름은 OpenSim 이 정한다 — `<도구이름>_<분석이름>_<항목>.sto`.
+  설정으로 바꿀 수 없어 `steps.analysis_output_path()` 가 렌더된 XML 에서 유도한다.
+  IK 마커 오차도 같다 — `<도구이름>_ik_marker_errors.sto`.
+- GRF 가 없으면 `external_loads_file` 은 `Unassigned` 여야 한다.
+  없는 파일을 가리키면 도구가 파일 열기에 실패한다.
 
 ## 문서
 

@@ -13,10 +13,10 @@
         <model_file>@SCALED_MODEL@</model_file>
         <results_directory>@RUN_DIR@/results</results_directory>
 
-        <time_range> 0 0 </time_range>
+        <time_range> @TIME_START@ @TIME_END@ </time_range>
         <forces_to_exclude> Muscles </forces_to_exclude>
 
-        <external_loads_file>@RUN_DIR@/setup/external_loads.xml</external_loads_file>
+        <external_loads_file>@EXTERNAL_LOADS@</external_loads_file>
         <coordinates_file>@IK_MOTION@</coordinates_file>
         <lowpass_cutoff_frequency_for_coordinates>6</lowpass_cutoff_frequency_for_coordinates>
 

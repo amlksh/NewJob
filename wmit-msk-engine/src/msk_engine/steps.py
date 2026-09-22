@@ -77,6 +77,68 @@ def _leftover_placeholders(text: str) -> set[str]:
     return found
 
 
+def analysis_output_path(
+    setup_xml: str | Path, results_dir: str | Path, label: str
+) -> Path:
+    """AnalyzeTool 분석 결과 파일의 경로를 렌더된 Setup XML 에서 유도한다.
+
+    OpenSim 은 분석 결과 파일 이름을 직접 정한다:
+        <AnalyzeTool 이름>_<분석 이름>_<항목>.sto
+    설정으로 바꿀 수 없으므로 파이프라인이 이름을 따로 정할 수 없다.
+    (OpenSim 4.6 실측 확인: so_setup.xml 의 wmit_so + StaticOptimization →
+     wmit_so_StaticOptimization_activation.sto)
+
+    Setup XML 을 원본으로 삼아 이름을 읽으므로, 템플릿의 name 속성을 바꾸면
+    기대 경로도 따라 바뀐다.
+    """
+    setup_xml = Path(setup_xml)
+    root = ElementTree.parse(setup_xml).getroot()
+
+    tool = root.find("AnalyzeTool")
+    if tool is None:
+        raise ConfigurationError(f"{setup_xml.name} 에 AnalyzeTool 요소가 없음")
+    tool_name = tool.get("name")
+    if not tool_name:
+        raise ConfigurationError(f"{setup_xml.name} 의 AnalyzeTool 에 name 속성이 없음")
+
+    objects = tool.find("AnalysisSet/objects")
+    analyses = list(objects) if objects is not None else []
+    if len(analyses) != 1:
+        raise ConfigurationError(
+            f"{setup_xml.name} 의 AnalysisSet 에 분석이 {len(analyses)} 개 있음 — "
+            "결과 파일 이름을 특정할 수 없으므로 분석 하나만 둘 것"
+        )
+    analysis_name = analyses[0].get("name")
+    if not analysis_name:
+        raise ConfigurationError(
+            f"{setup_xml.name} 의 {analyses[0].tag} 에 name 속성이 없음"
+        )
+
+    return Path(results_dir) / f"{tool_name}_{analysis_name}_{label}.sto"
+
+
+def ik_marker_error_path(setup_xml: str | Path, results_dir: str | Path) -> Path:
+    """IK 마커 오차 STO 의 경로를 렌더된 Setup XML 에서 유도한다.
+
+    이름은 <InverseKinematicsTool 이름>_ik_marker_errors.sto 이며 OpenSim 이 정한다.
+    (OpenSim 4.6 실측 확인: wmit_ik → wmit_ik_ik_marker_errors.sto)
+
+    이 파일이 없으면 마커 RMS·최대 오차를 보고할 수 없고,
+    품질 지표 없는 결과는 그대로 인용하지 않는다 (CLAUDE.md §4).
+    """
+    setup_xml = Path(setup_xml)
+    root = ElementTree.parse(setup_xml).getroot()
+    tool = root.find("InverseKinematicsTool")
+    if tool is None:
+        raise ConfigurationError(f"{setup_xml.name} 에 InverseKinematicsTool 요소가 없음")
+    tool_name = tool.get("name")
+    if not tool_name:
+        raise ConfigurationError(
+            f"{setup_xml.name} 의 InverseKinematicsTool 에 name 속성이 없음"
+        )
+    return Path(results_dir) / f"{tool_name}_ik_marker_errors.sto"
+
+
 def require_opensim():
     """OpenSim 모듈을 가져온다. 없으면 명확히 실패한다."""
     try:
@@ -90,10 +152,45 @@ def require_opensim():
     return opensim
 
 
+def check_marker_placer_tasks(setup_xml: str | Path) -> None:
+    """MarkerPlacer 의 IKTaskSet 이 비어 있으면 도구를 부르기 전에 멈춘다.
+
+    OpenSim 4.6 은 이 상태에서 예외가 아니라 **segmentation fault** 로 죽는다.
+    프로세스가 통째로 사라지므로 예외 처리도, provenance.json 기록도 돌지 않는다.
+    해석 실패가 아무 기록 없이 사라지는 것이 이 저장소에서 가장 피해야 할 일이라
+    (CLAUDE.md §4), 호출 전에 직접 확인한다.
+
+    IK 단계의 IKTaskSet 은 비어 있어도 동작한다 (모든 마커를 가중치 1 로 쓴다).
+    MarkerPlacer 만 해당된다.
+    """
+    setup_xml = Path(setup_xml)
+    placer = ElementTree.parse(setup_xml).getroot().find(".//MarkerPlacer")
+    if placer is None:
+        return
+
+    apply_element = placer.find("apply")
+    applies = apply_element is None or (apply_element.text or "").strip().lower() == "true"
+    if not applies:
+        return
+
+    objects = placer.find("IKTaskSet/objects")
+    if objects is not None and len(list(objects)) > 0:
+        return
+
+    raise StepExecutionError(
+        "scale",
+        f"{setup_xml.name} 의 MarkerPlacer IKTaskSet 이 비어 있음. "
+        "OpenSim 4.6 은 이 상태에서 segmentation fault 로 죽어 기록이 남지 않는다. "
+        "모델 마커셋에 맞춰 IKMarkerTask 를 채우거나, 마커 배치를 쓰지 않으려면 "
+        "MarkerPlacer 의 apply 를 false 로 둘 것",
+    )
+
+
 def run_scale(
     setup_xml: Path, run_dir: Path, model_out: Path
 ) -> StepResult:
     """ScaleTool — 정적 trial 과 신장·체중으로 모델을 개인화한다."""
+    check_marker_placer_tasks(setup_xml)
     return _run_tool(
         step="scale",
         setup_xml=setup_xml,

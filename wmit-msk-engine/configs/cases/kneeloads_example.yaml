@@ -25,6 +25,14 @@ templates:
   jr: ../templates/jr_setup.xml
   external_loads: ../templates/external_loads.xml
 
+# 해석 구간 [시작, 끝] (초). 생략하면 마커 파일 전체 구간을 쓴다.
+# 보행 1 사이클만 볼 거라면 여기서 잘라낸다. 어느 구간을 왜 골랐는지는
+# docs/vv/traceability.md 에 기록할 것.
+# time_range: [0.5, 2.0]
+
+# Scaling 에 쓸 정적 trial 구간. 생략하면 정적 trial 전체 구간을 쓴다.
+# static_time_range: [0.0, 1.0]
+
 # 관절반력 표현 좌표계. FE 연계 기준이므로 바꾸려면 ADR 을 남길 것.
 joint_reaction_frame: tibia_r
 

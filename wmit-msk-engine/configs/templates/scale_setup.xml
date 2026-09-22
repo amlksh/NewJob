@@ -28,7 +28,7 @@
                 <groups />
             </MeasurementSet>
             <marker_file>@STATIC_TRIAL@</marker_file>
-            <time_range> 0 1 </time_range>
+            <time_range> @STATIC_TIME_START@ @STATIC_TIME_END@ </time_range>
             <preserve_mass_distribution>true</preserve_mass_distribution>
             <output_model_file>@SCALED_MODEL@</output_model_file>
         </ModelScaler>
@@ -40,7 +40,7 @@
                 <groups />
             </IKTaskSet>
             <marker_file>@STATIC_TRIAL@</marker_file>
-            <time_range> 0 1 </time_range>
+            <time_range> @STATIC_TIME_START@ @STATIC_TIME_END@ </time_range>
             <output_model_file>@SCALED_MODEL@</output_model_file>
             <output_marker_file>@RUN_DIR@/results/scaled_markers.xml</output_marker_file>
         </MarkerPlacer>
