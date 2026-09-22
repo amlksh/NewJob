@@ -22,6 +22,13 @@ FRAMES = 21
 RATE = 100.0
 MARKERS = ("M_THIGH_A", "M_THIGH_B", "M_SHANK_A", "M_SHANK_B")
 
+# 보행 trial 이 따르는 처방 관절각. 마커를 여기서 만들고, 검증도 여기서
+# 기대값을 계산한다. 정의가 하나여야 "IK 가 원래 각도를 되찾았는가" 가
+# 순환논증이 되지 않는다 — 마커는 이 함수로 만들고, IK 는 마커만 본다.
+HIP_AMPLITUDE_RAD = 0.20
+KNEE_AMPLITUDE_RAD = 0.30
+KNEE_PHASE_RAD = 0.5
+
 #: 모델 안의 이름. Case YAML 과 장치 정의가 이 이름들을 가리킨다.
 THIGH_BODY = "thigh"
 SHANK_BODY = "shank"
@@ -81,6 +88,33 @@ def build_model(path: Path):
     return model, state
 
 
+def sample_times() -> list[float]:
+    """마커 파일이 담는 시각."""
+    return [index / RATE for index in range(FRAMES)]
+
+
+def prescribed_angles_rad(t: float) -> dict[str, float]:
+    """시각 t 에서 처방된 관절각 (rad)."""
+    return {
+        "hip_flex": HIP_AMPLITUDE_RAD * math.sin(2 * math.pi * t),
+        KNEE_COORDINATE: KNEE_AMPLITUDE_RAD * math.sin(2 * math.pi * t + KNEE_PHASE_RAD),
+    }
+
+
+def analytic_rom_deg() -> dict[str, tuple[float, float]]:
+    """처방 관절각의 최소·최대 (deg).
+
+    **샘플 시각에서만** 구한다. IK 는 마커가 있는 시각에서만 풀므로,
+    연속 함수의 극값이 아니라 샘플된 값의 극값이 비교 대상이다.
+    (예: 무릎의 연속 최대는 t=0.171 s 에 있지만 샘플은 0.01 s 간격이다.)
+    """
+    ranges: dict[str, list[float]] = {}
+    for t in sample_times():
+        for name, value in prescribed_angles_rad(t).items():
+            ranges.setdefault(name, []).append(math.degrees(value))
+    return {name: (min(values), max(values)) for name, values in ranges.items()}
+
+
 def write_static_markers(path: Path, model, state) -> None:
     """정적 trial — 한 자세를 그대로 유지하는 마커 파일.
 
@@ -102,12 +136,12 @@ def write_markers(path: Path, model, state) -> None:
 
 def _write_trc(path: Path, model, state, *, moving: bool) -> None:
     rows = []
-    for index in range(FRAMES):
-        t = index / RATE
-        hip = 0.20 * math.sin(2 * math.pi * t) if moving else 0.0
-        knee = 0.30 * math.sin(2 * math.pi * t + 0.5) if moving else 0.0
-        model.updCoordinateSet().get("hip_flex").setValue(state, hip)
-        model.updCoordinateSet().get(KNEE_COORDINATE).setValue(state, knee)
+    for index, t in enumerate(sample_times()):
+        angles = prescribed_angles_rad(t) if moving else dict.fromkeys(
+            ("hip_flex", KNEE_COORDINATE), 0.0
+        )
+        for name, value in angles.items():
+            model.updCoordinateSet().get(name).setValue(state, value)
         model.realizePosition(state)
         coords: list[float] = []
         for name in MARKERS:

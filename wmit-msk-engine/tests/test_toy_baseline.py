@@ -146,3 +146,83 @@ class TestBaselineContent:
         device = baseline.load(BASELINE_DIR / "toy_device.json")["values"]
         key = f"muscle.{toy_model.MUSCLE}.peak"
         assert device[key] < human[key]
+
+
+#: 관절각 해석값과의 허용 오차 (deg).
+#: 실측 편차는 최대 8.8e-4 deg 이므로 한 자릿수 여유만 둔다.
+#: 넓게 잡으면 IK 가 어긋나기 시작해도 통과한다.
+ROM_TOLERANCE_DEG = 0.01
+
+#: 마커 궤적에 잡음이 없으므로 IK 오차는 0 에 가까워야 한다.
+MARKER_RMS_LIMIT_M = 1e-4
+
+
+@pytest.mark.opensim
+class TestAnalyticAgreement:
+    """WP-B1 완료조건 — 스케일 계수 1.0 · 마커 RMS · ROM 해석값 일치.
+
+    회귀 기준선(위)은 "어제와 같은가"를 보고, 이쪽은 "정답과 같은가"를 본다.
+    둘은 다른 것을 잡는다. 기준선만 있으면 처음부터 틀린 값이 그대로 굳고,
+    해석값 대조만 있으면 정답이 없는 양(근육력·관절반력)의 변화를 놓친다.
+
+    토이 케이스는 마커 궤적을 모델 자신의 순기구학으로 만들었으므로 관절각의
+    정답이 사전에 정해져 있다. IK 는 마커만 보고 풀므로 순환논증이 아니다.
+    """
+
+    def test_scale_factors_are_unity(self, reference_runs):
+        """모델 자신의 마커로 스케일하면 계수는 1 이어야 한다."""
+        import re
+
+        for name, result in reference_runs.items():
+            text = result.outputs["scale_factors"].read_text(encoding="utf-8")
+            values = [float(v) for v in re.findall(r"<scales>\s*([0-9.eE+-]+)", text)]
+            assert values, f"{name}: 스케일 계수가 기록되지 않았다"
+            assert all(v == pytest.approx(1.0, abs=1e-6) for v in values), (name, values)
+
+    def test_marker_error_is_negligible(self, reference_runs):
+        for name, result in reference_runs.items():
+            rms = result.quality.marker_rms_m
+            assert rms is not None, (name, result.quality.notes)
+            assert rms < MARKER_RMS_LIMIT_M, (name, rms)
+
+    @pytest.mark.parametrize("case_name", sorted(toy_model.REFERENCE_CASES))
+    def test_rom_matches_the_prescribed_motion(self, case_name, reference_runs):
+        """IK 가 산출한 가동범위가 처방 관절각과 일치해야 한다.
+
+        어긋나면 마커 생성·IK·단위 변환 어딘가가 틀린 것이다.
+        기준선 대조와 달리 **외부 정답**과 맞추므로, 처음부터 틀린 값이
+        굳는 것을 막는다.
+        """
+        expected = toy_model.analytic_rom_deg()
+        actual = {
+            item.coordinate: item
+            for item in reference_runs[case_name].summary.range_of_motion
+        }
+
+        assert set(actual) == set(expected), (
+            f"{case_name}: 좌표 목록 불일치 — 기대 {sorted(expected)}, 실제 {sorted(actual)}"
+        )
+
+        for coordinate, (low, high) in expected.items():
+            item = actual[coordinate]
+            assert item.unit == "deg", f"{coordinate}: 단위가 deg 가 아님 ({item.unit})"
+            assert item.minimum == pytest.approx(low, abs=ROM_TOLERANCE_DEG), (
+                f"{case_name}.{coordinate} 최소: 해석값 {low:.6f} vs IK {item.minimum:.6f}"
+            )
+            assert item.maximum == pytest.approx(high, abs=ROM_TOLERANCE_DEG), (
+                f"{case_name}.{coordinate} 최대: 해석값 {high:.6f} vs IK {item.maximum:.6f}"
+            )
+
+    def test_device_does_not_change_the_kinematics(self, reference_runs):
+        """기기를 붙여도 IK 결과는 같아야 한다.
+
+        Tier 1 결합은 자유도를 늘리지 않고 마커는 인체에만 붙어 있으므로,
+        기기는 운동학이 아니라 **하중**에만 영향을 준다. 여기서 값이 갈리면
+        결합이 운동학을 건드린 것이다.
+        """
+        human = {i.coordinate: i for i in reference_runs["toy_human"].summary.range_of_motion}
+        device = {i.coordinate: i for i in reference_runs["toy_device"].summary.range_of_motion}
+        assert set(human) == set(device)
+        for coordinate, item in human.items():
+            assert device[coordinate].minimum == pytest.approx(item.minimum, abs=1e-9)
+            assert device[coordinate].maximum == pytest.approx(item.maximum, abs=1e-9)
