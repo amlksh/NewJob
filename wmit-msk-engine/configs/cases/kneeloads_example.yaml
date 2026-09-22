@@ -1,0 +1,46 @@
+# P1 PoC 기준 Case — Grand Challenge 무릎 하중 데이터
+#
+# 이 파일은 실행 가능한 템플릿이다. data/ 아래 실제 파일을 받은 뒤
+# 경로와 마커명을 맞춰야 돌아간다 (data/README.md 참조).
+#
+# 검증용과 튜닝용 trial 을 반드시 분리할 것 (CLAUDE.md §4).
+# 이 Case 를 어느 쪽으로 쓰는지 docs/vv/traceability.md 에 기록한다.
+
+name: kneeloads_poc
+
+subject:
+  height_m: 1.72            # TODO: 실제 피험자 값으로 교체
+  mass_kg: 68.0             # TODO: 실제 피험자 값으로 교체
+  marker_file: ../../data/kneeloads/gait_trial.trc
+  grf_file: ../../data/kneeloads/gait_trial_grf.mot
+  static_trial: ../../data/kneeloads/static.trc
+
+model_file: ../../models/rajagopal/Rajagopal2015.osim
+
+templates:
+  scale: ../templates/scale_setup.xml
+  ik: ../templates/ik_setup.xml
+  id: ../templates/id_setup.xml
+  so: ../templates/so_setup.xml
+  jr: ../templates/jr_setup.xml
+  external_loads: ../templates/external_loads.xml
+
+# 관절반력 표현 좌표계. FE 연계 기준이므로 바꾸려면 ADR 을 남길 것.
+joint_reaction_frame: tibia_r
+
+# 모델이 요구하는 마커. 입력 TRC 에 없으면 해석을 시작하지 않는다.
+# TODO: 실제 모델 마커셋에 맞춰 채울 것.
+required_markers: []
+
+# 품질 판정 임계값.
+# TBD 로 두면 판정하지 않고 'undecided' 로 기록된다.
+# 근거 없는 숫자를 넣지 말 것 — ADR-0003 에서 문헌 근거로 확정한다.
+thresholds:
+  marker_rms_m: TBD
+  marker_max_m: TBD
+  residual_force_n: TBD
+  residual_moment_nm: TBD
+
+notes: >
+  P1 G1 통과 기준 1번(Grand Challenge 1개 trial 재현)에 쓰이는 Case.
+  결과는 계측 경골 접촉력과 비교하며, 비교 방법과 합격기준은 ADR-0003 을 따른다.

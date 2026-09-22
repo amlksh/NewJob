@@ -1,0 +1,33 @@
+# 해석 결과 — 용량이 크고 재생성 가능하다. provenance.json 으로 재현한다.
+runs/*
+!runs/.gitkeep
+
+# 외부 데이터 — 재배포 조건 미확인, 환자 데이터 가능성
+data/*
+!data/README.md
+!data/.gitkeep
+
+# 모델 파일 — 라이선스 대장 확인 후 개별 판단
+models/*
+!models/README.md
+!models/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+build/
+dist/
+
+# OpenSim 이 작업 디렉터리에 남기는 로그
+opensim.log
+out.log
+err.log
+
+# OS
+.DS_Store
+Thumbs.db

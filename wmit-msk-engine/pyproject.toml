@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wmit-msk-engine"
+version = "0.1.0"
+description = "WMIT 통합플랫폼용 OpenSim 기반 근골격 시뮬레이션 엔진 (P1 PoC)"
+requires-python = ">=3.11"
+dependencies = [
+    "pyyaml>=6.0",
+    # opensim 은 여기에 고정하지 않는다.
+    # PyPI wheel 이 Linux(glibc 2.27+)/Windows/macOS 로 제한되어 있어
+    # 환경에 따라 설치 방법이 다르다. docker/Dockerfile 이 기준 환경이다.
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+]
+opensim = [
+    "opensim==4.6",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "opensim: OpenSim 설치가 필요한 테스트 (없으면 -m 'not opensim' 으로 제외)",
+]
+filterwarnings = ["error::DeprecationWarning"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests", "scripts"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["E501"]

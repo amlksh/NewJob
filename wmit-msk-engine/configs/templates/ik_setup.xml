@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  InverseKinematicsTool 템플릿 — 관절각(ROM) 산출.
+
+  report_marker_locations 를 켜면 마커 오차 STO 가 생성되고,
+  msk_engine.quality 가 이 파일에서 RMS·최대 오차를 읽는다.
+  품질 지표 없이 결과만 보고하지 않기 위해 반드시 유지할 것.
+-->
+<OpenSimDocument Version="40600">
+    <InverseKinematicsTool name="wmit_ik">
+        <model_file>@SCALED_MODEL@</model_file>
+        <results_directory>@RUN_DIR@/results</results_directory>
+
+        <IKTaskSet>
+            <objects />
+            <groups />
+        </IKTaskSet>
+
+        <marker_file>@MARKER_FILE@</marker_file>
+        <coordinate_file>Unassigned</coordinate_file>
+        <time_range> 0 0 </time_range>
+
+        <report_errors>true</report_errors>
+        <output_motion_file>@IK_MOTION@</output_motion_file>
+        <report_marker_locations>false</report_marker_locations>
+        <constraint_weight>Inf</constraint_weight>
+        <accuracy>1e-05</accuracy>
+    </InverseKinematicsTool>
+</OpenSimDocument>
